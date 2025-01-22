@@ -19,14 +19,14 @@ const Index = () => {
     // Simulate transcription for now - in reality, this would call your AI service
     setTranscriptions([
       {
-        text: "This is a sample transcription.",
+        text: "This is a sample transcription that you can edit.",
         start: 0,
         end: 5,
         confidence: 0.95,
         speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
       },
       {
-        text: "We'll replace this with real transcriptions later.",
+        text: "Click the edit button to modify the text.",
         start: 5,
         end: 10,
         confidence: 0.92,
@@ -34,6 +34,19 @@ const Index = () => {
       }
     ]);
   }, []);
+
+  const handleTranscriptionUpdate = useCallback((updatedTranscription: Transcription) => {
+    setTranscriptions(prev => 
+      prev.map(t => 
+        t.start === updatedTranscription.start ? updatedTranscription : t
+      )
+    );
+    
+    toast({
+      title: "Transcription updated",
+      description: "The transcription has been successfully updated.",
+    });
+  }, [toast]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -76,6 +89,7 @@ const Index = () => {
                 <TranscriptionDisplay
                   transcriptions={transcriptions}
                   currentTime={currentTime}
+                  onTranscriptionUpdate={handleTranscriptionUpdate}
                 />
               </CardContent>
             </Card>
