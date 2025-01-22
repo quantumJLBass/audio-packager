@@ -5,7 +5,11 @@ import ReactFlow, {
   MiniMap,
   Node,
   Edge,
-  Connection 
+  Connection,
+  NodeChange,
+  EdgeChange,
+  applyNodeChanges,
+  applyEdgeChanges
 } from 'reactflow';
 import { ProcessingNode } from './ProcessingNode';
 import { toast } from '@/hooks/use-toast';
@@ -29,6 +33,14 @@ export const ProcessingFlow: React.FC<ProcessingFlowProps> = ({
   onEdgesChange,
   onConnect,
 }) => {
+  const handleNodesChange = (changes: NodeChange[]) => {
+    onNodesChange?.(applyNodeChanges(changes, nodes));
+  };
+
+  const handleEdgesChange = (changes: EdgeChange[]) => {
+    onEdgesChange?.(applyEdgeChanges(changes, edges));
+  };
+
   const handleConnect = (params: Connection) => {
     onConnect?.(params);
     toast({
@@ -43,8 +55,8 @@ export const ProcessingFlow: React.FC<ProcessingFlowProps> = ({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={(changes) => onNodesChange?.(changes)}
-        onEdgesChange={(changes) => onEdgesChange?.(changes)}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={handleConnect}
         fitView
       >
