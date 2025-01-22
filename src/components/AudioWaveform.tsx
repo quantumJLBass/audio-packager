@@ -3,12 +3,13 @@ import WaveSurfer from 'wavesurfer.js';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PlayCircle, PauseCircle, Volume2, VolumeX } from 'lucide-react';
+import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface AudioWaveformProps {
   url: string;
   onReady?: () => void;
   onTimeUpdate?: (time: number) => void;
+  onSeek?: (time: number) => void;
   height?: number;
   waveColor?: string;
   progressColor?: string;
@@ -18,6 +19,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   url,
   onReady,
   onTimeUpdate,
+  onSeek,
   height = 128,
   waveColor = '#4a5568',
   progressColor = '#3182ce'
@@ -29,55 +31,71 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [volume, setVolume] = useState(1);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [zoom, setZoom] = useState(50);
   const { toast } = useToast();
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    wavesurfer.current = WaveSurfer.create({
-      container: containerRef.current,
-      height,
-      waveColor,
-      progressColor,
-      cursorWidth: 1,
-      cursorColor: '#718096',
-      normalize: true,
-      minPxPerSec: 50,
-      fillParent: true,
-      interact: true,
-      autoScroll: true,
-    });
+    try {
+      wavesurfer.current = WaveSurfer.create({
+        container: containerRef.current,
+        height,
+        waveColor,
+        progressColor,
+        cursorWidth: 1,
+        cursorColor: '#718096',
+        normalize: true,
+        minPxPerSec: zoom,
+        fillParent: true,
+        interact: true,
+        autoScroll: true,
+      });
 
-    wavesurfer.current.load(url);
+      wavesurfer.current.load(url);
 
-    wavesurfer.current.on('ready', () => {
-      setDuration(wavesurfer.current?.getDuration() || 0);
-      onReady?.();
-    });
+      wavesurfer.current.on('ready', () => {
+        console.log('WaveSurfer ready');
+        setDuration(wavesurfer.current?.getDuration() || 0);
+        onReady?.();
+      });
 
-    wavesurfer.current.on('error', (err) => {
-      console.error('WaveSurfer error:', err);
-      setError('Failed to load audio file');
+      wavesurfer.current.on('error', (err) => {
+        console.error('WaveSurfer error:', err);
+        setError('Failed to load audio file');
+        toast({
+          title: "Error",
+          description: "Failed to load audio file. Please try again or select a different file.",
+          variant: "destructive",
+        });
+      });
+
+      wavesurfer.current.on('audioprocess', (time) => {
+        setCurrentTime(time);
+        onTimeUpdate?.(time);
+      });
+
+      wavesurfer.current.on('seek', (progress) => {
+        const time = progress * (wavesurfer.current?.getDuration() || 0);
+        onSeek?.(time);
+      });
+
+      wavesurfer.current.on('finish', () => {
+        setIsPlaying(false);
+      });
+
+      return () => {
+        wavesurfer.current?.destroy();
+      };
+    } catch (err) {
+      console.error('Error initializing WaveSurfer:', err);
       toast({
         title: "Error",
-        description: "Failed to load audio file. Please try again or select a different file.",
+        description: "Failed to initialize audio player. Please try again.",
         variant: "destructive",
       });
-    });
-
-    wavesurfer.current.on('audioprocess', (time) => {
-      setCurrentTime(time);
-      onTimeUpdate?.(time);
-    });
-
-    wavesurfer.current.on('finish', () => {
-      setIsPlaying(false);
-    });
-
-    return () => {
-      wavesurfer.current?.destroy();
-    };
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate]);
+    }
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
 
   const togglePlayPause = () => {
     if (wavesurfer.current) {
@@ -100,6 +118,14 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       wavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
     }
+  };
+
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 10, 100));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 10, 20));
   };
 
   const formatTime = (time: number) => {
@@ -138,6 +164,25 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           <span className="text-sm font-mono">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>
+
+          <div className="flex items-center gap-2 ml-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomOut}
+              className="hover:bg-primary/20"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomIn}
+              className="hover:bg-primary/20"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

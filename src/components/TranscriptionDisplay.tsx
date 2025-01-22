@@ -6,21 +6,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pencil, Save, X } from 'lucide-react';
 import { Transcription } from '@/types/audio';
+import { useToast } from '@/hooks/use-toast';
 
 interface TranscriptionDisplayProps {
   transcriptions: Transcription[];
   currentTime: number;
   onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
+  onTimeClick?: (time: number) => void;
 }
 
 export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
   transcriptions,
   currentTime,
-  onTranscriptionUpdate
+  onTranscriptionUpdate,
+  onTimeClick
 }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const activeTranscript = transcriptions.find(
@@ -39,18 +44,44 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
   };
 
   const handleSave = (transcript: Transcription) => {
-    if (onTranscriptionUpdate) {
-      onTranscriptionUpdate({
-        ...transcript,
-        text: editText
+    try {
+      if (!editText.trim()) {
+        throw new Error("Transcription text cannot be empty");
+      }
+
+      if (onTranscriptionUpdate) {
+        onTranscriptionUpdate({
+          ...transcript,
+          text: editText.trim()
+        });
+        
+        toast({
+          title: "Success",
+          description: "Transcription updated successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving transcription:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save transcription",
+        variant: "destructive",
       });
+    } finally {
+      setEditingId(null);
+      setEditText("");
     }
-    setEditingId(null);
   };
 
   const handleCancel = () => {
     setEditingId(null);
     setEditText("");
+  };
+
+  const handleTimeClick = (time: number) => {
+    if (onTimeClick) {
+      onTimeClick(time);
+    }
   };
 
   return (
@@ -61,14 +92,20 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
             <div
               key={transcript.start}
               id={`transcript-${transcript.start}`}
-              className={`p-3 rounded-lg transition-colors ${
+              className={`p-3 rounded-lg transition-colors group ${
                 currentTime >= transcript.start && currentTime <= transcript.end
                   ? 'bg-primary/20'
                   : 'hover:bg-muted/50'
               }`}
+              onMouseEnter={() => setHoveredId(transcript.start)}
+              onMouseLeave={() => setHoveredId(null)}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">
+                <Badge 
+                  variant="outline"
+                  className="cursor-pointer hover:bg-primary/20"
+                  onClick={() => handleTimeClick(transcript.start)}
+                >
                   {new Date(transcript.start * 1000).toISOString().substr(14, 5)}
                 </Badge>
                 {transcript.speaker && (
@@ -86,6 +123,7 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     className="flex-1"
+                    autoFocus
                   />
                   <Button
                     size="icon"
@@ -109,7 +147,9 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
                     size="icon"
                     variant="ghost"
                     onClick={() => handleEdit(transcript)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    className={`${
+                      hoveredId === transcript.start ? 'opacity-100' : 'opacity-0'
+                    } transition-opacity`}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
