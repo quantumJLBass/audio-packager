@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import { useToast } from '@/hooks/use-toast';
 
 interface AudioWaveformProps {
   url: string;
@@ -20,6 +21,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -44,6 +47,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       onReady?.();
     });
 
+    wavesurfer.current.on('error', (err) => {
+      console.error('WaveSurfer error:', err);
+      setError('Failed to load audio file');
+      toast({
+        title: 'Error',
+        description: 'Failed to load audio file. Please try again or select a different file.',
+        variant: 'destructive',
+      });
+    });
+
     wavesurfer.current.on('audioprocess', (time) => {
       onTimeUpdate?.(time);
     });
@@ -51,7 +64,15 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     return () => {
       wavesurfer.current?.destroy();
     };
-  }, [url]);
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate]);
+
+  if (error) {
+    return (
+      <div className="w-full rounded-lg glass p-4 flex items-center justify-center text-gray-500">
+        <p>No audio file loaded. Please select an audio file to visualize the waveform.</p>
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className="w-full rounded-lg glass p-4" />;
 };
