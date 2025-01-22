@@ -29,11 +29,13 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       height,
       waveColor,
       progressColor,
-      responsive: true,
       cursorWidth: 1,
       cursorColor: '#718096',
       normalize: true,
-      minimap: true,
+      minPxPerSec: 50,
+      fillParent: true,
+      interact: true,
+      autoScroll: true,
     });
 
     wavesurfer.current.load(url);
