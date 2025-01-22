@@ -55,3 +55,20 @@ export interface AudioProject {
   status: 'idle' | 'processing' | 'completed' | 'error';
   error?: string;
 }
+
+export interface TranscriptionSegment {
+  text: string;
+  start: number;
+  end: number;
+  confidence: number;
+  speaker?: Speaker;
+}
+
+export interface AudioFile {
+  id: string;
+  name: string;
+  url: string;
+  duration: number;
+  transcription?: TranscriptionSegment[];
+  metadata: AudioMetadata;
+}
