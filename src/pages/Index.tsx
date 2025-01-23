@@ -28,14 +28,23 @@ const Index = () => {
         { device: "webgpu" }
       );
 
-      const result = await transcriber(audioFile);
+      // Convert File to ArrayBuffer for processing
+      const arrayBuffer = await audioFile.arrayBuffer();
+      const result = await transcriber(arrayBuffer);
       
-      // Convert Whisper result to our transcription format
-      // This is a simplified version - you might want to add more processing
+      if (!result || (!Array.isArray(result) && !result.text)) {
+        throw new Error("Failed to transcribe audio");
+      }
+
+      const transcriptionText = Array.isArray(result) 
+        ? result[0]?.text || ""
+        : result.text || "";
+
+      // Create a simple transcription segment
       const newTranscriptions: Transcription[] = [{
-        text: result.text,
+        text: transcriptionText,
         start: 0,
-        end: 5, // You might want to get actual timing from Whisper
+        end: 5,
         confidence: 0.95,
         speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
       }];

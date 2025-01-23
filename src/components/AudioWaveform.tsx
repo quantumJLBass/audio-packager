@@ -26,7 +26,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [duration, setDuration] = useState(0);
@@ -62,10 +61,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
       wavesurfer.current.on('error', (err) => {
         console.error('WaveSurfer error:', err);
-        setError('Failed to load audio file');
         toast({
           title: "Error",
-          description: "Failed to load audio file. Please try again or select a different file.",
+          description: "Failed to load audio file. Please try again.",
           variant: "destructive",
         });
       });
@@ -75,8 +73,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onTimeUpdate?.(time);
       });
 
-      wavesurfer.current.on('seek', (progress) => {
-        const time = progress * (wavesurfer.current?.getDuration() || 0);
+      wavesurfer.current.on('interaction', () => {
+        const time = wavesurfer.current?.getCurrentTime() || 0;
+        setCurrentTime(time);
         onSeek?.(time);
       });
 
@@ -121,11 +120,19 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   };
 
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 10, 100));
+    if (wavesurfer.current) {
+      const newZoom = Math.min(zoom + 10, 100);
+      setZoom(newZoom);
+      wavesurfer.current.zoom(newZoom);
+    }
   };
 
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 10, 20));
+    if (wavesurfer.current) {
+      const newZoom = Math.max(zoom - 10, 20);
+      setZoom(newZoom);
+      wavesurfer.current.zoom(newZoom);
+    }
   };
 
   const formatTime = (time: number) => {
@@ -133,14 +140,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
-
-  if (error) {
-    return (
-      <div className="w-full rounded-lg glass p-4 flex items-center justify-center text-gray-500">
-        <p>No audio file loaded. Please select an audio file to visualize the waveform.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
