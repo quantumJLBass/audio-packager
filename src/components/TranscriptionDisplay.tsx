@@ -4,27 +4,35 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Save, X } from 'lucide-react';
-import { Transcription } from '@/types/audio';
+import { Pencil, Save, X, Split, Plus } from 'lucide-react';
+import { Transcription, Speaker } from '@/types/audio';
 import { useToast } from '@/hooks/use-toast';
+import { SpeakerDialog } from './audio/SpeakerDialog';
 
 interface TranscriptionDisplayProps {
   transcriptions: Transcription[];
   currentTime: number;
   onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
+  onTranscriptionSplit?: (transcription: Transcription, time: number) => void;
+  onTranscriptionAdd?: (time: number) => void;
   onTimeClick?: (time: number) => void;
+  onSpeakerUpdate?: (speakerId: string, newName: string, updateAll: boolean) => void;
 }
 
 export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
   transcriptions,
   currentTime,
   onTranscriptionUpdate,
-  onTimeClick
+  onTranscriptionSplit,
+  onTranscriptionAdd,
+  onTimeClick,
+  onSpeakerUpdate
 }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [editingSpeaker, setEditingSpeaker] = useState<Speaker | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -84,6 +92,30 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
     }
   };
 
+  const handleSpeakerEdit = (speaker: Speaker) => {
+    setEditingSpeaker(speaker);
+  };
+
+  const handleSpeakerSave = (name: string, updateAll: boolean) => {
+    if (editingSpeaker && onSpeakerUpdate) {
+      onSpeakerUpdate(editingSpeaker.id, name, updateAll);
+    }
+    setEditingSpeaker(null);
+  };
+
+  const handleSplit = (transcript: Transcription) => {
+    if (onTranscriptionSplit) {
+      const splitTime = (transcript.start + transcript.end) / 2;
+      onTranscriptionSplit(transcript, splitTime);
+    }
+  };
+
+  const handleAdd = (time: number) => {
+    if (onTranscriptionAdd) {
+      onTranscriptionAdd(time);
+    }
+  };
+
   return (
     <Card className="glass">
       <ScrollArea className="h-[400px] p-4">
@@ -111,10 +143,33 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
                 {transcript.speaker && (
                   <Badge 
                     style={{ backgroundColor: transcript.speaker.color }}
+                    className="cursor-pointer"
+                    onClick={() => handleSpeakerEdit(transcript.speaker!)}
                   >
                     {transcript.speaker.name}
                   </Badge>
                 )}
+                <div className="flex-1" />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleSplit(transcript)}
+                  className={`${
+                    hoveredId === transcript.start ? 'opacity-100' : 'opacity-0'
+                  } transition-opacity`}
+                >
+                  <Split className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleAdd(transcript.end)}
+                  className={`${
+                    hoveredId === transcript.start ? 'opacity-100' : 'opacity-0'
+                  } transition-opacity`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
               
               {editingId === transcript.start ? (
@@ -159,6 +214,15 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
           ))}
         </div>
       </ScrollArea>
+      
+      {editingSpeaker && (
+        <SpeakerDialog
+          isOpen={true}
+          onClose={() => setEditingSpeaker(null)}
+          speaker={editingSpeaker}
+          onSave={handleSpeakerSave}
+        />
+      )}
     </Card>
   );
 };
