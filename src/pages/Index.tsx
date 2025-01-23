@@ -4,7 +4,7 @@ import { AudioUploader } from '@/components/AudioUploader';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Transcription } from '@/types/audio';
+import { Transcription, Speaker } from '@/types/audio';
 import { pipeline } from '@huggingface/transformers';
 
 const Index = () => {
@@ -22,36 +22,37 @@ const Index = () => {
         description: "Processing audio file. This may take a few moments...",
       });
 
+      const arrayBuffer = await audioFile.arrayBuffer();
+      const audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const float32Array = audioBuffer.getChannelData(0);
+
       const transcriber = await pipeline(
         "automatic-speech-recognition",
         "onnx-community/whisper-tiny.en",
         { device: "webgpu" }
       );
 
-      // Convert ArrayBuffer to Float32Array for processing
-      const arrayBuffer = await audioFile.arrayBuffer();
-      const audioContext = new AudioContext();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      const float32Array = audioBuffer.getChannelData(0);
+      const result = await transcriber(float32Array, {
+        chunk_length_s: 30,
+        stride_length_s: 5,
+        return_timestamps: true
+      });
 
-      const result = await transcriber(float32Array);
-      
-      if (!result || (!Array.isArray(result) && !result.text)) {
+      if (!result) {
         throw new Error("Failed to transcribe audio");
       }
 
-      const transcriptionText = Array.isArray(result) 
-        ? result[0]?.text || ""
-        : result.text || "";
-
-      // Create a simple transcription segment
-      const newTranscriptions: Transcription[] = [{
-        text: transcriptionText,
-        start: 0,
-        end: audioBuffer.duration,
+      // Create segments from the result
+      const segments = Array.isArray(result.chunks) ? result.chunks : [{ text: result.text, timestamp: [0, audioBuffer.duration] }];
+      
+      const newTranscriptions: Transcription[] = segments.map((segment, index) => ({
+        text: segment.text || "(no speech detected)",
+        start: segment.timestamp[0],
+        end: segment.timestamp[1],
         confidence: 0.95,
         speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
-      }];
+      }));
 
       setTranscriptions(newTranscriptions);
       
@@ -91,6 +92,75 @@ const Index = () => {
       prev.map(t => 
         t.start === updatedTranscription.start ? updatedTranscription : t
       )
+    );
+  }, []);
+
+  const handleTranscriptionSplit = useCallback((transcript: Transcription, splitTime: number) => {
+    setTranscriptions(prev => {
+      const index = prev.findIndex(t => t.start === transcript.start);
+      if (index === -1) return prev;
+
+      const firstHalf: Transcription = {
+        ...transcript,
+        end: splitTime
+      };
+
+      const secondHalf: Transcription = {
+        ...transcript,
+        start: splitTime,
+        text: transcript.text
+      };
+
+      const newTranscriptions = [...prev];
+      newTranscriptions.splice(index, 1, firstHalf, secondHalf);
+      return newTranscriptions;
+    });
+  }, []);
+
+  const handleTranscriptionAdd = useCallback((time: number, position: 'before' | 'after') => {
+    setTranscriptions(prev => {
+      const newTranscription: Transcription = {
+        text: "(new entry)",
+        start: time,
+        end: time + 5,
+        confidence: 0.95,
+        speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
+      };
+
+      const index = prev.findIndex(t => t.start > time);
+      const newTranscriptions = [...prev];
+      
+      if (position === 'before') {
+        newTranscriptions.splice(Math.max(0, index - 1), 0, newTranscription);
+      } else {
+        newTranscriptions.splice(index === -1 ? newTranscriptions.length : index, 0, newTranscription);
+      }
+      
+      return newTranscriptions;
+    });
+  }, []);
+
+  const handleTranscriptionDelete = useCallback((transcript: Transcription) => {
+    setTranscriptions(prev => prev.filter(t => t.start !== transcript.start));
+  }, []);
+
+  const handleSpeakerUpdate = useCallback((speakerId: string, newName: string, updateAll: boolean) => {
+    setTranscriptions(prev => 
+      prev.map(t => {
+        if (!t.speaker) return t;
+        if (updateAll && t.speaker.name === speakerId) {
+          return {
+            ...t,
+            speaker: { ...t.speaker, name: newName }
+          };
+        } else if (!updateAll && t.speaker.id === speakerId) {
+          return {
+            ...t,
+            speaker: { ...t.speaker, name: newName }
+          };
+        }
+        return t;
+      })
     );
   }, []);
 
@@ -151,7 +221,11 @@ const Index = () => {
                   transcriptions={transcriptions}
                   currentTime={currentTime}
                   onTranscriptionUpdate={handleTranscriptionUpdate}
+                  onTranscriptionSplit={handleTranscriptionSplit}
+                  onTranscriptionAdd={handleTranscriptionAdd}
+                  onTranscriptionDelete={handleTranscriptionDelete}
                   onTimeClick={handleTimeClick}
+                  onSpeakerUpdate={handleSpeakerUpdate}
                 />
               </CardContent>
             </Card>

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { useToast } from '@/hooks/use-toast';
 import { WaveformControls } from './audio/WaveformControls';
+import { debounce } from 'lodash';
 
 interface AudioWaveformProps {
   url: string;
@@ -94,7 +95,35 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         variant: "destructive",
       });
     }
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate]);
+
+  const debouncedZoom = debounce((newZoom: number) => {
+    if (wavesurfer.current && isReady) {
+      try {
+        const currentTime = wavesurfer.current.getCurrentTime();
+        wavesurfer.current.zoom(newZoom);
+        wavesurfer.current.seekTo(currentTime / duration);
+        setZoom(newZoom);
+      } catch (err) {
+        console.error('Error zooming:', err);
+        toast({
+          title: "Error",
+          description: "Failed to zoom. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, 100);
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom + 10, 100);
+    debouncedZoom(newZoom);
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom - 10, 20);
+    debouncedZoom(newZoom);
+  };
 
   const togglePlayPause = () => {
     if (wavesurfer.current) {
@@ -119,40 +148,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     }
   };
 
-  const handleZoomIn = () => {
-    if (wavesurfer.current && isReady) {
-      try {
-        const newZoom = Math.min(zoom + 10, 100);
-        wavesurfer.current.zoom(newZoom);
-        setZoom(newZoom);
-      } catch (err) {
-        console.error('Error zooming in:', err);
-        toast({
-          title: "Error",
-          description: "Failed to zoom in. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (wavesurfer.current && isReady) {
-      try {
-        const newZoom = Math.max(zoom - 10, 20);
-        wavesurfer.current.zoom(newZoom);
-        setZoom(newZoom);
-      } catch (err) {
-        console.error('Error zooming out:', err);
-        toast({
-          title: "Error",
-          description: "Failed to zoom out. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div ref={containerRef} className="w-full rounded-lg glass p-4" />
@@ -163,6 +158,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         volume={volume}
         currentTime={currentTime}
         duration={duration}
+        zoom={zoom}
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}

@@ -4,17 +4,19 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Pencil, Save, X, Split, Plus } from 'lucide-react';
+import { Pencil, Save, X, Split, Plus, Trash2 } from 'lucide-react';
 import { Transcription, Speaker } from '@/types/audio';
 import { useToast } from '@/hooks/use-toast';
 import { SpeakerDialog } from './audio/SpeakerDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface TranscriptionDisplayProps {
   transcriptions: Transcription[];
   currentTime: number;
   onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
   onTranscriptionSplit?: (transcription: Transcription, time: number) => void;
-  onTranscriptionAdd?: (time: number) => void;
+  onTranscriptionAdd?: (time: number, position: 'before' | 'after') => void;
+  onTranscriptionDelete?: (transcription: Transcription) => void;
   onTimeClick?: (time: number) => void;
   onSpeakerUpdate?: (speakerId: string, newName: string, updateAll: boolean) => void;
 }
@@ -25,6 +27,7 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
   onTranscriptionUpdate,
   onTranscriptionSplit,
   onTranscriptionAdd,
+  onTranscriptionDelete,
   onTimeClick,
   onSpeakerUpdate
 }) => {
@@ -33,6 +36,9 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
   const [editText, setEditText] = useState("");
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [editingSpeaker, setEditingSpeaker] = useState<Speaker | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addPosition, setAddPosition] = useState<'before' | 'after'>('after');
+  const [addTime, setAddTime] = useState(0);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -110,9 +116,25 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
     }
   };
 
-  const handleAdd = (time: number) => {
+  const handleAdd = (transcript: Transcription) => {
+    setAddTime(transcript.end);
+    setShowAddDialog(true);
+  };
+
+  const handleAddConfirm = () => {
     if (onTranscriptionAdd) {
-      onTranscriptionAdd(time);
+      onTranscriptionAdd(addTime, addPosition);
+    }
+    setShowAddDialog(false);
+  };
+
+  const handleDelete = (transcript: Transcription) => {
+    if (onTranscriptionDelete) {
+      onTranscriptionDelete(transcript);
+      toast({
+        title: "Success",
+        description: "Transcription deleted successfully",
+      });
     }
   };
 
@@ -163,12 +185,22 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={() => handleAdd(transcript.end)}
+                  onClick={() => handleAdd(transcript)}
                   className={`${
                     hoveredId === transcript.start ? 'opacity-100' : 'opacity-0'
                   } transition-opacity`}
                 >
                   <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleDelete(transcript)}
+                  className={`${
+                    hoveredId === transcript.start ? 'opacity-100' : 'opacity-0'
+                  } transition-opacity text-destructive`}
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
               
@@ -223,6 +255,38 @@ export const TranscriptionDisplay: React.FC<TranscriptionDisplayProps> = ({
           onSave={handleSpeakerSave}
         />
       )}
+
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Transcription</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant={addPosition === 'before' ? 'default' : 'outline'}
+                onClick={() => setAddPosition('before')}
+              >
+                Add Before
+              </Button>
+              <Button
+                variant={addPosition === 'after' ? 'default' : 'outline'}
+                onClick={() => setAddPosition('after')}
+              >
+                Add After
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddConfirm}>
+              Add Transcription
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

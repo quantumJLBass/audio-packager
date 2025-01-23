@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut } from 'lucide-react';
-import { debounce } from 'lodash';
+import { Input } from '@/components/ui/input';
 
 interface WaveformControlsProps {
   isPlaying: boolean;
@@ -10,6 +10,7 @@ interface WaveformControlsProps {
   volume: number;
   currentTime: number;
   duration: number;
+  zoom: number;
   onPlayPause: () => void;
   onVolumeChange: (value: number[]) => void;
   onMute: () => void;
@@ -23,15 +24,13 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
   volume,
   currentTime,
   duration,
+  zoom,
   onPlayPause,
   onVolumeChange,
   onMute,
   onZoomIn,
   onZoomOut,
 }) => {
-  const debouncedZoomIn = debounce(onZoomIn, 500);
-  const debouncedZoomOut = debounce(onZoomOut, 500);
-
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -62,16 +61,21 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={debouncedZoomOut}
+            onClick={onZoomOut}
             className="hover:bg-primary/20"
             disabled={!isReady}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
+          
+          <div className="w-12 text-center">
+            <span className="text-sm font-mono">{zoom}%</span>
+          </div>
+          
           <Button
             variant="ghost"
             size="icon"
-            onClick={debouncedZoomIn}
+            onClick={onZoomIn}
             className="hover:bg-primary/20"
             disabled={!isReady}
           >
