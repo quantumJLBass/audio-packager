@@ -31,6 +31,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [zoom, setZoom] = useState(50);
+  const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       wavesurfer.current.on('ready', () => {
         console.log('WaveSurfer ready');
         setDuration(wavesurfer.current?.getDuration() || 0);
+        setIsReady(true);
         onReady?.();
       });
 
@@ -120,18 +122,36 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   };
 
   const handleZoomIn = () => {
-    if (wavesurfer.current) {
-      const newZoom = Math.min(zoom + 10, 100);
-      setZoom(newZoom);
-      wavesurfer.current.zoom(newZoom);
+    if (wavesurfer.current && isReady) {
+      try {
+        const newZoom = Math.min(zoom + 10, 100);
+        wavesurfer.current.zoom(newZoom);
+        setZoom(newZoom);
+      } catch (err) {
+        console.error('Error zooming in:', err);
+        toast({
+          title: "Error",
+          description: "Failed to zoom in. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   const handleZoomOut = () => {
-    if (wavesurfer.current) {
-      const newZoom = Math.max(zoom - 10, 20);
-      setZoom(newZoom);
-      wavesurfer.current.zoom(newZoom);
+    if (wavesurfer.current && isReady) {
+      try {
+        const newZoom = Math.max(zoom - 10, 20);
+        wavesurfer.current.zoom(newZoom);
+        setZoom(newZoom);
+      } catch (err) {
+        console.error('Error zooming out:', err);
+        toast({
+          title: "Error",
+          description: "Failed to zoom out. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -170,6 +190,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
               size="icon"
               onClick={handleZoomOut}
               className="hover:bg-primary/20"
+              disabled={!isReady}
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
@@ -178,6 +199,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
               size="icon"
               onClick={handleZoomIn}
               className="hover:bg-primary/20"
+              disabled={!isReady}
             >
               <ZoomIn className="h-4 w-4" />
             </Button>

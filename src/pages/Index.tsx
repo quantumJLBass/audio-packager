@@ -28,9 +28,13 @@ const Index = () => {
         { device: "webgpu" }
       );
 
-      // Convert File to ArrayBuffer for processing
+      // Convert ArrayBuffer to Float32Array for processing
       const arrayBuffer = await audioFile.arrayBuffer();
-      const result = await transcriber(arrayBuffer);
+      const audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const float32Array = audioBuffer.getChannelData(0);
+
+      const result = await transcriber(float32Array);
       
       if (!result || (!Array.isArray(result) && !result.text)) {
         throw new Error("Failed to transcribe audio");
@@ -44,7 +48,7 @@ const Index = () => {
       const newTranscriptions: Transcription[] = [{
         text: transcriptionText,
         start: 0,
-        end: 5,
+        end: audioBuffer.duration,
         confidence: 0.95,
         speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
       }];
@@ -59,7 +63,7 @@ const Index = () => {
       console.error('Transcription error:', error);
       toast({
         title: "Error",
-        description: "Failed to transcribe audio. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to transcribe audio",
         variant: "destructive",
       });
     } finally {
