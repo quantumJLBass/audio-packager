@@ -5,7 +5,7 @@ import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Transcription, Speaker } from '@/types/audio';
-import { pipeline } from '@huggingface/transformers';
+import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
 
 const Index = () => {
   const { toast } = useToast();
@@ -14,7 +14,7 @@ const Index = () => {
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
-  const transcribeAudio = async (audioFile: File) => {
+  const handleTranscription = async (audioFile: File) => {
     try {
       setIsTranscribing(true);
       toast({
@@ -23,36 +23,26 @@ const Index = () => {
       });
 
       const arrayBuffer = await audioFile.arrayBuffer();
-      const audioContext = new AudioContext();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      const float32Array = audioBuffer.getChannelData(0);
-
-      const transcriber = await pipeline(
-        "automatic-speech-recognition",
-        "onnx-community/whisper-tiny.en",
-        { device: "webgpu" }
-      );
-
-      const result = await transcriber(float32Array, {
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        return_timestamps: true
-      });
+      const float32Array = await processAudioBuffer(arrayBuffer);
+      const result = await transcribeAudio(float32Array);
 
       if (!result) {
         throw new Error("Failed to transcribe audio");
       }
 
-      // Create segments from the result
-      const segments = Array.isArray(result.chunks) ? result.chunks : [{ text: result.text, timestamp: [0, audioBuffer.duration] }];
+      // Handle both single and array results
+      const segments = Array.isArray(result) ? result : [result];
       
-      const newTranscriptions: Transcription[] = segments.map((segment, index) => ({
-        text: segment.text || "(no speech detected)",
-        start: segment.timestamp[0],
-        end: segment.timestamp[1],
-        confidence: 0.95,
-        speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
-      }));
+      const newTranscriptions: Transcription[] = segments.map((segment, index) => {
+        const timestamps = segment.chunks?.[0]?.timestamp || [0, 0];
+        return {
+          text: segment.text || "(no speech detected)",
+          start: timestamps[0],
+          end: timestamps[1],
+          confidence: 0.95,
+          speaker: { id: "1", name: "Speaker 1", color: "#4f46e5" }
+        };
+      });
 
       setTranscriptions(newTranscriptions);
       
@@ -76,7 +66,7 @@ const Index = () => {
     try {
       const url = URL.createObjectURL(file);
       setAudioUrl(url);
-      await transcribeAudio(file);
+      await handleTranscription(file);
     } catch (error) {
       console.error('Error handling file:', error);
       toast({

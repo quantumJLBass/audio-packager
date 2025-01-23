@@ -97,7 +97,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     }
   }, [url, height, waveColor, progressColor, onReady, onTimeUpdate]);
 
-  const debouncedZoom = debounce((newZoom: number) => {
+  const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
         const currentTime = wavesurfer.current.getCurrentTime();
@@ -117,12 +117,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoom + 10, 100);
-    debouncedZoom(newZoom);
+    handleZoom(newZoom);
   };
 
   const handleZoomOut = () => {
     const newZoom = Math.max(zoom - 10, 20);
-    debouncedZoom(newZoom);
+    handleZoom(newZoom);
+  };
+
+  const handleZoomChange = (newZoom: number) => {
+    handleZoom(newZoom);
   };
 
   const togglePlayPause = () => {
@@ -164,6 +168,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onMute={toggleMute}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
+        onZoomChange={handleZoomChange}
       />
     </div>
   );
