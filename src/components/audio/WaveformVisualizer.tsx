@@ -3,11 +3,13 @@ import WaveSurfer from 'wavesurfer.js';
 import Minimap from 'wavesurfer.js/dist/plugins/minimap';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions';
 import Spectrogram from 'wavesurfer.js/dist/plugins/spectrogram';
+import Timeline from 'wavesurfer.js/dist/plugins/timeline';
 import { useToast } from '@/hooks/use-toast';
 import { Speaker } from '@/types/audio';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { formatTimestamp } from '@/utils/timeFormat';
 
 interface WaveformVisualizerProps {
   url: string;
@@ -25,11 +27,13 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   onSeek,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
   const spectrogramRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
   const regionsPlugin = useRef<RegionsPlugin | null>(null);
   const [showRegions, setShowRegions] = useState(true);
   const [showSpectrogram, setShowSpectrogram] = useState(false);
+  const [zoom, setZoom] = useState(100);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,7 +47,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         waveColor: '#4f46e5',
         progressColor: '#7c3aed',
         height: 128,
-        minPxPerSec: 100,
+        minPxPerSec: zoom,
         normalize: true,
         interact: true,
         autoScroll: true,
@@ -53,6 +57,12 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
             height: 20,
             waveColor: '#ddd',
             progressColor: '#999',
+          }),
+          Timeline.create({
+            container: timelineRef.current!,
+            formatTimeCallback: (seconds: number) => formatTimestamp(seconds),
+            primaryLabelInterval: zoom < 50 ? 1 : zoom < 100 ? 5 : 10,
+            secondaryLabelInterval: zoom < 50 ? 0.1 : zoom < 100 ? 1 : 5,
           }),
           regionsPlugin.current,
           showSpectrogram && Spectrogram.create({
@@ -97,15 +107,13 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         variant: "destructive",
       });
     }
-  }, [url, showSpectrogram]);
+  }, [url, showSpectrogram, zoom]);
 
   const updateRegions = () => {
     if (!wavesurfer.current || !regionsPlugin.current || !showRegions) return;
 
-    // Clear existing regions
     regionsPlugin.current.clearRegions();
 
-    // Create regions for each speaker
     speakers.forEach((speaker) => {
       regionsPlugin.current?.addRegion({
         id: speaker.id,
@@ -118,28 +126,56 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     });
   };
 
+  const handleZoomChange = (newZoom: number) => {
+    if (wavesurfer.current) {
+      wavesurfer.current.zoom(newZoom);
+      setZoom(newZoom);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end space-x-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="show-regions"
-            checked={showRegions}
-            onCheckedChange={setShowRegions}
-          />
-          <Label htmlFor="show-regions">Show Regions</Label>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => handleZoomChange(Math.max(20, zoom - 20))}
+            disabled={zoom <= 20}
+          >
+            Zoom Out
+          </Button>
+          <span>{zoom}%</span>
+          <Button 
+            variant="outline" 
+            onClick={() => handleZoomChange(Math.min(500, zoom + 20))}
+            disabled={zoom >= 500}
+          >
+            Zoom In
+          </Button>
         </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="show-spectrogram"
-            checked={showSpectrogram}
-            onCheckedChange={setShowSpectrogram}
-          />
-          <Label htmlFor="show-spectrogram">Show Spectrogram</Label>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-regions"
+              checked={showRegions}
+              onCheckedChange={setShowRegions}
+            />
+            <Label htmlFor="show-regions">Show Regions</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-spectrogram"
+              checked={showSpectrogram}
+              onCheckedChange={setShowSpectrogram}
+            />
+            <Label htmlFor="show-spectrogram">Show Spectrogram</Label>
+          </div>
         </div>
       </div>
       
       <div ref={containerRef} className="w-full rounded-lg glass p-4" />
+      <div ref={timelineRef} className="w-full" />
       {showSpectrogram && (
         <div ref={spectrogramRef} className="w-full rounded-lg glass p-4" />
       )}

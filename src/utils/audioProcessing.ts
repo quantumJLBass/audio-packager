@@ -13,29 +13,34 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
       "automatic-speech-recognition",
       "openai/whisper-large-v3",
       {
-        return_timestamps: true,
+        return_timestamps: "word",
         chunk_length_s: 30,
         stride_length_s: 5,
         device: "webgpu"
-      } as any // Type assertion needed due to missing types in the library
+      } as any
     );
 
     const result = await transcriber(float32Array, {
-      return_timestamps: true,
-    });
+      return_timestamps: "word",
+    }) as any;
 
-    const chunks = Array.isArray(result.chunks) ? result.chunks : [result];
+    if (!result || (!Array.isArray(result) && !result.text)) {
+      throw new Error("Invalid transcription result");
+    }
+
+    const segments = Array.isArray(result) ? result : [result];
     
-    return chunks.map((chunk: any, index: number) => {
-      const timestamps = chunk.timestamp || [0, 0];
-      return {
-        text: chunk.text || "(no speech detected)",
-        start: timestamps[0],
-        end: timestamps[1],
-        confidence: chunk.confidence || 0.95,
-        speaker: { id: `speaker-${index + 1}`, name: `Speaker ${index + 1}`, color: getRandomColor() }
-      };
-    });
+    return segments.map((segment: any, index: number) => ({
+      text: segment.text || "(no speech detected)",
+      start: segment.timestamp?.[0] || 0,
+      end: segment.timestamp?.[1] || 5,
+      confidence: segment.confidence || 0.95,
+      speaker: { 
+        id: `speaker-${index + 1}`, 
+        name: `Speaker ${index + 1}`, 
+        color: getRandomColor() 
+      }
+    }));
   } catch (error) {
     console.error('Transcription error:', error);
     throw error;
@@ -49,9 +54,8 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     { device: "webgpu" }
   );
   
-  const result = await classifier(text);
-  const output = Array.isArray(result) ? result[0] : result;
-  return output.label as string;
+  const result = await classifier(text) as any;
+  return result[0]?.label || 'neutral';
 };
 
 export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
@@ -64,16 +68,15 @@ export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysi
 
 const calculatePitch = (audioData: Float32Array): number => {
   // Implement pitch detection algorithm
-  return 440; // Placeholder
+  return 440;
 };
 
 const calculateTempo = (audioData: Float32Array): number => {
   // Implement tempo detection algorithm
-  return 120; // Placeholder
+  return 120;
 };
 
 const calculateEnergy = (audioData: Float32Array): number => {
-  // Calculate RMS energy
   const sum = audioData.reduce((acc, val) => acc + val * val, 0);
   return Math.sqrt(sum / audioData.length);
 };
