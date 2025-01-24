@@ -36,6 +36,10 @@ export interface AudioAnalysis {
     tempo: number;
     energy: number;
   };
+  emotions: {
+    label: string;
+    score: number;
+  }[];
 }
 
 export interface ProcessingOptions {
@@ -62,6 +66,12 @@ export interface TranscriptionSegment {
   end: number;
   confidence: number;
   speaker?: Speaker;
+  sentiment?: string;
+  tone?: {
+    pitch: number;
+    tempo: number;
+    energy: number;
+  };
 }
 
 export interface AudioFile {
