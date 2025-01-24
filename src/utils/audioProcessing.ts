@@ -9,31 +9,22 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 
 export const transcribeAudio = async (float32Array: Float32Array): Promise<Transcription[]> => {
   try {
-    const transcriber = await pipeline(
-      "automatic-speech-recognition",
-      "openai/whisper-large-v3",
-      {
-        return_timestamps: "word",
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        device: "webgpu"
-      } as any
-    );
-
+    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3");
+    
     const result = await transcriber(float32Array, {
-      return_timestamps: "word",
-    }) as any;
+      return_timestamps: true,
+      chunk_length_s: 30,
+      stride_length_s: 5,
+    } as any); // Type assertion needed due to incomplete types
 
-    if (!result || (!Array.isArray(result) && !result.text)) {
-      throw new Error("Invalid transcription result");
-    }
+    if (!result) throw new Error("Invalid transcription result");
 
     const segments = Array.isArray(result) ? result : [result];
     
     return segments.map((segment: any, index: number) => ({
       text: segment.text || "(no speech detected)",
-      start: segment.timestamp?.[0] || 0,
-      end: segment.timestamp?.[1] || 5,
+      start: segment.timestamp?.[0] || index * 5,
+      end: segment.timestamp?.[1] || (index + 1) * 5,
       confidence: segment.confidence || 0.95,
       speaker: { 
         id: `speaker-${index + 1}`, 
@@ -48,14 +39,18 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
 };
 
 export const analyzeSentiment = async (text: string): Promise<string> => {
-  const classifier = await pipeline(
-    "text-classification",
-    "SamLowe/roberta-base-go_emotions",
-    { device: "webgpu" }
-  );
-  
-  const result = await classifier(text) as any;
-  return result[0]?.label || 'neutral';
+  try {
+    const classifier = await pipeline(
+      "text-classification",
+      "SamLowe/roberta-base-go_emotions"
+    );
+    
+    const result = await classifier(text);
+    return (result as any)[0]?.label || 'neutral';
+  } catch (error) {
+    console.error('Sentiment analysis error:', error);
+    throw error;
+  }
 };
 
 export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {

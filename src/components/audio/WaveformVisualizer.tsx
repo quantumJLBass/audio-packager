@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { formatTimestamp } from '@/utils/timeFormat';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface WaveformVisualizerProps {
   url: string;
@@ -29,8 +30,8 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const spectrogramRef = useRef<HTMLDivElement>(null);
+  const minimapRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
-  const regionsPlugin = useRef<RegionsPlugin | null>(null);
   const [showRegions, setShowRegions] = useState(true);
   const [showSpectrogram, setShowSpectrogram] = useState(false);
   const [zoom, setZoom] = useState(100);
@@ -40,7 +41,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     if (!containerRef.current) return;
 
     try {
-      regionsPlugin.current = RegionsPlugin.create();
+      const regionsPlugin = RegionsPlugin.create();
       
       wavesurfer.current = WaveSurfer.create({
         container: containerRef.current,
@@ -48,12 +49,14 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         progressColor: '#7c3aed',
         height: 128,
         minPxPerSec: zoom,
+        maxCanvasWidth: 4000,
         normalize: true,
         interact: true,
         autoScroll: true,
         fillParent: true,
         plugins: [
           Minimap.create({
+            container: minimapRef.current!,
             height: 20,
             waveColor: '#ddd',
             progressColor: '#999',
@@ -64,7 +67,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
             primaryLabelInterval: zoom < 50 ? 1 : zoom < 100 ? 5 : 10,
             secondaryLabelInterval: zoom < 50 ? 0.1 : zoom < 100 ? 1 : 5,
           }),
-          regionsPlugin.current,
+          regionsPlugin,
           showSpectrogram && Spectrogram.create({
             container: spectrogramRef.current!,
             labels: true,
@@ -83,7 +86,9 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
 
       wavesurfer.current.on('ready', () => {
         console.log('WaveSurfer ready');
-        updateRegions();
+        if (showRegions) {
+          updateRegions();
+        }
         onReady?.();
       });
 
@@ -110,20 +115,25 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   }, [url, showSpectrogram, zoom]);
 
   const updateRegions = () => {
-    if (!wavesurfer.current || !regionsPlugin.current || !showRegions) return;
+    if (!wavesurfer.current) return;
 
-    regionsPlugin.current.clearRegions();
+    const regions = wavesurfer.current.getActivePlugins().find(p => p instanceof RegionsPlugin) as RegionsPlugin;
+    if (!regions) return;
 
-    speakers.forEach((speaker) => {
-      regionsPlugin.current?.addRegion({
-        id: speaker.id,
-        start: 0,
-        end: wavesurfer.current?.getDuration() || 0,
-        color: `${speaker.color}33`,
-        drag: false,
-        resize: false,
+    regions.clearRegions();
+
+    if (showRegions) {
+      speakers.forEach((speaker) => {
+        regions.addRegion({
+          id: speaker.id,
+          start: 0,
+          end: wavesurfer.current?.getDuration() || 0,
+          color: `${speaker.color}33`,
+          drag: false,
+          resize: false,
+        });
       });
-    });
+    }
   };
 
   const handleZoomChange = (newZoom: number) => {
@@ -159,7 +169,10 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
             <Switch
               id="show-regions"
               checked={showRegions}
-              onCheckedChange={setShowRegions}
+              onCheckedChange={(checked) => {
+                setShowRegions(checked);
+                updateRegions();
+              }}
             />
             <Label htmlFor="show-regions">Show Regions</Label>
           </div>
@@ -174,6 +187,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         </div>
       </div>
       
+      <div ref={minimapRef} className="w-full h-[20px]" />
       <div ref={containerRef} className="w-full rounded-lg glass p-4" />
       <div ref={timelineRef} className="w-full" />
       {showSpectrogram && (
