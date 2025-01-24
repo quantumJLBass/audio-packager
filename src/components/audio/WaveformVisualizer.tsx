@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import Minimap from 'wavesurfer.js/dist/plugins/minimap';
-import Regions from 'wavesurfer.js/dist/plugins/regions';
+import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions';
 import Spectrogram from 'wavesurfer.js/dist/plugins/spectrogram';
 import { useToast } from '@/hooks/use-toast';
 import { Speaker } from '@/types/audio';
@@ -27,6 +27,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const spectrogramRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
+  const regionsPlugin = useRef<RegionsPlugin | null>(null);
   const [showRegions, setShowRegions] = useState(true);
   const [showSpectrogram, setShowSpectrogram] = useState(false);
   const { toast } = useToast();
@@ -35,6 +36,8 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     if (!containerRef.current) return;
 
     try {
+      regionsPlugin.current = RegionsPlugin.create();
+      
       wavesurfer.current = WaveSurfer.create({
         container: containerRef.current,
         waveColor: '#4f46e5',
@@ -51,7 +54,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
             waveColor: '#ddd',
             progressColor: '#999',
           }),
-          Regions.create(),
+          regionsPlugin.current,
           showSpectrogram && Spectrogram.create({
             container: spectrogramRef.current!,
             labels: true,
@@ -97,17 +100,17 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   }, [url, showSpectrogram]);
 
   const updateRegions = () => {
-    if (!wavesurfer.current || !showRegions) return;
+    if (!wavesurfer.current || !regionsPlugin.current || !showRegions) return;
 
     // Clear existing regions
-    wavesurfer.current.regions.clear();
+    regionsPlugin.current.clearRegions();
 
     // Create regions for each speaker
     speakers.forEach((speaker) => {
-      wavesurfer.current?.regions.add({
+      regionsPlugin.current?.addRegion({
         id: speaker.id,
-        start: 0, // You'll need to update these based on actual speaker timestamps
-        end: wavesurfer.current.getDuration(),
+        start: 0,
+        end: wavesurfer.current?.getDuration() || 0,
         color: `${speaker.color}33`,
         drag: false,
         resize: false,

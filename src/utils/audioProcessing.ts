@@ -13,23 +13,26 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
       "automatic-speech-recognition",
       "openai/whisper-large-v3",
       {
+        return_timestamps: true,
         chunk_length_s: 30,
         stride_length_s: 5,
-        return_timestamps: true,
         device: "webgpu"
-      }
+      } as any // Type assertion needed due to missing types in the library
     );
 
-    const result = await transcriber(float32Array);
-    const chunks = Array.isArray(result) ? result : [result];
+    const result = await transcriber(float32Array, {
+      return_timestamps: true,
+    });
+
+    const chunks = Array.isArray(result.chunks) ? result.chunks : [result];
     
-    return chunks.map((chunk, index) => {
-      const timestamps = chunk.chunks?.[0]?.timestamp || [0, 0];
+    return chunks.map((chunk: any, index: number) => {
+      const timestamps = chunk.timestamp || [0, 0];
       return {
         text: chunk.text || "(no speech detected)",
         start: timestamps[0],
         end: timestamps[1],
-        confidence: 0.95,
+        confidence: chunk.confidence || 0.95,
         speaker: { id: `speaker-${index + 1}`, name: `Speaker ${index + 1}`, color: getRandomColor() }
       };
     });
@@ -47,11 +50,11 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
   );
   
   const result = await classifier(text);
-  return result[0].label;
+  const output = Array.isArray(result) ? result[0] : result;
+  return output.label as string;
 };
 
 export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
-  // Implement audio analysis for pitch, tempo, and energy
   return {
     pitch: calculatePitch(audioData),
     tempo: calculateTempo(audioData),
