@@ -1,35 +1,48 @@
 import { pipeline } from "@huggingface/transformers";
 import { AudioAnalysis, Transcription, Speaker } from "@/types/audio";
 
+interface AudioProcessingOptions {
+  model: string;
+  language: string;
+  floatingPoint: number;
+  diarization: boolean;
+  chunkLength: number;
+  strideLength: number;
+}
+
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   const audioContext = new AudioContext();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   return audioBuffer.getChannelData(0);
 };
 
-export const transcribeAudio = async (float32Array: Float32Array): Promise<Transcription[]> => {
+export const transcribeAudio = async (
+  float32Array: Float32Array,
+  options: AudioProcessingOptions
+): Promise<Transcription[]> => {
   try {
-    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3");
+    const transcriber = await pipeline("automatic-speech-recognition", options.model);
     
     const result = await transcriber(float32Array, {
+      language: options.language === 'auto' ? null : options.language,
       return_timestamps: true,
-      chunk_length_s: 30,
-      stride_length_s: 5,
-    } as any); // Type assertion needed due to incomplete types
+      chunk_length_s: options.chunkLength,
+      stride_length_s: options.strideLength,
+    } as any);
 
-    if (!result) throw new Error("Invalid transcription result");
+    if (!Array.isArray(result)) {
+      throw new Error("Invalid transcription result");
+    }
 
-    const segments = Array.isArray(result) ? result : [result];
-    
-    return segments.map((segment: any, index: number) => ({
+    return result.map((segment: any, index: number) => ({
       text: segment.text || "(no speech detected)",
-      start: segment.timestamp?.[0] || index * 5,
-      end: segment.timestamp?.[1] || (index + 1) * 5,
+      start: segment.timestamp?.[0] || index * options.strideLength,
+      end: segment.timestamp?.[1] || (index + 1) * options.strideLength,
       confidence: segment.confidence || 0.95,
-      speaker: { 
-        id: `speaker-${index + 1}`, 
-        name: `Speaker ${index + 1}`, 
-        color: getRandomColor() 
+      speaker: {
+        id: `speaker-${index + 1}`,
+        name: `Speaker ${index + 1}`,
+        color: getRandomColor()
       }
     }));
   } catch (error) {

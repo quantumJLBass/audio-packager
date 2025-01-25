@@ -49,7 +49,6 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         progressColor: '#7c3aed',
         height: 128,
         minPxPerSec: zoom,
-        maxCanvasWidth: 4000,
         normalize: true,
         interact: true,
         autoScroll: true,
