@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WaveformCore } from './waveform/WaveformCore';
 import { WaveformControls } from './waveform/WaveformControls';
-import { Speaker } from '@/types/audio';
-
-interface WaveformVisualizerProps {
-  url: string;
-  speakers: Speaker[];
-  onTimeUpdate?: (time: number) => void;
-  onReady?: () => void;
-  onDurationChange?: (duration: number) => void;
-}
+import { WaveformVisualizerProps } from '@/types/audio';
+import { useToast } from '@/hooks/use-toast';
 
 export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   url,
   speakers,
   onTimeUpdate,
+  onSeek,
+  onPlayPause,
   onReady,
   onDurationChange,
 }) => {
@@ -23,28 +18,40 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [zoom, setZoom] = useState(100);
+  const { toast } = useToast();
 
-  const handleReady = () => {
+  const handleReady = useCallback(() => {
     setIsReady(true);
     onReady?.();
-  };
+  }, [onReady]);
 
-  const handleTimeUpdate = (time: number) => {
+  const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
-    onTimeUpdate?.(time);
-  };
+    onTimeUpdate(time);
+  }, [onTimeUpdate]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(() => {
     setIsPlaying(!isPlaying);
-  };
+    onPlayPause?.(!isPlaying);
+  }, [isPlaying, onPlayPause]);
 
-  const handleZoomIn = () => {
-    setZoom(Math.min(500, zoom + 50));
-  };
+  const handleZoomChange = useCallback((newZoom: number) => {
+    if (!isReady) {
+      toast({
+        title: "Error",
+        description: "Please wait for audio to load before zooming",
+        variant: "destructive",
+      });
+      return;
+    }
+    setZoom(newZoom);
+  }, [isReady, toast]);
 
-  const handleZoomOut = () => {
-    setZoom(Math.max(50, zoom - 50));
-  };
+  useEffect(() => {
+    if (duration > 0) {
+      onDurationChange?.(duration);
+    }
+  }, [duration, onDurationChange]);
 
   return (
     <div className="space-y-4">
@@ -62,8 +69,8 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         duration={duration}
         zoom={zoom}
         onPlayPause={handlePlayPause}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
+        onZoomIn={() => handleZoomChange(Math.min(500, zoom + 50))}
+        onZoomOut={() => handleZoomChange(Math.max(50, zoom - 50))}
       />
     </div>
   );

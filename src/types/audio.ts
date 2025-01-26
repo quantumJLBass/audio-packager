@@ -82,3 +82,32 @@ export interface AudioFile {
   transcription?: TranscriptionSegment[];
   metadata: AudioMetadata;
 }
+
+export interface WaveformVisualizerProps {
+  url: string;
+  speakers: Speaker[];
+  onTimeUpdate: (time: number) => void;
+  onSeek?: (time: number) => void;
+  onPlayPause?: (isPlaying: boolean) => void;
+  onReady?: () => void;
+  onDurationChange?: (duration: number) => void;
+}
+
+export interface AudioProcessingState {
+  currentTime: number;
+  isPlaying: boolean;
+  duration: number;
+  isReady: boolean;
+  isTranscribing: boolean;
+  transcriptions: Transcription[];
+}
+
+export interface AudioProcessingOptions {
+  model: string;
+  language: string;
+  floatingPoint: number;
+  diarization: boolean;
+  chunkLength: number;
+  strideLength: number;
+  huggingFaceToken?: string;
+}

@@ -1,14 +1,5 @@
 import { pipeline } from "@huggingface/transformers";
-import { AudioAnalysis, Transcription, Speaker } from "@/types/audio";
-
-interface AudioProcessingOptions {
-  model: string;
-  language: string;
-  floatingPoint: number;
-  diarization: boolean;
-  chunkLength: number;
-  strideLength: number;
-}
+import { AudioAnalysis, Transcription, AudioProcessingOptions } from "@/types/audio";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   const audioContext = new AudioContext();
@@ -21,13 +12,9 @@ export const transcribeAudio = async (
   options: AudioProcessingOptions
 ): Promise<Transcription[]> => {
   try {
-    const huggingFaceToken = localStorage.getItem('huggingFaceToken');
-    if (!huggingFaceToken) {
-      throw new Error('HuggingFace token not found in settings');
-    }
-
     const transcriber = await pipeline("automatic-speech-recognition", options.model, {
-      accessToken: huggingFaceToken
+      token: options.huggingFaceToken,
+      quantized: options.floatingPoint === 16,
     });
     
     const result = await transcriber(float32Array, {
