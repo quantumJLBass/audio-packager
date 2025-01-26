@@ -55,6 +55,9 @@ export const SettingsView = () => {
               onChange={(e) => setSettings({ ...settings, huggingFaceToken: e.target.value })}
               placeholder="Enter your HuggingFace token"
             />
+            <p className="text-sm text-muted-foreground">
+              Get your token from the <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">HuggingFace settings page</a>
+            </p>
           </div>
 
           <div className="space-y-2">

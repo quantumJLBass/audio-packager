@@ -28,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="glass p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Audio Processing Studio</h1>
+        <Link to="/" className="text-2xl font-bold">Audio Processing Studio</Link>
         <Link to="/settings">
           <Button variant="ghost" size="icon">
             <Settings className="h-5 w-5" />

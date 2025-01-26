@@ -13,8 +13,8 @@ export const transcribeAudio = async (
 ): Promise<Transcription[]> => {
   try {
     const transcriber = await pipeline("automatic-speech-recognition", options.model, {
-      token: options.huggingFaceToken,
       quantized: options.floatingPoint === 16,
+      apiKey: options.huggingFaceToken // Changed from 'token' to 'apiKey'
     });
     
     const result = await transcriber(float32Array, {
