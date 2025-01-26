@@ -1,21 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, HelpCircle, Eye, EyeOff } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ArrowLeft } from 'lucide-react';
 import { APISettings } from './settings/APISettings';
 import { AudioSettings as AudioSettingsSection } from './settings/AudioSettings';
 import { VisualizationSettings } from './settings/VisualizationSettings';
 import { ProcessingSettings } from './settings/ProcessingSettings';
+import { getSettings, saveSettings, type AudioSettings } from '@/utils/settings';
+import { useToast } from '@/hooks/use-toast';
 
 export const SettingsView = () => {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<AudioSettings>(getSettings());
+  const { toast } = useToast();
+
+  const handleSettingsChange = (newSettings: Partial<AudioSettings>) => {
+    const updatedSettings = saveSettings(newSettings);
+    setSettings(updatedSettings);
+    toast({
+      title: "Settings saved",
+      description: "Your settings have been updated successfully",
+    });
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -40,19 +47,19 @@ export const SettingsView = () => {
         </TabsList>
 
         <TabsContent value="api">
-          <APISettings />
+          <APISettings settings={settings} onChange={handleSettingsChange} />
         </TabsContent>
 
         <TabsContent value="audio">
-          <AudioSettingsSection />
+          <AudioSettingsSection settings={settings} onChange={handleSettingsChange} />
         </TabsContent>
 
         <TabsContent value="visualization">
-          <VisualizationSettings />
+          <VisualizationSettings settings={settings} onChange={handleSettingsChange} />
         </TabsContent>
 
         <TabsContent value="processing">
-          <ProcessingSettings />
+          <ProcessingSettings settings={settings} onChange={handleSettingsChange} />
         </TabsContent>
       </Tabs>
     </div>

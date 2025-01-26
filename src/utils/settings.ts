@@ -1,4 +1,8 @@
 export interface AudioSettings {
+  // API Keys
+  huggingFaceToken: string;
+  openAIKey: string;
+  
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -9,6 +13,7 @@ export interface AudioSettings {
   defaultTempo: number;
   defaultConfidence: number;
   noSpeechText: string;
+  defaultModel: string;
   
   // Speaker Settings
   speakerIdTemplate: string;
@@ -17,7 +22,6 @@ export interface AudioSettings {
   maxSpeakers: number;
   
   // Model Settings
-  huggingFaceToken: string;
   modelRevision: string;
   enableModelCaching: boolean;
   sentimentModel: string;
@@ -57,6 +61,9 @@ export interface AudioSettings {
 }
 
 const defaultSettings: AudioSettings = {
+  huggingFaceToken: '',
+  openAIKey: '',
+  
   audioSampleRate: 44100,
   fftSize: 2048,
   minPitchLag: 20,
@@ -66,6 +73,7 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
+  defaultModel: 'whisper-large-v3',
   
   speakerIdTemplate: "speaker-{idx}",
   speakerNameTemplate: "Speaker {idx}",
@@ -75,7 +83,6 @@ const defaultSettings: AudioSettings = {
   ],
   maxSpeakers: 8,
   
-  huggingFaceToken: '',
   modelRevision: 'main',
   enableModelCaching: true,
   sentimentModel: 'SamLowe/roberta-base-go_emotions',

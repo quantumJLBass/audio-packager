@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import { SettingsView } from "./views/SettingsView";
+import { AudioUploadForm } from "./components/audio/AudioUploadForm";
 
 const queryClient = new QueryClient();
 
