@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Volume2, VolumeX } from 'lucide-react';
+import { getSettings } from '@/utils/settings';
 
 interface VolumeControlsProps {
   volume: number;
@@ -14,6 +15,8 @@ export const VolumeControls: React.FC<VolumeControlsProps> = ({
   onVolumeChange,
   onMute,
 }) => {
+  const settings = getSettings();
+  
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -32,8 +35,9 @@ export const VolumeControls: React.FC<VolumeControlsProps> = ({
       <div className="w-24">
         <Slider
           value={[volume]}
-          max={1}
-          step={0.1}
+          min={settings.minVolume}
+          max={settings.maxVolume}
+          step={settings.volumeStep}
           onValueChange={onVolumeChange}
         />
       </div>

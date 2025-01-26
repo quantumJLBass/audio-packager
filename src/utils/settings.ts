@@ -7,22 +7,38 @@ export interface AudioSettings {
   onsetThreshold: number;
   defaultPitch: number;
   defaultTempo: number;
+  defaultConfidence: number;
+  noSpeechText: string;
+  
+  // Speaker Settings
+  speakerIdTemplate: string;
+  speakerNameTemplate: string;
+  speakerColors: string[];
+  maxSpeakers: number;
   
   // Model Settings
   huggingFaceToken: string;
-  openAIKey: string;
   modelRevision: string;
   enableModelCaching: boolean;
   sentimentModel: string;
+  supportedLanguages: Array<{
+    code: string;
+    name: string;
+  }>;
+  defaultLanguage: string;
   
   // Visualization
-  speakerColors: string[];
   waveformColors: {
     background: string;
     waveform: string;
     progress: string;
     cursor: string;
   };
+  
+  // Volume Settings
+  minVolume: number;
+  maxVolume: number;
+  volumeStep: number;
   
   // Zoom Settings
   minZoom: number;
@@ -38,8 +54,6 @@ export interface AudioSettings {
   defaultChunkLength: number;
   defaultStrideLength: number;
   defaultFloatingPoint: number;
-  defaultLanguage: string;
-  defaultModel: string;
 }
 
 const defaultSettings: AudioSettings = {
@@ -50,17 +64,38 @@ const defaultSettings: AudioSettings = {
   onsetThreshold: 0.1,
   defaultPitch: 440,
   defaultTempo: 120,
+  defaultConfidence: 0.75,
+  noSpeechText: "(no speech detected)",
   
-  huggingFaceToken: '',
-  openAIKey: '',
-  modelRevision: 'main',
-  enableModelCaching: true,
-  sentimentModel: 'SamLowe/roberta-base-go_emotions',
-  
+  speakerIdTemplate: "speaker-{idx}",
+  speakerNameTemplate: "Speaker {idx}",
   speakerColors: [
     '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
     '#16a34a', '#2563eb', '#9333ea', '#c026d3'
   ],
+  maxSpeakers: 8,
+  
+  huggingFaceToken: '',
+  modelRevision: 'main',
+  enableModelCaching: true,
+  sentimentModel: 'SamLowe/roberta-base-go_emotions',
+  supportedLanguages: [
+    { code: 'auto', name: 'Auto Detect' },
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'it', name: 'Italian' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'nl', name: 'Dutch' },
+    { code: 'pl', name: 'Polish' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'zh', name: 'Chinese' },
+  ],
+  defaultLanguage: 'auto',
+  
   waveformColors: {
     background: '#ffffff',
     waveform: '#4a5568',
@@ -68,9 +103,13 @@ const defaultSettings: AudioSettings = {
     cursor: '#718096'
   },
   
+  minVolume: 0,
+  maxVolume: 200,
+  volumeStep: 1,
+  
   minZoom: 1,
-  maxZoom: 500,
-  defaultZoom: 50,
+  maxZoom: 1000,
+  defaultZoom: 100,
   zoomStep: 10,
   
   timeFormat: 'HH:mm:ss',
@@ -78,9 +117,7 @@ const defaultSettings: AudioSettings = {
   
   defaultChunkLength: 30,
   defaultStrideLength: 5,
-  defaultFloatingPoint: 32,
-  defaultLanguage: 'auto',
-  defaultModel: 'whisper-large-v3'
+  defaultFloatingPoint: 32
 };
 
 export const getSettings = (): AudioSettings => {

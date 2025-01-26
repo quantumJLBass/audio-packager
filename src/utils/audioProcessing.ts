@@ -1,5 +1,5 @@
 import { pipeline } from "@huggingface/transformers";
-import { AudioAnalysis, Transcription, AudioProcessingOptions } from "@/types/audio";
+import { AudioAnalysis, Transcription } from "@/types/audio";
 import { getSettings } from "./settings";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -13,37 +13,33 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   }
 };
 
-export const transcribeAudio = async (
-  float32Array: Float32Array,
-  options: AudioProcessingOptions
-): Promise<Transcription[]> => {
+export const transcribeAudio = async (float32Array: Float32Array): Promise<Transcription[]> => {
   try {
     const settings = getSettings();
-    const transcriber = await pipeline("automatic-speech-recognition", options.model, {
-      apiKey: options.huggingFaceToken,
+    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3", {
       revision: settings.modelRevision,
-      cache: settings.enableModelCaching,
+      cache_dir: settings.enableModelCaching ? undefined : null,
+      quantized: false
     });
     
     const result = await transcriber(float32Array, {
-      language: options.language === 'auto' ? null : options.language,
+      language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       return_timestamps: true,
-      chunk_length_s: options.chunkLength,
-      stride_length_s: options.strideLength,
+      chunk_length_s: settings.defaultChunkLength,
+      stride_length_s: settings.defaultStrideLength,
     });
 
     const chunks = Array.isArray(result) ? result : [result];
-    const colors = getSettings().speakerColors;
     
     return chunks.map((chunk: any, index: number) => ({
-      text: chunk.text || "(no speech detected)",
-      start: chunk.timestamp?.[0] || index * options.strideLength,
-      end: chunk.timestamp?.[1] || (index + 1) * options.strideLength,
-      confidence: chunk.confidence || 0.95,
+      text: chunk.text || settings.noSpeechText,
+      start: chunk.timestamp?.[0] || index * settings.defaultStrideLength,
+      end: chunk.timestamp?.[1] || (index + 1) * settings.defaultStrideLength,
+      confidence: chunk.confidence || settings.defaultConfidence,
       speaker: {
-        id: `speaker-${index % 2 + 1}`,
-        name: `Speaker ${index % 2 + 1}`,
-        color: colors[index % colors.length]
+        id: settings.speakerIdTemplate.replace('{idx}', String(index % settings.maxSpeakers + 1)),
+        name: settings.speakerNameTemplate.replace('{idx}', String(index % settings.maxSpeakers + 1)),
+        color: settings.speakerColors[index % settings.speakerColors.length]
       }
     }));
   } catch (error) {
@@ -52,47 +48,15 @@ export const transcribeAudio = async (
   }
 };
 
-export const analyzeSentiment = async (text: string): Promise<string> => {
+export const calculatePitch = (audioData: Float32Array): number => {
   try {
     const settings = getSettings();
-    const classifier = await pipeline(
-      "text-classification",
-      settings.sentimentModel,
-      { apiKey: settings.huggingFaceToken }
-    );
-    
-    const result = await classifier(text);
-    return (result as any)[0]?.label || 'neutral';
-  } catch (error) {
-    console.error('Sentiment analysis error:', error);
-    throw new Error('Failed to analyze sentiment');
-  }
-};
-
-export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
-  try {
-    return {
-      pitch: calculatePitch(audioData),
-      tempo: calculateTempo(audioData),
-      energy: calculateEnergy(audioData)
-    };
-  } catch (error) {
-    console.error('Tone analysis error:', error);
-    throw new Error('Failed to analyze tone');
-  }
-};
-
-const calculatePitch = (audioData: Float32Array): number => {
-  try {
-    const settings = getSettings();
-    const sampleRate = settings.audioSampleRate;
-    const bufferSize = settings.fftSize;
+    const correlations = new Float32Array(settings.fftSize);
     
     // Implement autocorrelation-based pitch detection
-    const correlations = new Float32Array(bufferSize);
-    for (let lag = 0; lag < bufferSize; lag++) {
+    for (let lag = 0; lag < settings.fftSize; lag++) {
       let correlation = 0;
-      for (let i = 0; i < bufferSize - lag; i++) {
+      for (let i = 0; i < settings.fftSize - lag; i++) {
         correlation += audioData[i] * audioData[i + lag];
       }
       correlations[lag] = correlation;
@@ -108,17 +72,16 @@ const calculatePitch = (audioData: Float32Array): number => {
       }
     }
     
-    return sampleRate / maxLag;
+    return settings.audioSampleRate / maxLag;
   } catch (error) {
     console.error('Pitch calculation error:', error);
-    return settings.defaultPitch;
+    return getSettings().defaultPitch;
   }
 };
 
-const calculateTempo = (audioData: Float32Array): number => {
+export const calculateTempo = (audioData: Float32Array): number => {
   try {
     const settings = getSettings();
-    const sampleRate = settings.audioSampleRate;
     const bufferSize = settings.fftSize;
     
     // Implement onset detection for tempo estimation
@@ -141,23 +104,17 @@ const calculateTempo = (audioData: Float32Array): number => {
       }
     }
     
+    if (peaks.length < 2) {
+      return settings.defaultTempo;
+    }
+    
     // Calculate average time between peaks
     const avgTimeBetweenPeaks = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
-    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / sampleRate);
+    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / settings.audioSampleRate);
     
     return Math.round(bpm);
   } catch (error) {
     console.error('Tempo calculation error:', error);
-    return settings.defaultTempo;
-  }
-};
-
-const calculateEnergy = (audioData: Float32Array): number => {
-  try {
-    const sum = audioData.reduce((acc, val) => acc + val * val, 0);
-    return Math.sqrt(sum / audioData.length);
-  } catch (error) {
-    console.error('Energy calculation error:', error);
-    return 0;
+    return getSettings().defaultTempo;
   }
 };

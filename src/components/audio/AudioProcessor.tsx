@@ -3,17 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WaveformVisualizer } from './WaveformVisualizer';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { useToast } from '@/hooks/use-toast';
-import { Transcription, AudioProcessingState, AudioProcessingOptions } from '@/types/audio';
+import { Transcription, AudioProcessingState } from '@/types/audio';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
 import { AudioProcessingControls } from './AudioProcessingControls';
+import { getSettings } from '@/utils/settings';
 
 interface AudioProcessorProps {
   audioUrl: string | null;
-  options?: AudioProcessingOptions;
 }
 
-export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl, options }) => {
+export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
   const { toast } = useToast();
+  const settings = getSettings();
   const [state, setState] = useState<AudioProcessingState>({
     currentTime: 0,
     isPlaying: false,
@@ -23,31 +24,40 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl, option
     transcriptions: [],
   });
 
-  const [speakers] = useState([
-    { id: '1', name: 'Speaker 1', color: '#4f46e5' },
-    { id: '2', name: 'Speaker 2', color: '#7c3aed' },
-  ]);
-
   useEffect(() => {
     if (audioUrl) {
       processAudio();
     }
-  }, [audioUrl, options]);
+    
+    return () => {
+      // Cleanup any blob URLs
+      if (audioUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   const processAudio = async () => {
     if (!audioUrl) return;
 
     try {
       setState(prev => ({ ...prev, isTranscribing: true }));
-      const response = await fetch(audioUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioData = await processAudioBuffer(arrayBuffer);
       
-      if (options) {
-        const result = await transcribeAudio(audioData, options);
-        setState(prev => ({ ...prev, transcriptions: result }));
-      }
-
+      const response = await fetch(audioUrl).catch(error => {
+        console.error('Error fetching audio:', error);
+        throw new Error('Failed to fetch audio file');
+      });
+      
+      const arrayBuffer = await response.arrayBuffer().catch(error => {
+        console.error('Error reading audio buffer:', error);
+        throw new Error('Failed to read audio file');
+      });
+      
+      const audioData = await processAudioBuffer(arrayBuffer);
+      const result = await transcribeAudio(audioData);
+      
+      setState(prev => ({ ...prev, transcriptions: result }));
+      
       toast({
         title: "Processing complete",
         description: "Audio has been successfully transcribed",
@@ -56,7 +66,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl, option
       console.error('Error processing audio:', error);
       toast({
         title: "Error",
-        description: "Failed to process audio file. Please check your settings.",
+        description: error instanceof Error ? error.message : "Failed to process audio file",
         variant: "destructive",
       });
     } finally {
@@ -91,7 +101,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl, option
         <CardContent className="space-y-4">
           <WaveformVisualizer
             url={audioUrl}
-            speakers={speakers}
             onTimeUpdate={handleTimeUpdate}
             onPlayPause={handlePlayPause}
             onReady={handleReady}

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { AudioUploadForm } from '@/components/audio/AudioUploadForm';
 import { AudioProcessor } from '@/components/audio/AudioProcessor';
-import { SettingsView } from '@/views/SettingsView';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 
 const Index = () => {
-  const { toast } = useToast();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const location = useLocation();
 
   const handleFileSelect = async (file: File, options: any) => {
     try {
@@ -17,11 +15,6 @@ const Index = () => {
       setAudioUrl(url);
     } catch (error) {
       console.error('Error handling file:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process audio file. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -37,15 +30,14 @@ const Index = () => {
       </header>
       
       <main className="flex-1 container mx-auto p-4 space-y-6">
-        <Routes>
-          <Route path="/" element={
-            <>
-              <AudioUploadForm onFileSelect={handleFileSelect} />
-              {audioUrl && <AudioProcessor audioUrl={audioUrl} />}
-            </>
-          } />
-          <Route path="/settings" element={<SettingsView />} />
-        </Routes>
+        {location.pathname === '/' ? (
+          <>
+            <AudioUploadForm onFileSelect={handleFileSelect} />
+            {audioUrl && <AudioProcessor audioUrl={audioUrl} />}
+          </>
+        ) : (
+          <Outlet />
+        )}
       </main>
     </div>
   );
