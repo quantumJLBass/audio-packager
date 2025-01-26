@@ -8,7 +8,6 @@ interface AudioProcessingOptions {
   diarization: boolean;
   chunkLength: number;
   strideLength: number;
-  huggingFaceToken?: string;
 }
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -22,10 +21,13 @@ export const transcribeAudio = async (
   options: AudioProcessingOptions
 ): Promise<Transcription[]> => {
   try {
+    const huggingFaceToken = localStorage.getItem('huggingFaceToken');
+    if (!huggingFaceToken) {
+      throw new Error('HuggingFace token not found in settings');
+    }
+
     const transcriber = await pipeline("automatic-speech-recognition", options.model, {
-      credentials: {
-        accessToken: options.huggingFaceToken
-      }
+      accessToken: huggingFaceToken
     });
     
     const result = await transcriber(float32Array, {
@@ -35,7 +37,6 @@ export const transcribeAudio = async (
       stride_length_s: options.strideLength,
     });
 
-    // Handle both single and array results
     const chunks = Array.isArray(result) ? result : [result];
     
     return chunks.map((chunk: any, index: number) => ({
