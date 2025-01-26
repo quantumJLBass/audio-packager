@@ -28,20 +28,19 @@ export const transcribeAudio = async (
       return_timestamps: true,
       chunk_length_s: options.chunkLength,
       stride_length_s: options.strideLength,
-    } as any);
+    });
 
-    if (!Array.isArray(result)) {
-      throw new Error("Invalid transcription result");
-    }
-
-    return result.map((segment: any, index: number) => ({
-      text: segment.text || "(no speech detected)",
-      start: segment.timestamp?.[0] || index * options.strideLength,
-      end: segment.timestamp?.[1] || (index + 1) * options.strideLength,
-      confidence: segment.confidence || 0.95,
+    // Handle both single and array results
+    const chunks = Array.isArray(result) ? result : [result];
+    
+    return chunks.map((chunk: any, index: number) => ({
+      text: chunk.text || "(no speech detected)",
+      start: chunk.timestamp?.[0] || index * options.strideLength,
+      end: chunk.timestamp?.[1] || (index + 1) * options.strideLength,
+      confidence: chunk.confidence || 0.95,
       speaker: {
-        id: `speaker-${index + 1}`,
-        name: `Speaker ${index + 1}`,
+        id: `speaker-${index % 2 + 1}`,
+        name: `Speaker ${index % 2 + 1}`,
         color: getRandomColor()
       }
     }));
