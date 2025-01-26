@@ -43,7 +43,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({ onFileSelect }) =>
     toast({
       title: "File uploaded successfully",
       description: `${file.name} is ready for processing`,
-      icon: <Check className="h-4 w-4" />,
     });
   }, [onFileSelect, toast]);
 

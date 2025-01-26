@@ -8,6 +8,7 @@ interface AudioProcessingOptions {
   diarization: boolean;
   chunkLength: number;
   strideLength: number;
+  huggingFaceToken?: string;
 }
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -21,7 +22,11 @@ export const transcribeAudio = async (
   options: AudioProcessingOptions
 ): Promise<Transcription[]> => {
   try {
-    const transcriber = await pipeline("automatic-speech-recognition", options.model);
+    const transcriber = await pipeline("automatic-speech-recognition", options.model, {
+      credentials: {
+        accessToken: options.huggingFaceToken
+      }
+    });
     
     const result = await transcriber(float32Array, {
       language: options.language === 'auto' ? null : options.language,
