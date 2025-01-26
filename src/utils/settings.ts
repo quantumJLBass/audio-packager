@@ -22,6 +22,10 @@ export interface AudioSettings {
   maxSpeakers: number;
   
   // Model Settings
+  supportedModels: Array<{
+    id: string;
+    name: string;
+  }>;
   modelRevision: string;
   enableModelCaching: boolean;
   sentimentModel: string;
@@ -83,6 +87,11 @@ const defaultSettings: AudioSettings = {
   ],
   maxSpeakers: 8,
   
+  supportedModels: [
+    { id: 'whisper-large-v3', name: 'Whisper Large v3' },
+    { id: 'whisper-medium', name: 'Whisper Medium' },
+    { id: 'whisper-small', name: 'Whisper Small' },
+  ],
   modelRevision: 'main',
   enableModelCaching: true,
   sentimentModel: 'SamLowe/roberta-base-go_emotions',

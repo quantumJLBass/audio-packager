@@ -5,42 +5,38 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AudioUploader } from '@/components/AudioUploader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import { ChevronDown } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { SettingField } from '@/components/settings/SettingField';
+import { getSettings } from '@/utils/settings';
 
-interface AudioUploadFormProps {
-  onFileSelect: (file: File, options: AudioProcessingOptions) => void;
-}
-
-interface AudioProcessingOptions {
-  model: string;
-  language: string;
-  floatingPoint: number;
-  diarization: boolean;
-  chunkLength: number;
-  strideLength: number;
-}
-
-export const AudioUploadForm: React.FC<AudioUploadFormProps> = ({ onFileSelect }) => {
+export const AudioUploadForm = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [packageName, setPackageName] = useState('');
-  const [options, setOptions] = useState<AudioProcessingOptions>({
-    model: 'whisper-large-v3',
-    language: 'auto',
-    floatingPoint: 32,
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [autoProcess, setAutoProcess] = useState(false);
+  const settings = getSettings();
+  const [options, setOptions] = useState({
+    model: settings.defaultModel,
+    language: settings.defaultLanguage,
+    floatingPoint: settings.defaultFloatingPoint,
     diarization: true,
-    chunkLength: 30,
-    strideLength: 5,
+    chunkLength: settings.defaultChunkLength,
+    strideLength: settings.defaultStrideLength,
   });
   const { toast } = useToast();
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
     setPackageName(file.name.replace(/\.[^/.]+$/, '')); // Remove extension
+    if (autoProcess) {
+      handleSubmit();
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (!selectedFile) {
       toast({
         title: "Error",
@@ -49,111 +45,141 @@ export const AudioUploadForm: React.FC<AudioUploadFormProps> = ({ onFileSelect }
       });
       return;
     }
-    onFileSelect(selectedFile, options);
+    // Process the file with current options
+    console.log('Processing file:', selectedFile, 'with options:', options);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
+    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Upload Audio</CardTitle>
           </CardHeader>
-          <CardContent>
-            <AudioUploader onFileSelect={handleFileSelect} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Processing Options</CardTitle>
-          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="packageName">Package Name</Label>
+            <AudioUploader onFileSelect={handleFileSelect} />
+            
+            <SettingField
+              id="packageName"
+              label="Package Name"
+              tooltip="Name for this audio processing package. This will be used to identify the processed results."
+            >
               <Input
                 id="packageName"
                 value={packageName}
                 onChange={(e) => setPackageName(e.target.value)}
                 placeholder="Enter package name"
               />
-            </div>
+            </SettingField>
 
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Select
-                value={options.model}
-                onValueChange={(value) => setOptions({ ...options, model: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="whisper-large-v3">Whisper Large v3</SelectItem>
-                  <SelectItem value="whisper-medium">Whisper Medium</SelectItem>
-                  <SelectItem value="whisper-small">Whisper Small</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <Select
-                value={options.language}
-                onValueChange={(value) => setOptions({ ...options, language: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Auto Detect</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  {/* Add more languages as needed */}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="floatingPoint">Floating Point</Label>
-              <Select
-                value={options.floatingPoint.toString()}
-                onValueChange={(value) => setOptions({ ...options, floatingPoint: parseInt(value) })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select precision" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="16">16-bit</SelectItem>
-                  <SelectItem value="32">32-bit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="chunkLength">Chunk Length (seconds)</Label>
-              <Input
-                id="chunkLength"
-                type="number"
-                value={options.chunkLength}
-                onChange={(e) => setOptions({ ...options, chunkLength: parseInt(e.target.value) })}
-                min={1}
-                max={60}
+            <SettingField
+              id="autoProcess"
+              label="Auto-process on Upload"
+              tooltip="Automatically start processing when a file is uploaded"
+            >
+              <Switch
+                checked={autoProcess}
+                onCheckedChange={setAutoProcess}
               />
-            </div>
+            </SettingField>
 
-            <div className="space-y-2">
-              <Label htmlFor="strideLength">Stride Length (seconds)</Label>
-              <Input
-                id="strideLength"
-                type="number"
-                value={options.strideLength}
-                onChange={(e) => setOptions({ ...options, strideLength: parseInt(e.target.value) })}
-                min={1}
-                max={30}
-              />
-            </div>
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  Advanced Options <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-4">
+                <SettingField
+                  id="model"
+                  label="Model"
+                  tooltip="Select the AI model to use for audio processing. Larger models are more accurate but slower."
+                >
+                  <Select
+                    value={options.model}
+                    onValueChange={(value) => setOptions({ ...options, model: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {settings.supportedModels.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingField>
+
+                <SettingField
+                  id="language"
+                  label="Language"
+                  tooltip="Select the primary language of the audio. Auto-detect works well for most cases."
+                >
+                  <Select
+                    value={options.language}
+                    onValueChange={(value) => setOptions({ ...options, language: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {settings.supportedLanguages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingField>
+
+                <SettingField
+                  id="floatingPoint"
+                  label="Floating Point"
+                  tooltip="Precision level for audio processing. Higher precision (32-bit) is more accurate but uses more memory."
+                >
+                  <Select
+                    value={options.floatingPoint.toString()}
+                    onValueChange={(value) => setOptions({ ...options, floatingPoint: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select precision" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="16">16-bit</SelectItem>
+                      <SelectItem value="32">32-bit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </SettingField>
+
+                <SettingField
+                  id="chunkLength"
+                  label="Chunk Length (seconds)"
+                  tooltip="Length of audio segments for processing. Longer chunks are more accurate but use more memory."
+                >
+                  <Input
+                    id="chunkLength"
+                    type="number"
+                    value={options.chunkLength}
+                    onChange={(e) => setOptions({ ...options, chunkLength: parseInt(e.target.value) })}
+                    min={1}
+                    max={60}
+                  />
+                </SettingField>
+
+                <SettingField
+                  id="strideLength"
+                  label="Stride Length (seconds)"
+                  tooltip="Overlap between audio chunks. Longer stride helps maintain context between chunks."
+                >
+                  <Input
+                    id="strideLength"
+                    type="number"
+                    value={options.strideLength}
+                    onChange={(e) => setOptions({ ...options, strideLength: parseInt(e.target.value) })}
+                    min={1}
+                    max={30}
+                  />
+                </SettingField>
+              </CollapsibleContent>
+            </Collapsible>
 
             <Button type="submit" className="w-full">
               Process Audio
