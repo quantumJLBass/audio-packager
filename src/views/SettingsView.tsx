@@ -1,40 +1,36 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { getSettings, saveSettings, type AudioSettings } from '@/utils/settings';
-import { SettingsSection } from './settings/SettingsSection';
+import { ArrowLeft, HelpCircle, Eye, EyeOff } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { APISettings } from './settings/APISettings';
 import { AudioSettings as AudioSettingsSection } from './settings/AudioSettings';
 import { VisualizationSettings } from './settings/VisualizationSettings';
 import { ProcessingSettings } from './settings/ProcessingSettings';
 
 export const SettingsView = () => {
-  const { toast } = useToast();
-  const [settings, setSettings] = React.useState<AudioSettings>(getSettings());
-
-  const handleSave = () => {
-    const updatedSettings = saveSettings(settings);
-    setSettings(updatedSettings);
-    toast({
-      title: "Settings saved",
-      description: "Your settings have been saved successfully",
-    });
-  };
+  const navigate = useNavigate();
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="h-8 w-8"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-2xl font-bold">Settings</h1>
+      </div>
+
       <Tabs defaultValue="api" className="w-full">
         <TabsList>
           <TabsTrigger value="api">API Keys</TabsTrigger>
@@ -44,25 +40,21 @@ export const SettingsView = () => {
         </TabsList>
 
         <TabsContent value="api">
-          <APISettings settings={settings} onChange={setSettings} />
+          <APISettings />
         </TabsContent>
 
         <TabsContent value="audio">
-          <AudioSettingsSection settings={settings} onChange={setSettings} />
+          <AudioSettingsSection />
         </TabsContent>
 
         <TabsContent value="visualization">
-          <VisualizationSettings settings={settings} onChange={setSettings} />
+          <VisualizationSettings />
         </TabsContent>
 
         <TabsContent value="processing">
-          <ProcessingSettings settings={settings} onChange={setSettings} />
+          <ProcessingSettings />
         </TabsContent>
       </Tabs>
-
-      <Button onClick={handleSave} className="w-full">
-        Save All Settings
-      </Button>
     </div>
   );
 };

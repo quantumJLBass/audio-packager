@@ -19,7 +19,6 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
     const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3", {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      quantized: false
     });
     
     const result = await transcriber(float32Array, {

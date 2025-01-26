@@ -24,6 +24,14 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
     transcriptions: [],
   });
 
+  const [speakers] = useState(
+    Array.from({ length: settings.maxSpeakers }, (_, i) => ({
+      id: settings.speakerIdTemplate.replace('{idx}', String(i + 1)),
+      name: settings.speakerNameTemplate.replace('{idx}', String(i + 1)),
+      color: settings.speakerColors[i % settings.speakerColors.length],
+    }))
+  );
+
   useEffect(() => {
     if (audioUrl) {
       processAudio();
@@ -101,6 +109,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
         <CardContent className="space-y-4">
           <WaveformVisualizer
             url={audioUrl}
+            speakers={speakers}
             onTimeUpdate={handleTimeUpdate}
             onPlayPause={handlePlayPause}
             onReady={handleReady}
