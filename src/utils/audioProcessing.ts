@@ -21,11 +21,11 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     // Create pipeline with proper authentication
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      "openai/whisper-small",
+      "onnx-community/whisper-large-v3-turbo-ONNX",
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        accessToken: settings.huggingFaceToken
+        token: settings.huggingFaceToken
       }
     );
     
