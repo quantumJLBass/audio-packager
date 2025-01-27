@@ -1,25 +1,6 @@
 import { pipeline } from "@huggingface/transformers";
-import { Transcription, AudioAnalysis } from "@/types/audio";
+import { Transcription, AudioAnalysis, PretrainedModelOptions, TranscriptionConfig } from "@/types/audio";
 import { AudioSettings, getSettings } from "@/utils/settings";
-
-interface WhisperModelConfig {
-  revision: string;
-  cache_dir?: string | null;
-  device?: string;
-  dtype?: string;
-}
-
-interface WhisperTranscriptionConfig {
-  language?: string | null;
-  task?: "transcribe" | "translate";
-  chunk_length_s: number;
-  stride_length_s: number;
-  return_timestamps: boolean;
-  max_new_tokens: number;
-  num_beams: number;
-  temperature: number;
-  no_repeat_ngram_size: number;
-}
 
 const getModelPath = (modelId: string): string => {
   return `onnx-community/whisper-large-v3-turbo-ONNX`;
@@ -44,10 +25,10 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     const modelPath = getModelPath(settings.defaultModel);
     console.log('Using model path:', modelPath);
     
-    const modelConfig: WhisperModelConfig = {
+    const modelConfig: PretrainedModelOptions = {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      device: "cpu",
+      device: "webgpu" as const,
       dtype: "float32"
     };
 
@@ -58,7 +39,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     );
     
     console.log('Pipeline created, starting transcription...');
-    const transcriptionConfig: WhisperTranscriptionConfig = {
+    const transcriptionConfig: TranscriptionConfig = {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       task: "transcribe",
       chunk_length_s: settings.defaultChunkLength,
