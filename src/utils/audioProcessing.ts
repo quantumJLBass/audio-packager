@@ -10,11 +10,15 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 
 export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
   try {
-    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3-turbo", {
-      revision: settings.modelRevision,
-      cache_dir: settings.enableModelCaching ? undefined : null,
-      use_auth_token: settings.huggingFaceToken
-    });
+    const transcriber = await pipeline(
+      "automatic-speech-recognition",
+      "onnx-community/whisper-large-v3-turbo-ONNX",
+      {
+        revision: settings.modelRevision,
+        cache_dir: settings.enableModelCaching ? undefined : null,
+        use_auth_token: settings.huggingFaceToken
+      }
+    );
     
     const result = await transcriber(float32Array, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,

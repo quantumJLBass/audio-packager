@@ -77,7 +77,7 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: 'whisper-large-v3',
+  defaultModel: 'onnx-community/whisper-large-v3-turbo-ONNX',
   
   speakerIdTemplate: "speaker-{idx}",
   speakerNameTemplate: "Speaker {idx}",
@@ -88,9 +88,10 @@ const defaultSettings: AudioSettings = {
   maxSpeakers: 8,
   
   supportedModels: [
-    { id: 'whisper-large-v3', name: 'Whisper Large v3' },
-    { id: 'whisper-medium', name: 'Whisper Medium' },
-    { id: 'whisper-small', name: 'Whisper Small' },
+    { id: 'onnx-community/whisper-large-v3-turbo-ONNX', name: 'Whisper Large v3 Turbo' },
+    { id: 'openai/whisper-large-v3', name: 'Whisper Large v3' },
+    { id: 'openai/whisper-medium', name: 'Whisper Medium' },
+    { id: 'openai/whisper-small', name: 'Whisper Small' },
   ],
   modelRevision: 'main',
   enableModelCaching: true,

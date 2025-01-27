@@ -135,16 +135,6 @@ export interface AudioSettings {
   }>;
 }
 
-export interface AudioProcessingOptions {
-  model: string;
-  language: string;
-  floatingPoint: number;
-  diarization: boolean;
-  chunkLength: number;
-  strideLength: number;
-  huggingFaceToken?: string;
-}
-
 export interface TranscriptionDisplayProps {
   transcriptions: Transcription[];
   currentTime: number;
