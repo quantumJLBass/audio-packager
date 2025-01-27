@@ -186,7 +186,7 @@ export interface PretrainedModelOptions {
   revision?: string;
   cache_dir?: string | null;
   device?: "webgpu" | "auto" | "gpu" | "cpu" | "wasm" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
-  dtype?: string;
+  dtype?: "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16";
 }
 
 export interface TranscriptionConfig {

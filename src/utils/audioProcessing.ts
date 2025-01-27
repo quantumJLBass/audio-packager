@@ -29,7 +29,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
       device: "webgpu",
-      dtype: "float32"
+      dtype: "fp32"
     };
 
     const transcriber = await pipeline(
@@ -82,7 +82,7 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentModel,
-      { device: "webgpu" }
+      { device: "webgpu", dtype: "fp32" }
     );
     
     const result = await classifier(text);
@@ -168,7 +168,7 @@ const calculateTempo = (audioData: Float32Array): number => {
     return Math.round(bpm);
   } catch (error) {
     console.error('Tempo calculation error:', error);
-    return getSettings().defaultTempo;
+    return settings.defaultTempo;
   }
 };
 
