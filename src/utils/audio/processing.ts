@@ -1,7 +1,7 @@
 import { pipeline } from "@huggingface/transformers";
-import { getSettings } from "@/utils/settings";
 import { getModelPath, createModelConfig, createTranscriptionConfig } from './modelConfig';
 import { Transcription } from '@/types/audio/transcription';
+import { AudioSettings } from '@/types/audio/settings';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');

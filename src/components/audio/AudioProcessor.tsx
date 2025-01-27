@@ -8,6 +8,8 @@ import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
 import { Loader2 } from 'lucide-react';
+import { AudioVisualization } from './AudioVisualization';
+import { TranscriptionSection } from './TranscriptionSection';
 
 interface AudioProcessorProps {
   audioUrl: string;
@@ -37,9 +39,8 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
       
-      // Add timeout for transcription
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Transcription timed out')), 60000); // 60s timeout
+        setTimeout(() => reject(new Error('Transcription timed out')), 60000);
       });
       
       const transcriptionPromise = transcribeAudio(audioData);
@@ -47,7 +48,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       
       setState(prev => ({ 
         ...prev, 
-        transcriptions: result as any[],
+        transcriptions: result,
         isTranscribing: false,
         error: null
       }));
@@ -76,7 +77,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     if (audioUrl) {
       processAudio();
     }
-    
     return () => {
       if (audioUrl?.startsWith('blob:')) {
         URL.revokeObjectURL(audioUrl);
@@ -110,41 +110,26 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   return (
     <div className="space-y-4">
-      <Card className="glass">
-        <CardHeader>
-          <CardTitle>Audio Visualization</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <WaveformVisualizer
-            key={audioUrl}
-            url={audioUrl}
-            speakers={[]}
-            onTimeUpdate={handleTimeUpdate}
-            onPlayPause={handlePlayPause}
-            onReady={handleReady}
-            onDurationChange={handleDurationChange}
-            settings={settings}
-          />
-        </CardContent>
-      </Card>
+      <AudioVisualization
+        url={audioUrl}
+        settings={settings}
+        onTimeUpdate={handleTimeUpdate}
+        onPlayPause={handlePlayPause}
+        onReady={handleReady}
+        onDurationChange={handleDurationChange}
+      />
 
       <AudioProcessingControls
         {...state}
         onPlayPause={() => handlePlayPause(!state.isPlaying)}
       />
 
-      {state.isTranscribing ? (
-        <Card className="p-6 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="mt-2">Transcribing audio...</p>
-        </Card>
-      ) : (
-        <TranscriptionDisplay
-          transcriptions={state.transcriptions}
-          currentTime={state.currentTime}
-          onTimeClick={handleTimeUpdate}
-        />
-      )}
+      <TranscriptionSection
+        isTranscribing={state.isTranscribing}
+        transcriptions={state.transcriptions}
+        currentTime={state.currentTime}
+        onTimeClick={handleTimeUpdate}
+      />
     </div>
   );
 };
