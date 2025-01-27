@@ -31,7 +31,6 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        token: settings.huggingFaceToken,
         quantized: true
       }
     );
@@ -42,7 +41,12 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: true,
-      max_new_tokens: 128
+      max_new_tokens: 128,
+      task: "transcribe",
+      cache_position: 0,
+      num_beams: 1,
+      temperature: 0,
+      no_repeat_ngram_size: 3
     });
 
     console.log('Transcription completed, processing results...');
