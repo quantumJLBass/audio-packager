@@ -1,6 +1,10 @@
 import { pipeline } from "@huggingface/transformers";
-import { Transcription } from "@/types/audio";
-import { AudioSettings } from "@/utils/settings";
+import { Transcription, AudioAnalysis } from "@/types/audio";
+import { AudioSettings, getSettings } from "@/utils/settings";
+
+const getModelPath = (modelId: string): string => {
+  return `onnx-community/whisper-${modelId}-ONNX`;
+};
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -18,14 +22,16 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
   console.log('Starting transcription with settings:', settings);
   try {
-    // Create pipeline with proper authentication
+    const modelPath = getModelPath(settings.defaultModel);
+    console.log('Using model path:', modelPath);
+    
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      "onnx-community/whisper-large-v3-turbo-ONNX",
+      modelPath,
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        token: settings.huggingFaceToken
+        use_auth_token: settings.huggingFaceToken
       }
     );
     
@@ -35,7 +41,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: true,
-      max_new_tokens: 128 // Limit output size
+      max_new_tokens: 128
     });
 
     console.log('Transcription completed, processing results...');
@@ -58,5 +64,111 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       throw new Error('Invalid HuggingFace token. Please check your settings and try again.');
     }
     throw new Error('Failed to transcribe audio. Please try again.');
+  }
+};
+
+export const calculatePitch = (audioData: Float32Array): number => {
+  try {
+    const settings = getSettings();
+    const correlations = new Float32Array(settings.fftSize);
+    
+    for (let lag = 0; lag < settings.fftSize; lag++) {
+      let correlation = 0;
+      for (let i = 0; i < settings.fftSize - lag; i++) {
+        correlation += audioData[i] * audioData[i + lag];
+      }
+      correlations[lag] = correlation;
+    }
+    
+    let maxCorrelation = 0;
+    let maxLag = 0;
+    for (let lag = settings.minPitchLag; lag < settings.maxPitchLag; lag++) {
+      if (correlations[lag] > maxCorrelation) {
+        maxCorrelation = correlations[lag];
+        maxLag = lag;
+      }
+    }
+    
+    return settings.audioSampleRate / maxLag;
+  } catch (error) {
+    console.error('Pitch calculation error:', error);
+    return getSettings().defaultPitch;
+  }
+};
+
+export const calculateTempo = (audioData: Float32Array): number => {
+  try {
+    const settings = getSettings();
+    const bufferSize = settings.fftSize;
+    
+    const energyProfile = new Float32Array(Math.floor(audioData.length / bufferSize));
+    for (let i = 0; i < energyProfile.length; i++) {
+      let sum = 0;
+      for (let j = 0; j < bufferSize; j++) {
+        sum += Math.abs(audioData[i * bufferSize + j]);
+      }
+      energyProfile[i] = sum;
+    }
+    
+    const peaks = [];
+    for (let i = 1; i < energyProfile.length - 1; i++) {
+      if (energyProfile[i] > energyProfile[i - 1] && 
+          energyProfile[i] > energyProfile[i + 1] &&
+          energyProfile[i] > settings.onsetThreshold) {
+        peaks.push(i);
+      }
+    }
+    
+    if (peaks.length < 2) {
+      return settings.defaultTempo;
+    }
+    
+    const avgTimeBetweenPeaks = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
+    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / settings.audioSampleRate);
+    
+    return Math.round(bpm);
+  } catch (error) {
+    console.error('Tempo calculation error:', error);
+    return getSettings().defaultTempo;
+  }
+};
+
+export const analyzeSentiment = async (text: string): Promise<string> => {
+  try {
+    const settings = getSettings();
+    const classifier = await pipeline(
+      "text-classification",
+      settings.sentimentModel,
+      { apiKey: settings.huggingFaceToken }
+    );
+    
+    const result = await classifier(text);
+    return (result as any)[0]?.label || 'neutral';
+  } catch (error) {
+    console.error('Sentiment analysis error:', error);
+    throw new Error('Failed to analyze sentiment');
+  }
+};
+
+export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
+  try {
+    return {
+      pitch: calculatePitch(audioData),
+      tempo: calculateTempo(audioData),
+      energy: calculateEnergy(audioData)
+    };
+  } catch (error) {
+    console.error('Tone analysis error:', error);
+    throw new Error('Failed to analyze tone');
+  }
+};
+
+const calculateEnergy = (audioData: Float32Array): number => {
+  try {
+    const sum = audioData.reduce((acc, val) => acc + val * val, 0);
+    return Math.sqrt(sum / audioData.length);
+  } catch (error) {
+    console.error('Energy calculation error:', error);
+    return 0;
   }
 };

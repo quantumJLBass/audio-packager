@@ -27,7 +27,7 @@ export const AudioUploadForm = () => {
     model: settings.defaultModel,
     language: settings.defaultLanguage,
     floatingPoint: settings.defaultFloatingPoint,
-    diarization: true,
+    diarization: settings.defaultDiarization,
     chunkLength: settings.defaultChunkLength,
     strideLength: settings.defaultStrideLength,
   });

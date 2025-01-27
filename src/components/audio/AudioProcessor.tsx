@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Transcription, AudioProcessingState } from '@/types/audio';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
 import { AudioProcessingControls } from './AudioProcessingControls';
-import { AudioSettings } from '@/utils/settings';
+import { AudioSettings, getSettings } from '@/utils/settings';
 import { Loader2 } from 'lucide-react';
 
 interface AudioProcessorProps {
@@ -21,15 +21,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   settings 
 }) => {
   const { toast } = useToast();
-  const [state, setState] = useState<AudioProcessingState>({
-    currentTime: 0,
-    isPlaying: false,
-    duration: 0,
-    isReady: false,
-    isTranscribing: false,
-    transcriptions: [],
-    error: null
-  });
+  const [state, setState] = useState<AudioProcessingState>(settings.initialState);
 
   const processAudio = useCallback(async () => {
     if (!audioUrl) return;

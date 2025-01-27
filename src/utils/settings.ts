@@ -62,6 +62,18 @@ export interface AudioSettings {
   defaultChunkLength: number;
   defaultStrideLength: number;
   defaultFloatingPoint: number;
+
+  minPxPerSec: number;
+  defaultDiarization: boolean;
+  initialState: {
+    currentTime: number;
+    isPlaying: boolean;
+    duration: number;
+    isReady: boolean;
+    isTranscribing: boolean;
+    transcriptions: any[];
+    error: string | null;
+  };
 }
 
 const defaultSettings: AudioSettings = {
@@ -77,7 +89,7 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: 'onnx-community/whisper-large-v3-turbo-ONNX',
+  defaultModel: 'large-v3-turbo',
   
   speakerIdTemplate: "speaker-{idx}",
   speakerNameTemplate: "Speaker {idx}",
@@ -88,10 +100,14 @@ const defaultSettings: AudioSettings = {
   maxSpeakers: 8,
   
   supportedModels: [
-    { id: 'onnx-community/whisper-large-v3-turbo-ONNX', name: 'Whisper Large v3 Turbo' },
-    { id: 'openai/whisper-large-v3', name: 'Whisper Large v3' },
-    { id: 'openai/whisper-medium', name: 'Whisper Medium' },
-    { id: 'openai/whisper-small', name: 'Whisper Small' },
+    { id: 'tiny', name: 'Whisper Tiny' },
+    { id: 'base', name: 'Whisper Base' },
+    { id: 'small', name: 'Whisper Small' },
+    { id: 'medium', name: 'Whisper Medium' },
+    { id: 'large', name: 'Whisper Large' },
+    { id: 'large-v2', name: 'Whisper Large v2' },
+    { id: 'large-v3', name: 'Whisper Large v3' },
+    { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
   ],
   modelRevision: 'main',
   enableModelCaching: true,
@@ -134,7 +150,19 @@ const defaultSettings: AudioSettings = {
   
   defaultChunkLength: 30,
   defaultStrideLength: 5,
-  defaultFloatingPoint: 32
+  defaultFloatingPoint: 32,
+
+  minPxPerSec: 100,
+  defaultDiarization: true,
+  initialState: {
+    currentTime: 0,
+    isPlaying: false,
+    duration: 0,
+    isReady: false,
+    isTranscribing: false,
+    transcriptions: [],
+    error: null
+  }
 };
 
 export const getSettings = (): AudioSettings => {
