@@ -3,7 +3,8 @@ import { Transcription, PretrainedModelOptions, TranscriptionConfig, AudioSettin
 import { getSettings } from "@/utils/settings";
 
 const getModelPath = (modelId: string): string => {
-  return `onnx-community/whisper-large-v3-turbo-ONNX`;
+  // Use a smaller model that's more likely to work in the browser
+  return `openai/whisper-small`;
 };
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -29,9 +30,10 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
       device: "webgpu",
-      dtype: "fp32"
+      dtype: "fp32" as const
     };
 
+    console.log('Creating pipeline with config:', modelConfig);
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
@@ -52,8 +54,8 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     };
 
     const result = await transcriber(float32Array, transcriptionConfig);
+    console.log('Transcription result:', result);
 
-    console.log('Transcription completed, processing results...');
     const chunks = Array.isArray(result) ? result : [result];
     
     return chunks.map((chunk: any, index: number) => ({
