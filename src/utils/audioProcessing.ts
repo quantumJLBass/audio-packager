@@ -18,13 +18,16 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
   console.log('Starting transcription with settings:', settings);
   try {
+    // Create pipeline with proper authentication
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       settings.defaultModel,
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        token: settings.huggingFaceToken
+        credentials: {
+          accessToken: settings.huggingFaceToken
+        }
       }
     );
     
@@ -33,7 +36,8 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: true
+      return_timestamps: true,
+      max_new_tokens: 128 // Limit output size
     });
 
     console.log('Transcription completed, processing results...');
@@ -52,6 +56,9 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     }));
   } catch (error) {
     console.error('Transcription error:', error);
-    throw new Error('Failed to transcribe audio. Please check your HuggingFace token and try again.');
+    if (error.message?.includes('Unauthorized')) {
+      throw new Error('Invalid HuggingFace token. Please check your settings and try again.');
+    }
+    throw new Error('Failed to transcribe audio. Please try again.');
   }
 };
