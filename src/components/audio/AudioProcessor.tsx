@@ -4,9 +4,9 @@ import { WaveformVisualizer } from './WaveformVisualizer';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { useToast } from '@/hooks/use-toast';
 import { AudioProcessingState } from '@/types/audio/processing';
-import { processAudioBuffer, transcribeAudio } from '@/utils/audio';
+import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
 import { AudioProcessingControls } from './AudioProcessingControls';
-import { getSettings } from '@/utils/settings';
+import { AudioSettings } from '@/types/audio/settings';
 import { Loader2 } from 'lucide-react';
 
 interface AudioProcessorProps {
@@ -42,12 +42,12 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         setTimeout(() => reject(new Error('Transcription timed out')), 60000); // 60s timeout
       });
       
-      const transcriptionPromise = transcribeAudio(audioData, settings);
-      const result = await Promise.race([transcriptionPromise, timeoutPromise]) as Transcription[];
+      const transcriptionPromise = transcribeAudio(audioData);
+      const result = await Promise.race([transcriptionPromise, timeoutPromise]);
       
       setState(prev => ({ 
         ...prev, 
-        transcriptions: result,
+        transcriptions: result as any[],
         isTranscribing: false,
         error: null
       }));
@@ -70,7 +70,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         variant: "destructive",
       });
     }
-  }, [audioUrl, settings, toast]);
+  }, [audioUrl, toast]);
 
   useEffect(() => {
     if (audioUrl) {

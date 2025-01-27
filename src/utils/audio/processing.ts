@@ -8,9 +8,8 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   try {
     const audioContext = new AudioContext();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    const float32Array = audioBuffer.getChannelData(0);
     console.log('Audio buffer processed successfully');
-    return float32Array;
+    return audioBuffer.getChannelData(0);
   } catch (error) {
     console.error('Error processing audio buffer:', error);
     throw new Error('Failed to process audio buffer');
@@ -23,14 +22,9 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
   console.log('Using model path:', modelPath);
 
   try {
-    const modelConfig = {
-      revision: settings.modelRevision,
-      cache_dir: settings.enableModelCaching ? undefined : null,
-      device: "webgpu" as const,
-      dtype: "fp32" as const
-    };
-
+    const modelConfig = createModelConfig(settings);
     console.log('Creating pipeline with config:', modelConfig);
+    
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
@@ -46,8 +40,13 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<Trans
       id: `segment-${index}`,
       start: chunk.timestamp?.[0] ?? 0,
       end: chunk.timestamp?.[1] ?? 0,
-      text: chunk.text?.trim() ?? '',
-      confidence: chunk.confidence ?? 1,
+      text: chunk.text?.trim() ?? settings.noSpeechText,
+      confidence: chunk.confidence ?? settings.defaultConfidence,
+      speaker: {
+        id: `speaker-${index % settings.maxSpeakers + 1}`,
+        name: `Speaker ${index % settings.maxSpeakers + 1}`,
+        color: settings.speakerColors[index % settings.speakerColors.length]
+      }
     }));
   } catch (error) {
     console.error('Transcription error:', error);

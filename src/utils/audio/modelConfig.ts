@@ -1,8 +1,8 @@
 import { AudioSettings } from '@/types/audio/settings';
 
 export const getModelPath = (modelId: string): string => {
-  // Use a smaller model that's more likely to work in the browser
-  return `openai/whisper-small`;
+  // Use the ONNX-specific model repository
+  return 'onnx-community/whisper-tiny.en';
 };
 
 export const createModelConfig = (settings: AudioSettings) => {
@@ -21,7 +21,7 @@ export const createTranscriptionConfig = (settings: AudioSettings) => {
     chunk_length_s: settings.defaultChunkLength,
     stride_length_s: settings.defaultStrideLength,
     return_timestamps: true,
-    max_new_tokens: 448,
+    max_new_tokens: 128,
     num_beams: 1,
     temperature: 0,
     no_repeat_ngram_size: 3
