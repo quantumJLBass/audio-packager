@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { SettingsSection } from './SettingsSection';
+import { SettingField } from '@/components/settings/SettingField';
 import type { AudioSettings } from '@/utils/settings';
 import { 
   Accordion,
@@ -27,8 +28,11 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           <AccordionTrigger>Color Settings</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Speaker Colors</Label>
+              <SettingField
+                id="speaker-colors"
+                label="Speaker Colors"
+                tooltip="Colors used to distinguish different speakers in the transcription"
+              >
                 <div className="grid grid-cols-4 gap-2">
                   {settings.speakerColors.map((color, index) => (
                     <Input
@@ -43,16 +47,22 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                     />
                   ))}
                 </div>
-              </div>
+              </SettingField>
 
-              <div className="space-y-2">
-                <Label>Waveform Colors</Label>
+              <SettingField
+                id="waveform-colors"
+                label="Waveform Colors"
+                tooltip="Colors used in the audio waveform visualization"
+              >
                 <div className="grid grid-cols-2 gap-4">
                   {Object.entries(settings.waveformColors).map(([key, value]) => (
-                    <div key={key} className="space-y-2">
-                      <Label htmlFor={`waveform-${key}`}>{key}</Label>
+                    <SettingField
+                      key={key}
+                      id={`waveform-${key}`}
+                      label={key}
+                      tooltip={`Color for the ${key} element of the waveform`}
+                    >
                       <Input
-                        id={`waveform-${key}`}
                         type="color"
                         value={value}
                         onChange={(e) => onChange({
@@ -63,10 +73,10 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                           }
                         })}
                       />
-                    </div>
+                    </SettingField>
                   ))}
                 </div>
-              </div>
+              </SettingField>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -75,45 +85,53 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           <AccordionTrigger>Zoom Settings</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="minZoom">Minimum Zoom (%)</Label>
+              <SettingField
+                id="minZoom"
+                label="Minimum Zoom (%)"
+                tooltip="The smallest allowed zoom level for the waveform view"
+              >
                 <Input
-                  id="minZoom"
                   type="number"
                   value={settings.minZoom}
                   onChange={(e) => onChange({ ...settings, minZoom: Number(e.target.value) })}
                 />
-              </div>
+              </SettingField>
 
-              <div className="space-y-2">
-                <Label htmlFor="maxZoom">Maximum Zoom (%)</Label>
+              <SettingField
+                id="maxZoom"
+                label="Maximum Zoom (%)"
+                tooltip="The largest allowed zoom level for the waveform view"
+              >
                 <Input
-                  id="maxZoom"
                   type="number"
                   value={settings.maxZoom}
                   onChange={(e) => onChange({ ...settings, maxZoom: Number(e.target.value) })}
                 />
-              </div>
+              </SettingField>
 
-              <div className="space-y-2">
-                <Label htmlFor="defaultZoom">Default Zoom (%)</Label>
+              <SettingField
+                id="defaultZoom"
+                label="Default Zoom (%)"
+                tooltip="The initial zoom level when loading the waveform"
+              >
                 <Input
-                  id="defaultZoom"
                   type="number"
                   value={settings.defaultZoom}
                   onChange={(e) => onChange({ ...settings, defaultZoom: Number(e.target.value) })}
                 />
-              </div>
+              </SettingField>
 
-              <div className="space-y-2">
-                <Label htmlFor="zoomStep">Zoom Step (%)</Label>
+              <SettingField
+                id="zoomStep"
+                label="Zoom Step (%)"
+                tooltip="How much the zoom changes with each zoom in/out action"
+              >
                 <Input
-                  id="zoomStep"
                   type="number"
                   value={settings.zoomStep}
                   onChange={(e) => onChange({ ...settings, zoomStep: Number(e.target.value) })}
                 />
-              </div>
+              </SettingField>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -122,24 +140,30 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
           <AccordionTrigger>Time Display Settings</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="timeFormat">Time Format</Label>
+              <SettingField
+                id="timeFormat"
+                label="Time Format"
+                tooltip="Format string for displaying timestamps (e.g., HH:mm:ss)"
+              >
                 <Input
-                  id="timeFormat"
                   value={settings.timeFormat}
                   onChange={(e) => onChange({ ...settings, timeFormat: e.target.value })}
                   placeholder="HH:mm:ss"
                 />
-              </div>
+              </SettingField>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="showMilliseconds"
-                  checked={settings.showMilliseconds}
-                  onCheckedChange={(checked) => onChange({ ...settings, showMilliseconds: checked })}
-                />
-                <Label htmlFor="showMilliseconds">Show Milliseconds</Label>
-              </div>
+              <SettingField
+                id="showMilliseconds"
+                label="Show Milliseconds"
+                tooltip="Whether to display milliseconds in timestamps"
+              >
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={settings.showMilliseconds}
+                    onCheckedChange={(checked) => onChange({ ...settings, showMilliseconds: checked })}
+                  />
+                </div>
+              </SettingField>
             </div>
           </AccordionContent>
         </AccordionItem>

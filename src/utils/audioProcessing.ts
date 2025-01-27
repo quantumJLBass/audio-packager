@@ -1,7 +1,6 @@
 import { pipeline } from "@huggingface/transformers";
 import { Transcription } from "@/types/audio";
 import { AudioSettings } from "@/utils/settings";
-import { useToast } from "@/hooks/use-toast";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   const audioContext = new AudioContext();
@@ -14,7 +13,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3-turbo", {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      accessToken: settings.huggingFaceToken
+      use_auth_token: settings.huggingFaceToken
     });
     
     const result = await transcriber(float32Array, {
