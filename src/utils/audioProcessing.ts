@@ -3,7 +3,7 @@ import { Transcription, AudioAnalysis } from "@/types/audio";
 import { AudioSettings, getSettings } from "@/utils/settings";
 
 const getModelPath = (modelId: string): string => {
-  return `onnx-community/whisper-${modelId}-ONNX`;
+  return `onnx-community/whisper-large-v3-turbo-ONNX`;
 };
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -31,7 +31,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        token: settings.huggingFaceToken,
+        use_auth_token: settings.huggingFaceToken,
         quantized: true
       }
     );
