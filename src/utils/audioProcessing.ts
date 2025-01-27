@@ -3,6 +3,8 @@ import { Transcription, AudioAnalysis } from "@/types/audio";
 import { AudioSettings, getSettings } from "@/utils/settings";
 
 const getModelPath = (modelId: string): string => {
+  // Convert from base model name to full path
+  // e.g. 'large-v3-turbo' -> 'onnx-community/whisper-large-v3-turbo-ONNX'
   return `onnx-community/whisper-${modelId}-ONNX`;
 };
 
@@ -31,7 +33,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        use_auth_token: settings.huggingFaceToken
+        token: settings.huggingFaceToken
       }
     );
     
@@ -96,7 +98,37 @@ export const calculatePitch = (audioData: Float32Array): number => {
   }
 };
 
-export const calculateTempo = (audioData: Float32Array): number => {
+export const analyzeSentiment = async (text: string): Promise<string> => {
+  try {
+    const settings = getSettings();
+    const classifier = await pipeline(
+      "text-classification",
+      settings.sentimentModel,
+      { token: settings.huggingFaceToken }
+    );
+    
+    const result = await classifier(text);
+    return (result as any)[0]?.label || 'neutral';
+  } catch (error) {
+    console.error('Sentiment analysis error:', error);
+    throw new Error('Failed to analyze sentiment');
+  }
+};
+
+export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
+  try {
+    return {
+      pitch: calculatePitch(audioData),
+      tempo: calculateTempo(audioData),
+      energy: calculateEnergy(audioData)
+    };
+  } catch (error) {
+    console.error('Tone analysis error:', error);
+    throw new Error('Failed to analyze tone');
+  }
+};
+
+const calculateTempo = (audioData: Float32Array): number => {
   try {
     const settings = getSettings();
     const bufferSize = settings.fftSize;
@@ -130,36 +162,6 @@ export const calculateTempo = (audioData: Float32Array): number => {
   } catch (error) {
     console.error('Tempo calculation error:', error);
     return getSettings().defaultTempo;
-  }
-};
-
-export const analyzeSentiment = async (text: string): Promise<string> => {
-  try {
-    const settings = getSettings();
-    const classifier = await pipeline(
-      "text-classification",
-      settings.sentimentModel,
-      { apiKey: settings.huggingFaceToken }
-    );
-    
-    const result = await classifier(text);
-    return (result as any)[0]?.label || 'neutral';
-  } catch (error) {
-    console.error('Sentiment analysis error:', error);
-    throw new Error('Failed to analyze sentiment');
-  }
-};
-
-export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
-  try {
-    return {
-      pitch: calculatePitch(audioData),
-      tempo: calculateTempo(audioData),
-      energy: calculateEnergy(audioData)
-    };
-  } catch (error) {
-    console.error('Tone analysis error:', error);
-    throw new Error('Failed to analyze tone');
   }
 };
 

@@ -100,14 +100,14 @@ const defaultSettings: AudioSettings = {
   maxSpeakers: 8,
   
   supportedModels: [
-    { id: 'tiny', name: 'Whisper Tiny' },
-    { id: 'base', name: 'Whisper Base' },
-    { id: 'small', name: 'Whisper Small' },
-    { id: 'medium', name: 'Whisper Medium' },
-    { id: 'large', name: 'Whisper Large' },
-    { id: 'large-v2', name: 'Whisper Large v2' },
-    { id: 'large-v3', name: 'Whisper Large v3' },
     { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
+    { id: 'large-v3', name: 'Whisper Large v3' },
+    { id: 'large-v2', name: 'Whisper Large v2' },
+    { id: 'large', name: 'Whisper Large' },
+    { id: 'medium', name: 'Whisper Medium' },
+    { id: 'small', name: 'Whisper Small' },
+    { id: 'base', name: 'Whisper Base' },
+    { id: 'tiny', name: 'Whisper Tiny' }
   ],
   modelRevision: 'main',
   enableModelCaching: true,
