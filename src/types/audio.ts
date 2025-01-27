@@ -173,11 +173,11 @@ export interface AudioSettings {
 export interface TranscriptionDisplayProps {
   transcriptions: Transcription[];
   currentTime: number;
-  settings: AudioSettings;
   onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
   onTranscriptionSplit?: (transcription: Transcription, time: number) => void;
   onTranscriptionAdd?: (time: number, position: 'before' | 'after') => void;
   onTranscriptionDelete?: (transcription: Transcription) => void;
   onTimeClick?: (time: number) => void;
   onSpeakerUpdate?: (speakerId: string, newName: string, updateAll: boolean) => void;
+  settings?: AudioSettings;
 }
