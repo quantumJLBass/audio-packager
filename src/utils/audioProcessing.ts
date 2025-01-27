@@ -31,7 +31,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        use_auth_token: settings.huggingFaceToken,
+        token: settings.huggingFaceToken,
         quantized: true
       }
     );
