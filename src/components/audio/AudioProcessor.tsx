@@ -117,7 +117,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <WaveformVisualizer
-            key={audioUrl} // Prevent unnecessary reloads
+            key={audioUrl}
             url={audioUrl}
             speakers={[]}
             onTimeUpdate={handleTimeUpdate}
