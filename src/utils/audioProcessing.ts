@@ -3,12 +3,20 @@ import { Transcription } from "@/types/audio";
 import { AudioSettings } from "@/utils/settings";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
-  const audioContext = new AudioContext();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  return audioBuffer.getChannelData(0);
+  console.log('Processing audio buffer...');
+  try {
+    const audioContext = new AudioContext();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    console.log('Audio buffer processed successfully');
+    return audioBuffer.getChannelData(0);
+  } catch (error) {
+    console.error('Error processing audio buffer:', error);
+    throw new Error('Failed to process audio buffer. Please try a different file.');
+  }
 };
 
 export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
+  console.log('Starting transcription with settings:', settings);
   try {
     const transcriber = await pipeline(
       "automatic-speech-recognition",
@@ -16,10 +24,14 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        token: settings.huggingFaceToken
+        // Pass token through headers instead of options
+        headers: {
+          Authorization: `Bearer ${settings.huggingFaceToken}`
+        }
       }
     );
     
+    console.log('Pipeline created, starting transcription...');
     const result = await transcriber(float32Array, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       chunk_length_s: settings.defaultChunkLength,
@@ -27,6 +39,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
       return_timestamps: true
     });
 
+    console.log('Transcription completed, processing results...');
     const chunks = Array.isArray(result) ? result : [result];
     
     return chunks.map((chunk: any, index: number) => ({

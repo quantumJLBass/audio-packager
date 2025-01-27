@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import { useToast } from '@/hooks/use-toast';
 
 interface WaveformCoreProps {
   url: string;
@@ -22,30 +23,82 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const urlRef = useRef(url);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    wavesurfer.current = WaveSurfer.create({
-      container: containerRef.current,
-      waveColor,
-      progressColor,
-      height,
-      normalize: true,
-      minPxPerSec,
-    });
+    const initWaveSurfer = async () => {
+      try {
+        if (isLoading) return;
+        setIsLoading(true);
+        console.log('Initializing WaveSurfer...', { url });
 
-    wavesurfer.current.load(url);
-    wavesurfer.current.on('ready', onReady);
-    wavesurfer.current.on('timeupdate', onTimeUpdate);
+        // Cleanup previous instance
+        if (wavesurfer.current) {
+          console.log('Destroying previous WaveSurfer instance');
+          wavesurfer.current.destroy();
+          wavesurfer.current = null;
+        }
+
+        // Only create new instance if URL changed
+        if (urlRef.current !== url) {
+          console.log('Creating new WaveSurfer instance');
+          wavesurfer.current = WaveSurfer.create({
+            container: containerRef.current,
+            waveColor,
+            progressColor,
+            height,
+            normalize: true,
+            minPxPerSec,
+          });
+
+          wavesurfer.current.on('ready', () => {
+            console.log('WaveSurfer ready');
+            onReady();
+          });
+
+          wavesurfer.current.on('timeupdate', (time) => {
+            console.log('Time update:', time);
+            onTimeUpdate(time);
+          });
+
+          wavesurfer.current.on('error', (error) => {
+            console.error('WaveSurfer error:', error);
+            toast({
+              title: "Error",
+              description: "Failed to load audio waveform",
+              variant: "destructive",
+            });
+          });
+
+          await wavesurfer.current.load(url);
+          urlRef.current = url;
+        }
+      } catch (error) {
+        console.error('Error initializing WaveSurfer:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize audio waveform",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initWaveSurfer();
 
     return () => {
+      console.log('Cleaning up WaveSurfer');
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
         wavesurfer.current = null;
       }
     };
-  }, [url, onReady, onTimeUpdate, waveColor, progressColor, height, minPxPerSec]);
+  }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate]);
 
   return <div ref={containerRef} />;
 };
