@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WaveformVisualizer } from './WaveformVisualizer';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { useToast } from '@/hooks/use-toast';
-import { Transcription, AudioProcessingState } from '@/types/audio';
-import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
+import { AudioProcessingState } from '@/types/audio/processing';
+import { processAudioBuffer, transcribeAudio } from '@/utils/audio';
 import { AudioProcessingControls } from './AudioProcessingControls';
-import { AudioSettings, getSettings } from '@/utils/settings';
+import { getSettings } from '@/utils/settings';
 import { Loader2 } from 'lucide-react';
 
 interface AudioProcessorProps {

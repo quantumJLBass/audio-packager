@@ -1,24 +1,16 @@
 import { Speaker } from './speaker';
 
-export interface Transcription {
-  text: string;
+export interface TranscriptionSegment {
+  id: string;
   start: number;
   end: number;
+  text: string;
   speaker?: Speaker;
-  sentiment?: string;
   confidence: number;
 }
 
-export interface TranscriptionSegment {
+export interface TranscriptionResult {
   text: string;
-  start: number;
-  end: number;
-  confidence: number;
-  speaker?: Speaker;
-  sentiment?: string;
-  tone?: {
-    pitch: number;
-    tempo: number;
-    energy: number;
-  };
+  segments: TranscriptionSegment[];
+  language: string;
 }

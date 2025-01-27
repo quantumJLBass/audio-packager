@@ -1,22 +1,20 @@
 import { TranscriptionSegment } from './transcription';
 
 export interface AudioMetadata {
-  title: string;
-  description: string;
-  tags: string[];
-  created: Date;
-  modified: Date;
+  filename: string;
   duration: number;
-  format: string;
   sampleRate: number;
   channels: number;
+  format: string;
+  bitrate: number;
+  segments: TranscriptionSegment[];
+  language: string;
 }
 
 export interface AudioFile {
   id: string;
   name: string;
-  url: string;
-  duration: number;
-  transcription?: TranscriptionSegment[];
+  size: number;
+  type: string;
   metadata: AudioMetadata;
 }
