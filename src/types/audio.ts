@@ -91,6 +91,7 @@ export interface WaveformVisualizerProps {
   onPlayPause?: (isPlaying: boolean) => void;
   onReady?: () => void;
   onDurationChange?: (duration: number) => void;
+  settings: AudioSettings;
 }
 
 export interface AudioProcessingState {
@@ -110,4 +111,16 @@ export interface AudioProcessingOptions {
   chunkLength: number;
   strideLength: number;
   huggingFaceToken?: string;
+}
+
+export interface TranscriptionDisplayProps {
+  transcriptions: Transcription[];
+  currentTime: number;
+  onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
+  onTranscriptionSplit?: (transcription: Transcription, time: number) => void;
+  onTranscriptionAdd?: (time: number, position: 'before' | 'after') => void;
+  onTranscriptionDelete?: (transcription: Transcription) => void;
+  onTimeClick?: (time: number) => void;
+  onSpeakerUpdate?: (speakerId: string, newName: string, updateAll: boolean) => void;
+  settings: AudioSettings;
 }

@@ -29,7 +29,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     transcriptions: [],
   });
 
-  const [speakers] = useState(
+  const [speakers] = useState(() => 
     Array.from({ length: settings.maxSpeakers }, (_, i) => ({
       id: settings.speakerIdTemplate.replace('{idx}', String(i + 1)),
       name: settings.speakerNameTemplate.replace('{idx}', String(i + 1)),
@@ -55,18 +55,10 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     try {
       setState(prev => ({ ...prev, isTranscribing: true }));
       
-      const response = await fetch(audioUrl).catch(error => {
-        console.error('Error fetching audio:', error);
-        throw new Error('Failed to fetch audio file');
-      });
-      
-      const arrayBuffer = await response.arrayBuffer().catch(error => {
-        console.error('Error reading audio buffer:', error);
-        throw new Error('Failed to read audio file');
-      });
-      
+      const response = await fetch(audioUrl);
+      const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
-      const result = await transcribeAudio(audioData);
+      const result = await transcribeAudio(audioData, settings);
       
       setState(prev => ({ ...prev, transcriptions: result }));
       

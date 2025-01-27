@@ -1,6 +1,5 @@
 import { pipeline } from "@huggingface/transformers";
-import { AudioAnalysis, Transcription } from "@/types/audio";
-import { getSettings } from "./settings";
+import { AudioAnalysis, Transcription, AudioSettings } from "@/types/audio";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   try {
@@ -13,10 +12,10 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   }
 };
 
-export const transcribeAudio = async (float32Array: Float32Array): Promise<Transcription[]> => {
+export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
   try {
-    const settings = getSettings();
-    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3", {
+    const transcriber = await pipeline("automatic-speech-recognition", settings.defaultModel, {
+      quantized: true,
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
     });
@@ -52,7 +51,6 @@ export const calculatePitch = (audioData: Float32Array): number => {
     const settings = getSettings();
     const correlations = new Float32Array(settings.fftSize);
     
-    // Implement autocorrelation-based pitch detection
     for (let lag = 0; lag < settings.fftSize; lag++) {
       let correlation = 0;
       for (let i = 0; i < settings.fftSize - lag; i++) {
@@ -61,7 +59,6 @@ export const calculatePitch = (audioData: Float32Array): number => {
       correlations[lag] = correlation;
     }
     
-    // Find the highest correlation peak
     let maxCorrelation = 0;
     let maxLag = 0;
     for (let lag = settings.minPitchLag; lag < settings.maxPitchLag; lag++) {
@@ -74,46 +71,6 @@ export const calculatePitch = (audioData: Float32Array): number => {
     return settings.audioSampleRate / maxLag;
   } catch (error) {
     console.error('Pitch calculation error:', error);
-    return getSettings().defaultPitch;
-  }
-};
-
-export const calculateTempo = (audioData: Float32Array): number => {
-  try {
-    const settings = getSettings();
-    const bufferSize = settings.fftSize;
-    
-    // Implement onset detection for tempo estimation
-    const energyProfile = new Float32Array(Math.floor(audioData.length / bufferSize));
-    for (let i = 0; i < energyProfile.length; i++) {
-      let sum = 0;
-      for (let j = 0; j < bufferSize; j++) {
-        sum += Math.abs(audioData[i * bufferSize + j]);
-      }
-      energyProfile[i] = sum;
-    }
-    
-    // Find peaks in energy profile
-    const peaks = [];
-    for (let i = 1; i < energyProfile.length - 1; i++) {
-      if (energyProfile[i] > energyProfile[i - 1] && 
-          energyProfile[i] > energyProfile[i + 1] &&
-          energyProfile[i] > settings.onsetThreshold) {
-        peaks.push(i);
-      }
-    }
-    
-    if (peaks.length < 2) {
-      return settings.defaultTempo;
-    }
-    
-    // Calculate average time between peaks
-    const avgTimeBetweenPeaks = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
-    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / settings.audioSampleRate);
-    
-    return Math.round(bpm);
-  } catch (error) {
-    console.error('Tempo calculation error:', error);
-    return getSettings().defaultTempo;
+    return settings.defaultPitch;
   }
 };
