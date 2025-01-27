@@ -168,16 +168,35 @@ export interface AudioSettings {
   defaultChunkLength: number;
   defaultStrideLength: number;
   defaultFloatingPoint: number;
+
+  minPxPerSec: number;
+  defaultDiarization: boolean;
+  initialState: {
+    currentTime: number;
+    isPlaying: boolean;
+    duration: number;
+    isReady: boolean;
+    isTranscribing: boolean;
+    transcriptions: any[];
+    error: string | null;
+  };
 }
 
-export interface TranscriptionDisplayProps {
-  transcriptions: Transcription[];
-  currentTime: number;
-  onTranscriptionUpdate?: (updatedTranscription: Transcription) => void;
-  onTranscriptionSplit?: (transcription: Transcription, time: number) => void;
-  onTranscriptionAdd?: (time: number, position: 'before' | 'after') => void;
-  onTranscriptionDelete?: (transcription: Transcription) => void;
-  onTimeClick?: (time: number) => void;
-  onSpeakerUpdate?: (speakerId: string, newName: string, updateAll: boolean) => void;
-  settings?: AudioSettings;
+export interface PretrainedModelOptions {
+  revision?: string;
+  cache_dir?: string | null;
+  device?: string;
+  dtype?: string;
+}
+
+export interface TranscriptionConfig {
+  language?: string | null;
+  task?: "transcribe" | "translate";
+  chunk_length_s: number;
+  stride_length_s: number;
+  return_timestamps: boolean;
+  max_new_tokens: number;
+  num_beams: number;
+  temperature: number;
+  no_repeat_ngram_size: number;
 }
