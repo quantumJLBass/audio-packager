@@ -38,11 +38,14 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   );
 
   useEffect(() => {
+    let mounted = true;
+
     if (audioUrl) {
       processAudio();
     }
     
     return () => {
+      mounted = false;
       if (audioUrl?.startsWith('blob:')) {
         URL.revokeObjectURL(audioUrl);
       }

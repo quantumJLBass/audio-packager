@@ -1,5 +1,6 @@
 import { pipeline } from "@huggingface/transformers";
-import { AudioAnalysis, Transcription, AudioSettings } from "@/types/audio";
+import { Transcription } from "@/types/audio";
+import { AudioSettings } from "@/utils/settings";
 import { useToast } from "@/hooks/use-toast";
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -10,19 +11,17 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 
 export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
   try {
-    const transcriber = await pipeline("automatic-speech-recognition", settings.defaultModel, {
+    const transcriber = await pipeline("automatic-speech-recognition", "openai/whisper-large-v3-turbo", {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      credentials: {
-        accessToken: settings.huggingFaceToken
-      }
+      accessToken: settings.huggingFaceToken
     });
     
     const result = await transcriber(float32Array, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
-      return_timestamps: true,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
+      return_timestamps: true
     });
 
     const chunks = Array.isArray(result) ? result : [result];
@@ -40,6 +39,6 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     }));
   } catch (error) {
     console.error('Transcription error:', error);
-    throw new Error('Failed to transcribe audio');
+    throw new Error('Failed to transcribe audio. Please check your HuggingFace token and try again.');
   }
 };
