@@ -1,6 +1,6 @@
 import { pipeline } from "@huggingface/transformers";
-import { Transcription, AudioAnalysis, PretrainedModelOptions, TranscriptionConfig } from "@/types/audio";
-import { AudioSettings, getSettings } from "@/utils/settings";
+import { Transcription, PretrainedModelOptions, TranscriptionConfig, AudioSettings } from "@/types/audio";
+import { getSettings } from "@/utils/settings";
 
 const getModelPath = (modelId: string): string => {
   return `onnx-community/whisper-large-v3-turbo-ONNX`;
@@ -93,11 +93,16 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
   }
 };
 
-export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
+export const analyzeTone = async (audioData: Float32Array): Promise<{
+  pitch: number;
+  tempo: number;
+  energy: number;
+}> => {
+  const settings = getSettings();
   try {
     return {
-      pitch: calculatePitch(audioData),
-      tempo: calculateTempo(audioData),
+      pitch: calculatePitch(audioData, settings),
+      tempo: calculateTempo(audioData, settings),
       energy: calculateEnergy(audioData)
     };
   } catch (error) {
@@ -106,9 +111,8 @@ export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysi
   }
 };
 
-const calculatePitch = (audioData: Float32Array): number => {
+const calculatePitch = (audioData: Float32Array, settings: AudioSettings): number => {
   try {
-    const settings = getSettings();
     const correlations = new Float32Array(settings.fftSize);
     
     for (let lag = 0; lag < settings.fftSize; lag++) {
@@ -135,9 +139,8 @@ const calculatePitch = (audioData: Float32Array): number => {
   }
 };
 
-const calculateTempo = (audioData: Float32Array): number => {
+const calculateTempo = (audioData: Float32Array, settings: AudioSettings): number => {
   try {
-    const settings = getSettings();
     const bufferSize = settings.fftSize;
     
     const energyProfile = new Float32Array(Math.floor(audioData.length / bufferSize));
