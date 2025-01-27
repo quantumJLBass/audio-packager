@@ -20,7 +20,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
   try {
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      "onnx-community/whisper-large-v3-turbo-ONNX",
+      settings.defaultModel,
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,

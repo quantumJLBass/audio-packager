@@ -44,7 +44,14 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
-      const result = await transcribeAudio(audioData, settings);
+      
+      // Add timeout for transcription
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Transcription timed out')), 60000); // 60s timeout
+      });
+      
+      const transcriptionPromise = transcribeAudio(audioData, settings);
+      const result = await Promise.race([transcriptionPromise, timeoutPromise]) as Transcription[];
       
       setState(prev => ({ 
         ...prev, 
@@ -144,7 +151,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
           transcriptions={state.transcriptions}
           currentTime={state.currentTime}
           onTimeClick={handleTimeUpdate}
-          settings={settings}
         />
       )}
     </div>
