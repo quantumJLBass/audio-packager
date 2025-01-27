@@ -21,13 +21,11 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     // Create pipeline with proper authentication
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      settings.defaultModel,
+      "openai/whisper-small",
       {
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        credentials: {
-          accessToken: settings.huggingFaceToken
-        }
+        accessToken: settings.huggingFaceToken
       }
     );
     
