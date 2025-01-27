@@ -1,3 +1,5 @@
+import { TranscriptionSegment } from './transcription';
+
 export interface AudioMetadata {
   title: string;
   description: string;
