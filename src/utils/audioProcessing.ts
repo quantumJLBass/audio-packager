@@ -13,7 +13,9 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     const transcriber = await pipeline("automatic-speech-recognition", settings.defaultModel, {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      token: settings.huggingFaceToken
+      credentials: {
+        accessToken: settings.huggingFaceToken
+      }
     });
     
     const result = await transcriber(float32Array, {
