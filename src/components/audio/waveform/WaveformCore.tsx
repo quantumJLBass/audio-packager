@@ -36,16 +36,14 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
     });
 
     wavesurfer.current.load(url);
-
-    wavesurfer.current.on('ready', () => {
-      console.log('WaveSurfer ready');
-      onReady();
-    });
-
+    wavesurfer.current.on('ready', onReady);
     wavesurfer.current.on('timeupdate', onTimeUpdate);
 
     return () => {
-      wavesurfer.current?.destroy();
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+        wavesurfer.current = null;
+      }
     };
   }, [url, onReady, onTimeUpdate, waveColor, progressColor, height, minPxPerSec]);
 

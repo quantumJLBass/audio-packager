@@ -103,6 +103,38 @@ export interface AudioProcessingState {
   transcriptions: Transcription[];
 }
 
+export interface AudioSettings {
+  // API Keys
+  huggingFaceToken: string;
+  
+  // Model Settings
+  defaultModel: string;
+  modelRevision: string;
+  defaultLanguage: string;
+  defaultChunkLength: number;
+  defaultStrideLength: number;
+  defaultFloatingPoint: number;
+  defaultConfidence: number;
+  noSpeechText: string;
+  
+  // Speaker Settings
+  speakerIdTemplate: string;
+  speakerNameTemplate: string;
+  speakerColors: string[];
+  maxSpeakers: number;
+  
+  // Audio Processing
+  enableModelCaching: boolean;
+  supportedModels: Array<{
+    id: string;
+    name: string;
+  }>;
+  supportedLanguages: Array<{
+    code: string;
+    name: string;
+  }>;
+}
+
 export interface AudioProcessingOptions {
   model: string;
   language: string;
