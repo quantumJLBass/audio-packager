@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AudioUploader } from '@/components/AudioUploader';
@@ -12,7 +12,12 @@ import { useToast } from '@/hooks/use-toast';
 import { SettingField } from '@/components/settings/SettingField';
 import { getSettings } from '@/utils/settings';
 
+interface OutletContext {
+  onFileSelect: (file: File) => void;
+}
+
 export const AudioUploadForm = () => {
+  const { onFileSelect } = useOutletContext<OutletContext>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [packageName, setPackageName] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -34,6 +39,7 @@ export const AudioUploadForm = () => {
     if (autoProcess) {
       handleSubmit();
     }
+    onFileSelect(file);
   };
 
   const handleSubmit = () => {
@@ -45,8 +51,7 @@ export const AudioUploadForm = () => {
       });
       return;
     }
-    // Process the file with current options
-    console.log('Processing file:', selectedFile, 'with options:', options);
+    onFileSelect(selectedFile);
   };
 
   return (

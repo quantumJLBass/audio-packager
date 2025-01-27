@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { AudioUploadForm } from '@/components/audio/AudioUploadForm';
-import { AudioProcessor } from '@/components/audio/AudioProcessor';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
+import { AudioProcessor } from '@/components/audio/AudioProcessor';
+import { getSettings } from '@/utils/settings';
 
 const Index = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const location = useLocation();
+  const settings = getSettings();
 
-  const handleFileSelect = async (file: File, options: any) => {
+  const handleFileSelect = (file: File) => {
     try {
       const url = URL.createObjectURL(file);
       setAudioUrl(url);
+      setSelectedFile(file);
     } catch (error) {
       console.error('Error handling file:', error);
     }
@@ -32,8 +35,14 @@ const Index = () => {
       <main className="flex-1 container mx-auto p-4 space-y-6">
         {location.pathname === '/' ? (
           <>
-            <AudioUploadForm onFileSelect={handleFileSelect} />
-            {audioUrl && <AudioProcessor audioUrl={audioUrl} />}
+            <Outlet context={{ onFileSelect: handleFileSelect }} />
+            {audioUrl && selectedFile && (
+              <AudioProcessor 
+                audioUrl={audioUrl} 
+                file={selectedFile}
+                settings={settings}
+              />
+            )}
           </>
         ) : (
           <Outlet />

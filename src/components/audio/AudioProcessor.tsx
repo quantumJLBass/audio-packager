@@ -6,15 +6,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Transcription, AudioProcessingState } from '@/types/audio';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
 import { AudioProcessingControls } from './AudioProcessingControls';
-import { getSettings } from '@/utils/settings';
+import { AudioSettings } from '@/utils/settings';
 
 interface AudioProcessorProps {
-  audioUrl: string | null;
+  audioUrl: string;
+  file: File;
+  settings: AudioSettings;
 }
 
-export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
+export const AudioProcessor: React.FC<AudioProcessorProps> = ({ 
+  audioUrl, 
+  file,
+  settings 
+}) => {
   const { toast } = useToast();
-  const settings = getSettings();
   const [state, setState] = useState<AudioProcessingState>({
     currentTime: 0,
     isPlaying: false,
@@ -38,7 +43,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
     }
     
     return () => {
-      // Cleanup any blob URLs
       if (audioUrl?.startsWith('blob:')) {
         URL.revokeObjectURL(audioUrl);
       }
@@ -98,8 +102,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
     setState(prev => ({ ...prev, duration }));
   };
 
-  if (!audioUrl) return null;
-
   return (
     <div className="space-y-4">
       <Card className="glass">
@@ -114,6 +116,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
             onPlayPause={handlePlayPause}
             onReady={handleReady}
             onDurationChange={handleDurationChange}
+            settings={settings}
           />
         </CardContent>
       </Card>
@@ -127,6 +130,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({ audioUrl }) => {
         transcriptions={state.transcriptions}
         currentTime={state.currentTime}
         onTimeClick={(time) => handleTimeUpdate(time)}
+        settings={settings}
       />
     </div>
   );
