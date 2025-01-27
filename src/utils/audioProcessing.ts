@@ -28,7 +28,7 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
     const modelConfig: PretrainedModelOptions = {
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      device: "webgpu" as const,
+      device: "webgpu",
       dtype: "float32"
     };
 
@@ -76,7 +76,37 @@ export const transcribeAudio = async (float32Array: Float32Array, settings: Audi
   }
 };
 
-export const calculatePitch = (audioData: Float32Array): number => {
+export const analyzeSentiment = async (text: string): Promise<string> => {
+  try {
+    const settings = getSettings();
+    const classifier = await pipeline(
+      "text-classification",
+      settings.sentimentModel,
+      { device: "webgpu" }
+    );
+    
+    const result = await classifier(text);
+    return (result as any)[0]?.label || 'neutral';
+  } catch (error) {
+    console.error('Sentiment analysis error:', error);
+    throw new Error('Failed to analyze sentiment');
+  }
+};
+
+export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
+  try {
+    return {
+      pitch: calculatePitch(audioData),
+      tempo: calculateTempo(audioData),
+      energy: calculateEnergy(audioData)
+    };
+  } catch (error) {
+    console.error('Tone analysis error:', error);
+    throw new Error('Failed to analyze tone');
+  }
+};
+
+const calculatePitch = (audioData: Float32Array): number => {
   try {
     const settings = getSettings();
     const correlations = new Float32Array(settings.fftSize);
@@ -102,36 +132,6 @@ export const calculatePitch = (audioData: Float32Array): number => {
   } catch (error) {
     console.error('Pitch calculation error:', error);
     return getSettings().defaultPitch;
-  }
-};
-
-export const analyzeSentiment = async (text: string): Promise<string> => {
-  try {
-    const settings = getSettings();
-    const classifier = await pipeline(
-      "text-classification",
-      settings.sentimentModel,
-      { token: settings.huggingFaceToken }
-    );
-    
-    const result = await classifier(text);
-    return (result as any)[0]?.label || 'neutral';
-  } catch (error) {
-    console.error('Sentiment analysis error:', error);
-    throw new Error('Failed to analyze sentiment');
-  }
-};
-
-export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
-  try {
-    return {
-      pitch: calculatePitch(audioData),
-      tempo: calculateTempo(audioData),
-      energy: calculateEnergy(audioData)
-    };
-  } catch (error) {
-    console.error('Tone analysis error:', error);
-    throw new Error('Failed to analyze tone');
   }
 };
 

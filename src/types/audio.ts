@@ -185,7 +185,7 @@ export interface AudioSettings {
 export interface PretrainedModelOptions {
   revision?: string;
   cache_dir?: string | null;
-  device?: string;
+  device?: "webgpu" | "auto" | "gpu" | "cpu" | "wasm" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
   dtype?: string;
 }
 
