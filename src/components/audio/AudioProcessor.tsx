@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WaveformVisualizer } from './WaveformVisualizer';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
@@ -7,6 +7,7 @@ import { Transcription, AudioProcessingState } from '@/types/audio';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audioProcessing';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/utils/settings';
+import { Loader2 } from 'lucide-react';
 
 interface AudioProcessorProps {
   audioUrl: string;
@@ -27,43 +28,30 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     isReady: false,
     isTranscribing: false,
     transcriptions: [],
+    error: null
   });
 
-  const [speakers] = useState(() => 
-    Array.from({ length: settings.maxSpeakers }, (_, i) => ({
-      id: settings.speakerIdTemplate.replace('{idx}', String(i + 1)),
-      name: settings.speakerNameTemplate.replace('{idx}', String(i + 1)),
-      color: settings.speakerColors[i % settings.speakerColors.length],
-    }))
-  );
-
-  useEffect(() => {
-    let mounted = true;
-
-    if (audioUrl) {
-      processAudio();
-    }
-    
-    return () => {
-      mounted = false;
-      if (audioUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
-
-  const processAudio = async () => {
+  const processAudio = useCallback(async () => {
     if (!audioUrl) return;
 
     try {
-      setState(prev => ({ ...prev, isTranscribing: true }));
+      setState(prev => ({ ...prev, isTranscribing: true, error: null }));
       
       const response = await fetch(audioUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio file');
+      }
+      
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
       const result = await transcribeAudio(audioData, settings);
       
-      setState(prev => ({ ...prev, transcriptions: result }));
+      setState(prev => ({ 
+        ...prev, 
+        transcriptions: result,
+        isTranscribing: false,
+        error: null
+      }));
       
       toast({
         title: "Processing complete",
@@ -71,31 +59,55 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       });
     } catch (error) {
       console.error('Error processing audio:', error);
+      setState(prev => ({ 
+        ...prev, 
+        isTranscribing: false,
+        error: error instanceof Error ? error.message : 'Failed to process audio file'
+      }));
+      
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process audio file",
         variant: "destructive",
       });
-    } finally {
-      setState(prev => ({ ...prev, isTranscribing: false }));
     }
-  };
+  }, [audioUrl, settings, toast]);
 
-  const handleTimeUpdate = (time: number) => {
+  useEffect(() => {
+    if (audioUrl) {
+      processAudio();
+    }
+    
+    return () => {
+      if (audioUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl, processAudio]);
+
+  const handleTimeUpdate = useCallback((time: number) => {
     setState(prev => ({ ...prev, currentTime: time }));
-  };
+  }, []);
 
-  const handlePlayPause = (isPlaying: boolean) => {
+  const handlePlayPause = useCallback((isPlaying: boolean) => {
     setState(prev => ({ ...prev, isPlaying }));
-  };
+  }, []);
 
-  const handleReady = () => {
+  const handleReady = useCallback(() => {
     setState(prev => ({ ...prev, isReady: true }));
-  };
+  }, []);
 
-  const handleDurationChange = (duration: number) => {
+  const handleDurationChange = useCallback((duration: number) => {
     setState(prev => ({ ...prev, duration }));
-  };
+  }, []);
+
+  if (state.error) {
+    return (
+      <Card className="p-6 text-center text-red-500">
+        <p>Error: {state.error}</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -105,8 +117,9 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <WaveformVisualizer
+            key={audioUrl} // Prevent unnecessary reloads
             url={audioUrl}
-            speakers={speakers}
+            speakers={[]}
             onTimeUpdate={handleTimeUpdate}
             onPlayPause={handlePlayPause}
             onReady={handleReady}
@@ -121,12 +134,19 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         onPlayPause={() => handlePlayPause(!state.isPlaying)}
       />
 
-      <TranscriptionDisplay
-        transcriptions={state.transcriptions}
-        currentTime={state.currentTime}
-        onTimeClick={(time) => handleTimeUpdate(time)}
-        settings={settings}
-      />
+      {state.isTranscribing ? (
+        <Card className="p-6 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p className="mt-2">Transcribing audio...</p>
+        </Card>
+      ) : (
+        <TranscriptionDisplay
+          transcriptions={state.transcriptions}
+          currentTime={state.currentTime}
+          onTimeClick={handleTimeUpdate}
+          settings={settings}
+        />
+      )}
     </div>
   );
 };
