@@ -1,4 +1,4 @@
-import { AudioSettings } from '@/utils/settings';
+import { AudioSettings } from '@/types/audio/settings';
 
 export const getModelPath = (modelId: string): string => {
   // Use a smaller model that's more likely to work in the browser
@@ -9,7 +9,7 @@ export const createModelConfig = (settings: AudioSettings) => {
   return {
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
-    device: "webgpu",
+    device: "webgpu" as const,
     dtype: "fp32" as const
   };
 };

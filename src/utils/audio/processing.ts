@@ -1,6 +1,7 @@
 import { pipeline } from "@huggingface/transformers";
 import { getSettings } from "@/utils/settings";
 import { getModelPath, createModelConfig, createTranscriptionConfig } from './modelConfig';
+import { Transcription } from '@/types/audio/transcription';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -16,14 +17,18 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   }
 };
 
-export const transcribeAudio = async (float32Array: Float32Array): Promise<any[]> => {
+export const transcribeAudio = async (float32Array: Float32Array): Promise<Transcription[]> => {
   const settings = getSettings();
   const modelPath = getModelPath(settings.defaultModel);
   console.log('Using model path:', modelPath);
 
   try {
-    const modelConfig = createModelConfig(settings);
-    const transcriptionConfig = createTranscriptionConfig(settings);
+    const modelConfig = {
+      revision: settings.modelRevision,
+      cache_dir: settings.enableModelCaching ? undefined : null,
+      device: "webgpu" as const,
+      dtype: "fp32" as const
+    };
 
     console.log('Creating pipeline with config:', modelConfig);
     const transcriber = await pipeline(
@@ -32,7 +37,7 @@ export const transcribeAudio = async (float32Array: Float32Array): Promise<any[]
       modelConfig
     );
 
-    const result = await transcriber(float32Array, transcriptionConfig);
+    const result = await transcriber(float32Array, createTranscriptionConfig(settings));
     console.log('Transcription result:', result);
 
     const chunks = Array.isArray(result) ? result : [result];
