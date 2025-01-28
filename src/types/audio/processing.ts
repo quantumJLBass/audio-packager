@@ -1,4 +1,5 @@
 import { Pipeline } from '@huggingface/transformers';
+import { Transcription } from './transcription';
 
 export interface PretrainedModelOptions {
   device: "webgpu";

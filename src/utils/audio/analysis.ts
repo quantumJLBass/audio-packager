@@ -1,4 +1,4 @@
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, TextClassificationOutput, AudioClassificationOutput } from '@huggingface/transformers';
 import { getSettings } from '../settings';
 import { PretrainedModelOptions } from '@/types/audio/processing';
 
@@ -15,7 +15,8 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
   try {
     const classifier = await pipeline("text-classification", settings.sentimentModel, modelOptions);
     const result = await classifier(text);
-    return Array.isArray(result) ? result[0].label : result.label;
+    const output = Array.isArray(result) ? result[0] : result;
+    return (output as TextClassificationOutput).scores[0].toString();
   } catch (error) {
     console.error('Sentiment analysis error:', error);
     throw error;
@@ -34,21 +35,10 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   };
 
   try {
-    // Initialize the audio analysis pipeline
     const analyzer = await pipeline("audio-classification", settings.defaultModel, modelOptions);
-    
-    // Process the audio data
-    const result = await analyzer(audioData, {
-      return_all_scores: true,
-      top_k: 1
-    });
-
-    // Extract the dominant tone
-    const tone = Array.isArray(result) 
-      ? result[0].label 
-      : (result as any).label || 'neutral';
-
-    return tone.toLowerCase();
+    const result = await analyzer(audioData);
+    const output = Array.isArray(result) ? result[0] : result;
+    return ((output as AudioClassificationOutput).scores[0] || 'neutral').toString().toLowerCase();
   } catch (error) {
     console.error('Tone analysis error:', error);
     return 'neutral';

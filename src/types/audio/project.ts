@@ -2,7 +2,7 @@ import { AudioMetadata } from './metadata';
 import { Transcription } from './transcription';
 import { AudioAnalysis } from './analysis';
 import { Speaker } from './speaker';
-import { ProcessingOptions } from './processing';
+import { AudioProcessingOptions } from './processing';
 
 export interface AudioProject {
   id: string;
@@ -10,7 +10,7 @@ export interface AudioProject {
   transcriptions: Transcription[];
   analysis: AudioAnalysis;
   speakers: Speaker[];
-  processingOptions: ProcessingOptions;
+  processingOptions: AudioProcessingOptions;
   status: 'idle' | 'processing' | 'completed' | 'error';
   error?: string;
 }

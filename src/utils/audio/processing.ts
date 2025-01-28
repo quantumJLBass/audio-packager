@@ -1,4 +1,4 @@
-import { pipeline } from '@huggingface/transformers';
+import { pipeline, AutomaticSpeechRecognitionOutput } from '@huggingface/transformers';
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
 import { Transcription } from '@/types/audio/transcription';
@@ -36,24 +36,27 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
   try {
     const transcriber = await pipeline("automatic-speech-recognition", settings.defaultModel, modelOptions);
-    const result = await transcriber(audioData, processingOptions);
+    const result = await transcriber(audioData, processingOptions) as AutomaticSpeechRecognitionOutput;
     
-    if (!Array.isArray(result.chunks)) {
-      throw new Error('Unexpected transcription result format');
+    if (!result.text) {
+      throw new Error('No transcription result');
     }
 
-    return result.chunks.map((chunk: ProcessingResult) => ({
+    // Create a single transcription segment if no timestamps
+    const segments: Transcription[] = [{
       id: uuidv4(),
-      text: chunk.text,
-      start: chunk.start,
-      end: chunk.end,
-      confidence: chunk.confidence,
+      text: result.text,
+      start: 0,
+      end: 0,
+      confidence: 1,
       speaker: {
         id: `speaker-1`,
         name: 'Speaker 1',
         color: settings.speakerColors[0]
       }
-    }));
+    }];
+
+    return segments;
   } catch (error) {
     console.error('Transcription error:', error);
     throw error;
