@@ -43,14 +43,25 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
 
+      // Convert Float32Array to base64 string for transcription
+      const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+      const reader = new FileReader();
+      const audioBase64 = await new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          resolve(base64.split(',')[1]); // Remove data URL prefix
+        };
+        reader.readAsDataURL(audioBlob);
+      });
+
       // Start transcription process
       setState(prev => ({ ...prev, isTranscribing: true }));
       
       // Run transcription, sentiment and tone analysis in parallel
       const [transcriptionResult, sentimentResult, toneResult] = await Promise.allSettled([
-        transcribeAudio(audioData),
-        analyzeSentiment(audioData),
-        analyzeTone(audioData)
+        transcribeAudio(audioBase64),
+        analyzeSentiment(audioBase64),
+        analyzeTone(audioBase64)
       ]);
 
       // Handle transcription results
@@ -77,12 +88,10 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
       // Handle sentiment and tone results independently
       if (sentimentResult.status === 'fulfilled') {
-        // Handle sentiment result
         console.log('Sentiment analysis complete:', sentimentResult.value);
       }
 
       if (toneResult.status === 'fulfilled') {
-        // Handle tone result
         console.log('Tone analysis complete:', toneResult.value);
       }
 
@@ -104,7 +113,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   useEffect(() => {
     if (audioUrl) {
-      // Start processing in the background
       processAudio();
     }
     return () => {
@@ -130,7 +138,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     setState(prev => ({ ...prev, duration }));
   }, []);
 
-  // Render waveform immediately
   return (
     <div className="space-y-4">
       <ImmediateAudioVisualizer

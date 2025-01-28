@@ -44,6 +44,7 @@ export interface AudioSettings {
     progress: string;
     cursor: string;
   };
+  waveformHeight: number;  // Added this property
   
   // Volume Settings
   minVolume: number;
