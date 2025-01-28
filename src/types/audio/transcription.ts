@@ -2,11 +2,11 @@ import { Speaker } from './speaker';
 
 export interface Transcription {
   id: string;
+  text: string;
   start: number;
   end: number;
-  text: string;
-  speaker?: Speaker;
   confidence: number;
+  speaker?: Speaker;
 }
 
 export interface TranscriptionSegment {

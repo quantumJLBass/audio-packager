@@ -1,11 +1,8 @@
 import { pipeline } from "@huggingface/transformers";
-import { Transcription, PretrainedModelOptions, TranscriptionConfig, AudioSettings } from "@/types/audio";
-import { getSettings } from "@/utils/settings";
-
-const getModelPath = (modelId: string): string => {
-  // Use a smaller model that's more likely to work in the browser
-  return `openai/whisper-small`;
-};
+import { v4 as uuidv4 } from 'uuid';
+import { getSettings } from './settings';
+import { Transcription } from '@/types/audio/transcription';
+import { AudioAnalysis } from '@/types/audio/analysis';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -16,65 +13,54 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
     return audioBuffer.getChannelData(0);
   } catch (error) {
     console.error('Error processing audio buffer:', error);
-    throw new Error('Failed to process audio buffer. Please try a different file.');
+    throw new Error('Failed to process audio buffer');
   }
 };
 
-export const transcribeAudio = async (float32Array: Float32Array, settings: AudioSettings): Promise<Transcription[]> => {
+export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
+  const settings = getSettings();
   console.log('Starting transcription with settings:', settings);
+  
   try {
-    const modelPath = getModelPath(settings.defaultModel);
+    const modelPath = 'onnx-community/whisper-tiny.en';
     console.log('Using model path:', modelPath);
     
-    const modelConfig: PretrainedModelOptions = {
-      revision: settings.modelRevision,
-      cache_dir: settings.enableModelCaching ? undefined : null,
-      device: "webgpu",
-      dtype: "fp32" as const
-    };
-
-    console.log('Creating pipeline with config:', modelConfig);
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
-      modelConfig
+      { 
+        device: "webgpu",
+        revision: settings.modelRevision,
+        cache_dir: settings.enableModelCaching ? undefined : null
+      }
     );
     
-    console.log('Pipeline created, starting transcription...');
-    const transcriptionConfig: TranscriptionConfig = {
+    const result = await transcriber(audioData, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       task: "transcribe",
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: true,
-      max_new_tokens: 128,
-      num_beams: 1,
-      temperature: 0,
-      no_repeat_ngram_size: 3
-    };
-
-    const result = await transcriber(float32Array, transcriptionConfig);
-    console.log('Transcription result:', result);
-
-    const chunks = Array.isArray(result) ? result : [result];
+      return_timestamps: true
+    });
     
-    return chunks.map((chunk: any, index: number) => ({
-      text: chunk.text || settings.noSpeechText,
-      start: chunk.timestamp?.[0] || index * settings.defaultStrideLength,
-      end: chunk.timestamp?.[1] || (index + 1) * settings.defaultStrideLength,
-      confidence: chunk.confidence || settings.defaultConfidence,
+    console.log('Transcription result:', result);
+    
+    const chunks = Array.isArray(result) ? result : [result];
+    return chunks.map((chunk: any): Transcription => ({
+      id: uuidv4(),
+      text: chunk.text?.trim() ?? settings.noSpeechText,
+      start: chunk.timestamp?.[0] ?? 0,
+      end: chunk.timestamp?.[1] ?? 0,
+      confidence: chunk.confidence ?? settings.defaultConfidence,
       speaker: {
-        id: settings.speakerIdTemplate.replace('{idx}', String(index % settings.maxSpeakers + 1)),
-        name: settings.speakerNameTemplate.replace('{idx}', String(index % settings.maxSpeakers + 1)),
-        color: settings.speakerColors[index % settings.speakerColors.length]
+        id: settings.speakerIdTemplate.replace('{idx}', '1'),
+        name: settings.speakerNameTemplate.replace('{idx}', '1'),
+        color: settings.speakerColors[0]
       }
     }));
   } catch (error) {
     console.error('Transcription error:', error);
-    if (error.message?.includes('Unauthorized')) {
-      throw new Error('Invalid HuggingFace token. Please check your settings and try again.');
-    }
-    throw new Error('Failed to transcribe audio. Please try again.');
+    throw new Error('Failed to transcribe audio');
   }
 };
 
@@ -84,7 +70,7 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentModel,
-      { device: "webgpu", dtype: "fp32" }
+      { apiKey: settings.huggingFaceToken }
     );
     
     const result = await classifier(text);
@@ -95,16 +81,11 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
   }
 };
 
-export const analyzeTone = async (audioData: Float32Array): Promise<{
-  pitch: number;
-  tempo: number;
-  energy: number;
-}> => {
-  const settings = getSettings();
+export const analyzeTone = async (audioData: Float32Array): Promise<AudioAnalysis['tone']> => {
   try {
     return {
-      pitch: calculatePitch(audioData, settings),
-      tempo: calculateTempo(audioData, settings),
+      pitch: calculatePitch(audioData),
+      tempo: calculateTempo(audioData),
       energy: calculateEnergy(audioData)
     };
   } catch (error) {
@@ -113,18 +94,23 @@ export const analyzeTone = async (audioData: Float32Array): Promise<{
   }
 };
 
-const calculatePitch = (audioData: Float32Array, settings: AudioSettings): number => {
+const calculatePitch = (audioData: Float32Array): number => {
+  const settings = getSettings();
   try {
-    const correlations = new Float32Array(settings.fftSize);
+    const sampleRate = settings.audioSampleRate;
+    const bufferSize = settings.fftSize;
     
-    for (let lag = 0; lag < settings.fftSize; lag++) {
+    // Implement autocorrelation-based pitch detection
+    const correlations = new Float32Array(bufferSize);
+    for (let lag = 0; lag < bufferSize; lag++) {
       let correlation = 0;
-      for (let i = 0; i < settings.fftSize - lag; i++) {
+      for (let i = 0; i < bufferSize - lag; i++) {
         correlation += audioData[i] * audioData[i + lag];
       }
       correlations[lag] = correlation;
     }
     
+    // Find the highest correlation peak
     let maxCorrelation = 0;
     let maxLag = 0;
     for (let lag = settings.minPitchLag; lag < settings.maxPitchLag; lag++) {
@@ -134,17 +120,20 @@ const calculatePitch = (audioData: Float32Array, settings: AudioSettings): numbe
       }
     }
     
-    return settings.audioSampleRate / maxLag;
+    return sampleRate / maxLag;
   } catch (error) {
     console.error('Pitch calculation error:', error);
-    return getSettings().defaultPitch;
+    return settings.defaultPitch;
   }
 };
 
-const calculateTempo = (audioData: Float32Array, settings: AudioSettings): number => {
+const calculateTempo = (audioData: Float32Array): number => {
+  const settings = getSettings();
   try {
+    const sampleRate = settings.audioSampleRate;
     const bufferSize = settings.fftSize;
     
+    // Implement onset detection for tempo estimation
     const energyProfile = new Float32Array(Math.floor(audioData.length / bufferSize));
     for (let i = 0; i < energyProfile.length; i++) {
       let sum = 0;
@@ -154,6 +143,7 @@ const calculateTempo = (audioData: Float32Array, settings: AudioSettings): numbe
       energyProfile[i] = sum;
     }
     
+    // Find peaks in energy profile
     const peaks = [];
     for (let i = 1; i < energyProfile.length - 1; i++) {
       if (energyProfile[i] > energyProfile[i - 1] && 
@@ -163,12 +153,11 @@ const calculateTempo = (audioData: Float32Array, settings: AudioSettings): numbe
       }
     }
     
-    if (peaks.length < 2) {
-      return settings.defaultTempo;
-    }
+    // Calculate average time between peaks
+    if (peaks.length < 2) return settings.defaultTempo;
     
     const avgTimeBetweenPeaks = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
-    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / settings.audioSampleRate);
+    const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / sampleRate);
     
     return Math.round(bpm);
   } catch (error) {
