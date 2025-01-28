@@ -41,6 +41,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     );
 
     const result = await transcriber(audioData, processingOptions);
+    console.log('Transcription result:', result);
     
     if (!Array.isArray(result) && result.text) {
       return [{
@@ -60,6 +61,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     return [];
   } catch (error) {
     console.error('Transcription error:', error);
-    return [];
+    throw error;
   }
 };

@@ -5,10 +5,8 @@ import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
 import { analyzeSentiment, analyzeTone } from '@/utils/audio/analysis';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
-import { AudioVisualization } from './AudioVisualization';
-import { TranscriptionSection } from './TranscriptionSection';
-import { ProcessingStatus } from './processing/ProcessingStatus';
-import { Transcription } from '@/types/audio/transcription';
+import { AudioVisualizer } from './processor/AudioVisualizer';
+import { AudioProcessingStateComponent } from './processor/AudioProcessingState';
 
 interface AudioProcessorProps {
   audioUrl: string;
@@ -32,14 +30,18 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     error: null
   });
 
+  // Immediately show waveform
+  useEffect(() => {
+    if (audioUrl) {
+      setState(prev => ({ ...prev, isReady: true }));
+    }
+  }, [audioUrl]);
+
   const processAudio = useCallback(async () => {
     if (!audioUrl) return;
 
-    // Start with waveform visualization immediately
-    setState(prev => ({ ...prev, isReady: true }));
-
     try {
-      // Process audio in parallel
+      // Start processing in parallel
       const response = await fetch(audioUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch audio file');
@@ -52,17 +54,31 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       setState(prev => ({ ...prev, isTranscribing: true }));
       
       // Run transcription, sentiment and tone analysis in parallel
-      const [transcriptions, sentiment, tone] = await Promise.allSettled([
-        transcribeAudio(audioData),
-        analyzeSentiment(""), // Will be updated with actual text once transcription is done
-        analyzeTone(audioData)
+      const [transcriptionResult, sentimentResult, toneResult] = await Promise.allSettled([
+        transcribeAudio(audioData).catch(error => {
+          console.error('Transcription error:', error);
+          toast({
+            title: "Transcription Warning",
+            description: "Failed to transcribe audio, but continuing with other processing",
+            variant: "destructive",
+          });
+          return [];
+        }),
+        analyzeSentiment("").catch(error => {
+          console.error('Sentiment analysis error:', error);
+          return 'neutral';
+        }),
+        analyzeTone(audioData).catch(error => {
+          console.error('Tone analysis error:', error);
+          return null;
+        })
       ]);
 
       // Handle transcription results
-      if (transcriptions.status === 'fulfilled' && transcriptions.value.length > 0) {
+      if (transcriptionResult.status === 'fulfilled' && transcriptionResult.value.length > 0) {
         setState(prev => ({ 
           ...prev, 
-          transcriptions: transcriptions.value,
+          transcriptions: transcriptionResult.value,
           isTranscribing: false 
         }));
 
@@ -72,6 +88,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         });
       } else {
         console.warn('Transcription failed or returned empty results');
+        setState(prev => ({ ...prev, isTranscribing: false }));
         toast({
           title: "Warning",
           description: "Transcription completed but no results were found",
@@ -123,7 +140,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   return (
     <div className="space-y-4">
-      <AudioVisualization
+      <AudioVisualizer
         url={audioUrl}
         settings={settings}
         onTimeUpdate={handleTimeUpdate}
@@ -137,18 +154,10 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         onPlayPause={() => handlePlayPause(!state.isPlaying)}
       />
 
-      <ProcessingStatus
-        isTranscribing={state.isTranscribing}
-        error={state.error}
+      <AudioProcessingStateComponent
+        {...state}
+        onTimeUpdate={handleTimeUpdate}
       />
-
-      {!state.isTranscribing && !state.error && state.transcriptions.length > 0 && (
-        <TranscriptionSection
-          transcriptions={state.transcriptions}
-          currentTime={state.currentTime}
-          onTimeClick={handleTimeUpdate}
-        />
-      )}
     </div>
   );
 };
