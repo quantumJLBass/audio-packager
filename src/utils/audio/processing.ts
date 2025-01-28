@@ -19,7 +19,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const modelOptions: PretrainedModelOptions = {
     device: "webgpu",
     revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null
+    cache_dir: settings.enableModelCaching ? undefined : null,
+    dtype: "fp32"
   };
 
   const processingOptions: AudioProcessingOptions = {
@@ -27,7 +28,11 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     strideLength: settings.defaultStrideLength,
     language: settings.defaultLanguage === 'auto' ? 'en' : settings.defaultLanguage,
     task: "transcribe",
-    return_timestamps: true
+    return_timestamps: true,
+    max_new_tokens: 225,
+    num_beams: 5,
+    temperature: 0.0,
+    no_repeat_ngram_size: 3
   };
 
   try {
@@ -43,7 +48,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       throw new Error('No transcription result');
     }
 
-    // Create segments from the transcription
     const segments: Transcription[] = [{
       id: uuidv4(),
       text: result.text,

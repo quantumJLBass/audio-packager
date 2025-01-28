@@ -62,17 +62,19 @@ export const VisualizationSettings: React.FC<VisualizationSettingsProps> = ({
                       label={key}
                       tooltip={`Color for the ${key} element of the waveform`}
                     >
-                      <Input
-                        type="color"
-                        value={value}
-                        onChange={(e) => onChange({
-                          ...settings,
-                          waveformColors: {
-                            ...settings.waveformColors,
-                            [key]: e.target.value
-                          }
-                        })}
-                      />
+
+<Input
+  type="color"
+  value={value as string}
+  onChange={(e) => onChange({
+    ...settings,
+    waveformColors: {
+      ...settings.waveformColors,
+      [key]: e.target.value
+    }
+  })}
+/>
+
                     </SettingField>
                   ))}
                 </div>
