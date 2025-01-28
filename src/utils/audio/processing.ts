@@ -23,11 +23,9 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     dtype: "fp32"
   };
 
-  const processingOptions: AudioProcessingOptions = {
-    chunkLength: settings.defaultChunkLength,
-    strideLength: settings.defaultStrideLength,
-    language: 'en',
-    task: "transcribe",
+  const processingOptions = {
+    chunk_length_s: settings.defaultChunkLength,
+    stride_length_s: settings.defaultStrideLength,
     return_timestamps: true,
     max_new_tokens: 225,
     num_beams: 5,
