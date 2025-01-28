@@ -16,7 +16,8 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     const classifier = await pipeline("text-classification", settings.sentimentModel, modelOptions);
     const result = await classifier(text);
     const output = Array.isArray(result) ? result[0] : result;
-    return (output as TextClassificationOutput).scores[0].toString();
+    // Access the first classification result directly
+    return ((output as any).label || 'neutral').toString();
   } catch (error) {
     console.error('Sentiment analysis error:', error);
     throw error;
@@ -38,7 +39,8 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
     const analyzer = await pipeline("audio-classification", settings.defaultModel, modelOptions);
     const result = await analyzer(audioData);
     const output = Array.isArray(result) ? result[0] : result;
-    return ((output as AudioClassificationOutput).scores[0] || 'neutral').toString().toLowerCase();
+    // Access the first classification result directly
+    return ((output as any).label || 'neutral').toString().toLowerCase();
   } catch (error) {
     console.error('Tone analysis error:', error);
     return 'neutral';
