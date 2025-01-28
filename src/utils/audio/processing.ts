@@ -19,19 +19,18 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const modelOptions: PretrainedModelOptions = {
     device: "webgpu",
     revision: settings.modelRevision,
-    quantized: true // Enable quantized model
+    cache_dir: settings.enableModelCaching ? undefined : null
   };
 
   const processingOptions: AudioProcessingOptions = {
-    chunk_length_s: settings.defaultChunkLength,
-    stride_length_s: settings.defaultStrideLength,
+    chunkLength: settings.defaultChunkLength,
+    strideLength: settings.defaultStrideLength,
     language: settings.defaultLanguage === 'auto' ? 'en' : settings.defaultLanguage,
     task: "transcribe",
     return_timestamps: true
   };
 
   try {
-    // Use a quantized model that's optimized for web browsers
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       "distil-whisper/distil-small.en",
