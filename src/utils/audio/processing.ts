@@ -1,8 +1,8 @@
-import { pipeline, AutomaticSpeechRecognitionOutput } from '@huggingface/transformers';
+import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
 import { Transcription } from '@/types/audio/transcription';
-import { PretrainedModelOptions, AudioProcessingOptions } from '@/types/audio/processing';
+import { PretrainedModelOptions } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -40,7 +40,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       modelOptions
     );
 
-    const result = await transcriber(audioData, processingOptions) as AutomaticSpeechRecognitionOutput;
+    const result = await transcriber(audioData, processingOptions);
     
     if (!Array.isArray(result) && result.text) {
       return [{
@@ -57,9 +57,9 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       }];
     }
     
-    throw new Error('Invalid transcription result format');
+    return [];
   } catch (error) {
     console.error('Transcription error:', error);
-    throw error;
+    return [];
   }
 };

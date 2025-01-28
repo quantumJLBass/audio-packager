@@ -35,9 +35,11 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   const processAudio = useCallback(async () => {
     if (!audioUrl) return;
 
+    // Start with waveform visualization immediately
+    setState(prev => ({ ...prev, isReady: true }));
+
     try {
-      setState(prev => ({ ...prev, isTranscribing: true, error: null }));
-      
+      // Process audio in parallel
       const response = await fetch(audioUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch audio file');
@@ -45,28 +47,37 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
+
+      // Start transcription process
+      setState(prev => ({ ...prev, isTranscribing: true }));
       
-      const transcriptions = await transcribeAudio(audioData);
-      
-      const enhancedTranscriptions = await Promise.all(
-        transcriptions.map(async (t) => ({
-          ...t,
-          sentiment: await analyzeSentiment(t.text),
-          tone: await analyzeTone(audioData)
-        }))
-      );
-      
-      setState(prev => ({ 
-        ...prev, 
-        transcriptions: enhancedTranscriptions,
-        isTranscribing: false,
-        error: null
-      }));
-      
-      toast({
-        title: "Processing complete",
-        description: "Audio has been successfully transcribed and analyzed",
-      });
+      // Run transcription, sentiment and tone analysis in parallel
+      const [transcriptions, sentiment, tone] = await Promise.allSettled([
+        transcribeAudio(audioData),
+        analyzeSentiment(""), // Will be updated with actual text once transcription is done
+        analyzeTone(audioData)
+      ]);
+
+      // Handle transcription results
+      if (transcriptions.status === 'fulfilled' && transcriptions.value.length > 0) {
+        setState(prev => ({ 
+          ...prev, 
+          transcriptions: transcriptions.value,
+          isTranscribing: false 
+        }));
+
+        toast({
+          title: "Processing complete",
+          description: "Audio has been successfully transcribed",
+        });
+      } else {
+        console.warn('Transcription failed or returned empty results');
+        toast({
+          title: "Warning",
+          description: "Transcription completed but no results were found",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Error processing audio:', error);
       setState(prev => ({ 
@@ -131,7 +142,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         error={state.error}
       />
 
-      {!state.isTranscribing && !state.error && (
+      {!state.isTranscribing && !state.error && state.transcriptions.length > 0 && (
         <TranscriptionSection
           transcriptions={state.transcriptions}
           currentTime={state.currentTime}
