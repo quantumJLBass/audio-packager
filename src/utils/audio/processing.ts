@@ -16,6 +16,17 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   console.log('Transcribing audio...');
   const settings = getSettings();
   
+  // Convert Float32Array to base64 string for the model
+  const audioBlob = new Blob([audioData], { type: 'audio/wav' });
+  const base64String = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      resolve(base64.split(',')[1]); // Remove data URL prefix
+    };
+    reader.readAsDataURL(audioBlob);
+  });
+
   const modelOptions: PretrainedModelOptions = {
     device: "webgpu",
     revision: settings.modelRevision,
@@ -24,14 +35,13 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   };
 
   try {
-    // Use a better model for transcription
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       "openai/whisper-small",
       modelOptions
     );
 
-    const result = await transcriber(audioData, {
+    const result = await transcriber(base64String, {
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: true
