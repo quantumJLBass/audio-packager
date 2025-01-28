@@ -2,7 +2,7 @@ import { pipeline, AutomaticSpeechRecognitionOutput } from '@huggingface/transfo
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
 import { Transcription } from '@/types/audio/transcription';
-import { PretrainedModelOptions, AudioProcessingOptions, ProcessingResult } from '@/types/audio/processing';
+import { PretrainedModelOptions, AudioProcessingOptions } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -19,30 +19,32 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const modelOptions: PretrainedModelOptions = {
     device: "webgpu",
     revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null
+    quantized: true // Enable quantized model
   };
 
   const processingOptions: AudioProcessingOptions = {
-    chunkLength: settings.defaultChunkLength,
-    strideLength: settings.defaultStrideLength,
+    chunk_length_s: settings.defaultChunkLength,
+    stride_length_s: settings.defaultStrideLength,
     language: settings.defaultLanguage === 'auto' ? 'en' : settings.defaultLanguage,
     task: "transcribe",
-    return_timestamps: true,
-    max_new_tokens: 128,
-    num_beams: 1,
-    temperature: 0,
-    no_repeat_ngram_size: 3
+    return_timestamps: true
   };
 
   try {
-    const transcriber = await pipeline("automatic-speech-recognition", settings.defaultModel, modelOptions);
+    // Use a quantized model that's optimized for web browsers
+    const transcriber = await pipeline(
+      "automatic-speech-recognition",
+      "distil-whisper/distil-small.en",
+      modelOptions
+    );
+
     const result = await transcriber(audioData, processingOptions) as AutomaticSpeechRecognitionOutput;
     
     if (!result.text) {
       throw new Error('No transcription result');
     }
 
-    // Create a single transcription segment if no timestamps
+    // Create segments from the transcription
     const segments: Transcription[] = [{
       id: uuidv4(),
       text: result.text,

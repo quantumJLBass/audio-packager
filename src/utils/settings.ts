@@ -1,3 +1,5 @@
+import { Transcription } from './transcription';
+
 export interface AudioSettings {
   // API Keys
   huggingFaceToken: string;
@@ -22,56 +24,22 @@ export interface AudioSettings {
   maxSpeakers: number;
   
   // Model Settings
-  supportedModels: Array<{
-    id: string;
-    name: string;
-  }>;
   modelRevision: string;
   enableModelCaching: boolean;
-  sentimentModel: string;
-  supportedLanguages: Array<{
-    code: string;
-    name: string;
-  }>;
   defaultLanguage: string;
-  
-  // Visualization
-  waveformColors: {
-    background: string;
-    waveform: string;
-    progress: string;
-    cursor: string;
-  };
-  
-  // Volume Settings
-  minVolume: number;
-  maxVolume: number;
-  volumeStep: number;
-  
-  // Zoom Settings
-  minZoom: number;
-  maxZoom: number;
-  defaultZoom: number;
-  zoomStep: number;
-  
-  // Time Format
-  timeFormat: string;
-  showMilliseconds: boolean;
   
   // Processing Options
   defaultChunkLength: number;
   defaultStrideLength: number;
   defaultFloatingPoint: number;
 
-  minPxPerSec: number;
-  defaultDiarization: boolean;
   initialState: {
     currentTime: number;
     isPlaying: boolean;
     duration: number;
     isReady: boolean;
     isTranscribing: boolean;
-    transcriptions: any[];
+    transcriptions: Transcription[];
     error: string | null;
   };
 }
@@ -89,7 +57,7 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: 'large-v3-turbo',
+  defaultModel: "distil-whisper/distil-small.en", // Update default model
   
   speakerIdTemplate: "speaker-{idx}",
   speakerNameTemplate: "Speaker {idx}",
@@ -107,7 +75,8 @@ const defaultSettings: AudioSettings = {
     { id: 'medium', name: 'Whisper Medium' },
     { id: 'small', name: 'Whisper Small' },
     { id: 'base', name: 'Whisper Base' },
-    { id: 'tiny', name: 'Whisper Tiny' }
+    { id: 'tiny', name: 'Whisper Tiny' },
+    { id: 'distil-small', name: 'Distil Whisper Small' } // Added new model
   ],
   modelRevision: 'main',
   enableModelCaching: true,
