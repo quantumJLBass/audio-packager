@@ -1,4 +1,4 @@
-import { pipeline, AutomaticSpeechRecognitionOutput } from '@huggingface/transformers';
+import { pipeline } from '@huggingface/transformers';
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
 import { Transcription } from '@/types/audio/transcription';
@@ -26,7 +26,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const processingOptions: AudioProcessingOptions = {
     chunkLength: settings.defaultChunkLength,
     strideLength: settings.defaultStrideLength,
-    language: settings.defaultLanguage === 'auto' ? 'en' : settings.defaultLanguage,
     task: "transcribe",
     return_timestamps: true,
     max_new_tokens: 225,
@@ -42,7 +41,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       modelOptions
     );
 
-    const result = await transcriber(audioData, processingOptions) as AutomaticSpeechRecognitionOutput;
+    const result = await transcriber(audioData, processingOptions);
     
     if (!result.text) {
       throw new Error('No transcription result');
