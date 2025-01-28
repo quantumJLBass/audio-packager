@@ -23,39 +23,35 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     dtype: "fp32"
   };
 
-  const processingOptions = {
-    chunk_length_s: settings.defaultChunkLength,
-    stride_length_s: settings.defaultStrideLength,
-    return_timestamps: true,
-    max_new_tokens: 225,
-    num_beams: 5,
-    temperature: 0.0,
-    no_repeat_ngram_size: 3
-  };
-
   try {
+    // Use a better model for transcription
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      "distil-whisper/distil-small.en",
+      "openai/whisper-small",
       modelOptions
     );
 
-    const result = await transcriber(audioData, processingOptions);
+    const result = await transcriber(audioData, {
+      chunk_length_s: settings.defaultChunkLength,
+      stride_length_s: settings.defaultStrideLength,
+      return_timestamps: true
+    });
+
     console.log('Transcription result:', result);
     
-    if (!Array.isArray(result) && result.text) {
-      return [{
+    if (!Array.isArray(result) && result.chunks) {
+      return result.chunks.map((chunk: any, index: number) => ({
         id: uuidv4(),
-        text: result.text,
-        start: 0,
-        end: 0,
-        confidence: 1,
+        text: chunk.text || settings.noSpeechText,
+        start: chunk.timestamp[0] || 0,
+        end: chunk.timestamp[1] || 0,
+        confidence: chunk.confidence || settings.defaultConfidence,
         speaker: {
-          id: `speaker-1`,
-          name: 'Speaker 1',
-          color: settings.speakerColors[0]
+          id: `speaker-${Math.floor(index / 2) + 1}`,
+          name: `Speaker ${Math.floor(index / 2) + 1}`,
+          color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
         }
-      }];
+      }));
     }
     
     return [];

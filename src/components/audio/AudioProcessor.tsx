@@ -5,7 +5,7 @@ import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
 import { analyzeSentiment, analyzeTone } from '@/utils/audio/analysis';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
-import { AudioVisualizer } from './processor/AudioVisualizer';
+import { ImmediateAudioVisualizer } from './processor/ImmediateAudioVisualizer';
 import { AudioProcessingStateComponent } from './processor/AudioProcessingState';
 
 interface AudioProcessorProps {
@@ -30,13 +30,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     error: null
   });
 
-  // Immediately show waveform
-  useEffect(() => {
-    if (audioUrl) {
-      setState(prev => ({ ...prev, isReady: true }));
-    }
-  }, [audioUrl]);
-
   const processAudio = useCallback(async () => {
     if (!audioUrl) return;
 
@@ -55,23 +48,9 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       
       // Run transcription, sentiment and tone analysis in parallel
       const [transcriptionResult, sentimentResult, toneResult] = await Promise.allSettled([
-        transcribeAudio(audioData).catch(error => {
-          console.error('Transcription error:', error);
-          toast({
-            title: "Transcription Warning",
-            description: "Failed to transcribe audio, but continuing with other processing",
-            variant: "destructive",
-          });
-          return [];
-        }),
-        analyzeSentiment("").catch(error => {
-          console.error('Sentiment analysis error:', error);
-          return 'neutral';
-        }),
-        analyzeTone(audioData).catch(error => {
-          console.error('Tone analysis error:', error);
-          return null;
-        })
+        transcribeAudio(audioData),
+        analyzeSentiment(audioData),
+        analyzeTone(audioData)
       ]);
 
       // Handle transcription results
@@ -95,6 +74,18 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
           variant: "destructive",
         });
       }
+
+      // Handle sentiment and tone results independently
+      if (sentimentResult.status === 'fulfilled') {
+        // Handle sentiment result
+        console.log('Sentiment analysis complete:', sentimentResult.value);
+      }
+
+      if (toneResult.status === 'fulfilled') {
+        // Handle tone result
+        console.log('Tone analysis complete:', toneResult.value);
+      }
+
     } catch (error) {
       console.error('Error processing audio:', error);
       setState(prev => ({ 
@@ -113,6 +104,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   useEffect(() => {
     if (audioUrl) {
+      // Start processing in the background
       processAudio();
     }
     return () => {
@@ -138,9 +130,10 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     setState(prev => ({ ...prev, duration }));
   }, []);
 
+  // Render waveform immediately
   return (
     <div className="space-y-4">
-      <AudioVisualizer
+      <ImmediateAudioVisualizer
         url={audioUrl}
         settings={settings}
         onTimeUpdate={handleTimeUpdate}
