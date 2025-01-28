@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from './settings';
 import { Transcription } from '@/types/audio/transcription';
 import { AudioAnalysis } from '@/types/audio/analysis';
+import { PretrainedModelOptions } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -70,7 +71,11 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentModel,
-      { apiKey: settings.huggingFaceToken }
+      { 
+        device: "webgpu",
+        revision: settings.modelRevision,
+        cache_dir: settings.enableModelCaching ? undefined : null
+      }
     );
     
     const result = await classifier(text);
