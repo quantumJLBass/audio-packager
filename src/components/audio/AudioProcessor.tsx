@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { WaveformVisualizer } from './WaveformVisualizer';
-import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { useToast } from '@/hooks/use-toast';
 import { AudioProcessingState } from '@/types/audio/processing';
-import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
+import { processAudioBuffer, transcribeAudio, analyzeSentiment, analyzeTone } from '@/utils/audio/processing';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
 import { Loader2 } from 'lucide-react';
 import { AudioVisualization } from './AudioVisualization';
 import { TranscriptionSection } from './TranscriptionSection';
+import { Transcription } from '@/types/audio/transcription';
 
 interface AudioProcessorProps {
   audioUrl: string;
@@ -23,7 +21,15 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   settings 
 }) => {
   const { toast } = useToast();
-  const [state, setState] = useState<AudioProcessingState>(settings.initialState);
+  const [state, setState] = useState<AudioProcessingState>({
+    currentTime: 0,
+    isPlaying: false,
+    duration: 0,
+    isReady: false,
+    isTranscribing: false,
+    transcriptions: [],
+    error: null
+  });
 
   const processAudio = useCallback(async () => {
     if (!audioUrl) return;
@@ -44,18 +50,27 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       });
       
       const transcriptionPromise = transcribeAudio(audioData);
-      const result = await Promise.race([transcriptionPromise, timeoutPromise]);
+      const transcriptions = await Promise.race([transcriptionPromise, timeoutPromise]) as Transcription[];
+      
+      // Analyze sentiment and tone for each transcription
+      const enhancedTranscriptions = await Promise.all(
+        transcriptions.map(async (t) => {
+          const sentiment = await analyzeSentiment(t.text);
+          const tone = await analyzeTone(audioData);
+          return { ...t, sentiment, tone };
+        })
+      );
       
       setState(prev => ({ 
         ...prev, 
-        transcriptions: result,
+        transcriptions: enhancedTranscriptions,
         isTranscribing: false,
         error: null
       }));
       
       toast({
         title: "Processing complete",
-        description: "Audio has been successfully transcribed",
+        description: "Audio has been successfully transcribed and analyzed",
       });
     } catch (error) {
       console.error('Error processing audio:', error);
@@ -102,9 +117,9 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   if (state.error) {
     return (
-      <Card className="p-6 text-center text-red-500">
+      <div className="p-6 text-center text-red-500">
         <p>Error: {state.error}</p>
-      </Card>
+      </div>
     );
   }
 
@@ -124,12 +139,18 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         onPlayPause={() => handlePlayPause(!state.isPlaying)}
       />
 
-      <TranscriptionSection
-        isTranscribing={state.isTranscribing}
-        transcriptions={state.transcriptions}
-        currentTime={state.currentTime}
-        onTimeClick={handleTimeUpdate}
-      />
+      {state.isTranscribing ? (
+        <div className="p-6 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p className="mt-2">Processing audio...</p>
+        </div>
+      ) : (
+        <TranscriptionSection
+          transcriptions={state.transcriptions}
+          currentTime={state.currentTime}
+          onTimeClick={handleTimeUpdate}
+        />
+      )}
     </div>
   );
 };
