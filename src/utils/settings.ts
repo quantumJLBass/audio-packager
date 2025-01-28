@@ -44,6 +44,7 @@ export interface AudioSettings {
     progress: string;
     cursor: string;
   };
+  waveformHeight: number;
   
   // Volume Settings
   minVolume: number;
@@ -138,6 +139,7 @@ const defaultSettings: AudioSettings = {
     progress: '#3182ce',
     cursor: '#718096'
   },
+  waveformHeight: 128,
   
   minVolume: 0,
   maxVolume: 200,

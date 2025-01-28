@@ -34,7 +34,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     if (!audioUrl) return;
 
     try {
-      // Start processing in parallel
       const response = await fetch(audioUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch audio file');
@@ -43,25 +42,14 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
 
-      // Convert Float32Array to base64 string for transcription
-      const audioBlob = new Blob([audioData], { type: 'audio/wav' });
-      const reader = new FileReader();
-      const audioBase64 = await new Promise<string>((resolve) => {
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          resolve(base64.split(',')[1]); // Remove data URL prefix
-        };
-        reader.readAsDataURL(audioBlob);
-      });
-
       // Start transcription process
       setState(prev => ({ ...prev, isTranscribing: true }));
       
       // Run transcription, sentiment and tone analysis in parallel
       const [transcriptionResult, sentimentResult, toneResult] = await Promise.allSettled([
-        transcribeAudio(audioBase64),
-        analyzeSentiment(audioBase64),
-        analyzeTone(audioBase64)
+        transcribeAudio(audioData),
+        analyzeSentiment(audioData),
+        analyzeTone(audioData)
       ]);
 
       // Handle transcription results
