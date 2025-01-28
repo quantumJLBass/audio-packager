@@ -69,7 +69,10 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
     );
 
     const result = await transcriber(base64String);
-    return typeof result === 'string' ? result : result.text || '';
+    if (Array.isArray(result)) {
+      return result[0]?.chunks?.[0]?.text || '';
+    }
+    return result.chunks?.[0]?.text || '';
   } catch (error) {
     console.error('Audio to text conversion error:', error);
     return '';
