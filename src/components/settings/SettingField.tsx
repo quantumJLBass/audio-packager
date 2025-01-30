@@ -15,6 +15,10 @@ interface SettingFieldProps {
   id: string;
 }
 
+/**
+ * A reusable field component for settings forms
+ * Includes a label, tooltip, and children elements
+ */
 export const SettingField: React.FC<SettingFieldProps> = ({
   label,
   tooltip,

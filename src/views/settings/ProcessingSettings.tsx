@@ -19,6 +19,10 @@ interface ProcessingSettingsProps {
   onChange: (settings: AudioSettings) => void;
 }
 
+/**
+ * Component for managing audio processing settings
+ * Handles model configuration, sentiment analysis, and processing options
+ */
 export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
   settings,
   onChange
@@ -205,7 +209,7 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
               <SettingField
                 id="defaultLanguage"
                 label="Default Language"
-                tooltip="Select the primary language of the audio. Auto-detect works well for most cases."
+                tooltip="Select the primary language of the audio"
               >
                 <Select
                   value={settings.defaultLanguage}
