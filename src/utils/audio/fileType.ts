@@ -1,79 +1,47 @@
 /**
- * Utility functions for audio file type detection and validation
+ * Audio file type detection and validation utilities
  */
+import { SupportedAudioType } from '@/types/audio/processing';
 
 /**
- * List of supported audio MIME types
+ * Checks if a given MIME type is a supported audio format
  */
-export const SUPPORTED_AUDIO_TYPES = [
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-  'audio/aac',
-  'audio/flac',
-  'audio/alac',
-  'audio/aiff',
-  'audio/m4a',
-  'audio/pcm',
-  'audio/dsd',
-  'audio/mp4',
-  'audio/webm',
-  'audio/opus',
-  'audio/midi',
-  'audio/vorbis'
-] as const;
-
-export type SupportedAudioType = typeof SUPPORTED_AUDIO_TYPES[number];
-
-/**
- * Checks if a file type is a supported audio format
- */
-export const isSupportedAudioType = (type: string): type is SupportedAudioType => {
-  return SUPPORTED_AUDIO_TYPES.includes(type as SupportedAudioType);
+export const isSupportedAudioType = (mimeType: string): boolean => {
+  const supportedTypes: SupportedAudioType[] = [
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/aac',
+    'audio/flac', 'audio/alac', 'audio/aiff', 'audio/m4a',
+    'audio/pcm', 'audio/dsd', 'audio/mp4', 'audio/webm',
+    'audio/opus', 'audio/midi', 'audio/vorbis'
+  ];
+  return supportedTypes.includes(mimeType as SupportedAudioType);
 };
 
 /**
- * Gets the file extension for a given audio MIME type
+ * Validates an audio file's format and size
  */
-export const getAudioFileExtension = (mimeType: SupportedAudioType): string => {
-  const extensionMap: Record<SupportedAudioType, string> = {
-    'audio/mpeg': '.mp3',
-    'audio/wav': '.wav',
-    'audio/ogg': '.ogg',
-    'audio/aac': '.aac',
-    'audio/flac': '.flac',
-    'audio/alac': '.m4a',
-    'audio/aiff': '.aiff',
-    'audio/m4a': '.m4a',
-    'audio/pcm': '.pcm',
-    'audio/dsd': '.dsd',
-    'audio/mp4': '.m4a',
-    'audio/webm': '.webm',
-    'audio/opus': '.opus',
-    'audio/midi': '.midi',
-    'audio/vorbis': '.ogg'
-  };
-
-  return extensionMap[mimeType];
-};
-
-/**
- * Validates an audio file based on its type and size
- */
-export const validateAudioFile = (file: File): { valid: boolean; error?: string } => {
-  if (!isSupportedAudioType(file.type)) {
+export const validateAudioFile = (file: File) => {
+  // Check file type
+  if (!file.type.startsWith('audio/')) {
     return {
       valid: false,
-      error: `Unsupported file type. Supported types are: ${SUPPORTED_AUDIO_TYPES.join(', ')}`
+      error: 'File must be an audio file'
     };
   }
 
-  // 500MB max file size
-  const MAX_FILE_SIZE = 500 * 1024 * 1024;
-  if (file.size > MAX_FILE_SIZE) {
+  // Check if type is supported
+  if (!isSupportedAudioType(file.type)) {
     return {
       valid: false,
-      error: 'File size exceeds 500MB limit'
+      error: 'Unsupported audio format'
+    };
+  }
+
+  // Check file size (100MB limit)
+  const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: 'File size must be less than 100MB'
     };
   }
 
@@ -81,10 +49,9 @@ export const validateAudioFile = (file: File): { valid: boolean; error?: string 
 };
 
 /**
- * Determines the audio type from file data
+ * Determines the audio type from ArrayBuffer data
  */
-export const determineAudioType = async (file: File): Promise<SupportedAudioType | null> => {
-  const buffer = await file.arrayBuffer();
+export const determineAudioTypeFromBuffer = (buffer: ArrayBuffer): SupportedAudioType => {
   const view = new DataView(buffer);
 
   // Check file signatures
@@ -101,6 +68,6 @@ export const determineAudioType = async (file: File): Promise<SupportedAudioType
     return 'audio/mpeg';
   }
 
-  // Default to the file's reported type if supported
-  return isSupportedAudioType(file.type) ? file.type as SupportedAudioType : null;
+  // Default to MP3 if no signature match
+  return 'audio/mpeg';
 };

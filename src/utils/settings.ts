@@ -10,10 +10,10 @@ const defaultSettings: AudioSettings = {
   openAIKey: '',
   
   modelConfig: {
-    provider: 'onnx-community',
-    model: 'large-v3-turbo',
+    provider: 'openai',
+    model: 'base',
     useOnnx: true,
-    useQuantized: true,
+    useQuantized: false,
     device: DeviceType.WebGPU,
     dtype: DType.FP32
   },
@@ -73,7 +73,7 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: "large-v3-turbo",
+  defaultModel: "base",
   
   processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
@@ -95,15 +95,12 @@ const defaultSettings: AudioSettings = {
   maxSpeakers: 8,
 
   supportedModels: [
-    { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
-    { id: 'large-v3', name: 'Whisper Large v3' },
-    { id: 'large-v2', name: 'Whisper Large v2' },
-    { id: 'large', name: 'Whisper Large' },
-    { id: 'medium', name: 'Whisper Medium' },
-    { id: 'small', name: 'Whisper Small' },
     { id: 'base', name: 'Whisper Base' },
-    { id: 'tiny', name: 'Whisper Tiny' },
-    { id: 'distil-small', name: 'Distil Whisper Small' }
+    { id: 'small', name: 'Whisper Small' },
+    { id: 'medium', name: 'Whisper Medium' },
+    { id: 'large', name: 'Whisper Large' },
+    { id: 'large-v2', name: 'Whisper Large v2' },
+    { id: 'large-v3', name: 'Whisper Large v3' }
   ],
 
   modelRevision: 'main',
@@ -158,10 +155,11 @@ const defaultSettings: AudioSettings = {
   }
 };
 
+export type { AudioSettings };
+
 /**
  * Retrieves the current audio settings
  */
-export { type AudioSettings };
 export const getSettings = (): AudioSettings => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {
