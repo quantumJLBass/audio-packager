@@ -2,8 +2,6 @@ import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
-import { determineAudioTypeFromBuffer } from './fileType';
-import { buildModelPath } from './modelBuilder';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -24,9 +22,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
   try {
     // Use a simpler model that's more reliable
-    //const modelPath = "Xenova/whisper-tiny.en";
-
-    const modelPath = buildModelPath(settings.defaultModel);
+    const modelPath = "Xenova/whisper-tiny.en";
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
@@ -35,13 +31,13 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       {
         device: settings.modelConfig.device, // Fallback to CPU for reliability
         revision: settings.modelRevision,
-        quantized: settings.modelConfig.useQuantized
+        quantized: true
       }
     );
 
     // Convert Float32Array to base64 for the model
     const audioBlob = new Blob([audioData], {
-      type: determineAudioTypeFromBuffer(audioData.buffer), //'audio/wav'
+      type: 'audio/wav'
     });
     const base64String = await new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -53,11 +49,9 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     });
 
     const result = await transcriber(base64String, {
-      language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
-      task:settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: settings.returnTimestamps
+      return_timestamps: true
     });
 
     console.log('Transcription result:', result);
@@ -70,8 +64,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         end: chunk.timestamp[1] || 0,
         confidence: chunk.confidence || settings.defaultConfidence,
         speaker: {
-          id: settings.speakerIdTemplate.replace('{idx}', `${Math.floor(index / 2) + 1}`),
-          name: settings.speakerNameTemplate.replace('{idx}', `${Math.floor(index /2) + 1}'`),
+          id: `speaker-${Math.floor(index / 2) + 1}`,
+          name: `Speaker ${Math.floor(index / 2) + 1}`,
           color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
         }
       }));

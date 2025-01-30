@@ -2,7 +2,6 @@ import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
-import { determineAudioTypeFromBuffer } from './fileType';
 import { buildModelPath } from './modelBuilder';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -41,7 +40,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
     // Convert Float32Array to base64 for the model
     const audioBlob = new Blob([audioData], {
-      type: determineAudioTypeFromBuffer(audioData.buffer), //'audio/wav'
+      type: 'audio/wav'
     });
     const base64String = await new Promise<string>((resolve) => {
       const reader = new FileReader();

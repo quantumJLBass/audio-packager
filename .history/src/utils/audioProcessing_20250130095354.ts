@@ -2,7 +2,6 @@ import { AudioAnalysis } from '@/types/audio/analysis';
 import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
-import { buildModelPath } from './audio/modelBuilder';
 import { getSettings } from './settings';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -28,9 +27,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
    *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
   */
   // TODO:  use the quantized option and use it to build just like the ONNX option
-    //const modelPath = 'onnx-community/whisper-tiny.en';
-
-    const modelPath = buildModelPath(settings.defaultModel);
+    const modelPath = 'onnx-community/whisper-tiny.en';
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
@@ -54,19 +51,16 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     console.log('Transcription result:', result);
 
     const chunks = Array.isArray(result) ? result : [result];
-    return chunks.map((chunk: any, index: number): Transcription => ({
+    return chunks.map((chunk: any): Transcription => ({
       id: uuidv4(),
       text: chunk.text?.trim() ?? settings.noSpeechText,
       start: chunk.timestamp?.[0] ?? 0,
       end: chunk.timestamp?.[1] ?? 0,
       confidence: chunk.confidence ?? settings.defaultConfidence,
       speaker: {
-        // id: settings.speakerIdTemplate.replace('{idx}', '1'),
-        // name: settings.speakerNameTemplate.replace('{idx}', '1'),
-        // color: settings.speakerColors[0]
-        id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-        name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
-        color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
+        id: settings.speakerIdTemplate.replace('{idx}', '1'),
+        name: settings.speakerNameTemplate.replace('{idx}', '1'),
+        color: settings.speakerColors[0]
       }
     }));
   } catch (error) {
@@ -82,7 +76,7 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
       "text-classification",
       settings.sentimentModel,
       {
-        device: settings.modelConfig.device,
+        device: settings.modelConfig.device, // TODO: setting is it not?
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
       }

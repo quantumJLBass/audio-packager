@@ -2,7 +2,6 @@ import { AudioAnalysis } from '@/types/audio/analysis';
 import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
-import { buildModelPath } from './audio/modelBuilder';
 import { getSettings } from './settings';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
@@ -28,9 +27,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
    *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
   */
   // TODO:  use the quantized option and use it to build just like the ONNX option
-    //const modelPath = 'onnx-community/whisper-tiny.en';
-
-    const modelPath = buildModelPath(settings.defaultModel);
+    const modelPath = 'onnx-community/whisper-tiny.en';
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
