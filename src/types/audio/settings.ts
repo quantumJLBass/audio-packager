@@ -1,3 +1,6 @@
+/**
+ * Audio settings type definitions
+ */
 import { Transcription } from './transcription';
 import { DeviceType, DType, ProcessingTask } from './processing';
 

@@ -1,4 +1,9 @@
 /**
+ * Audio processing type definitions
+ */
+import { Transcription } from './transcription';
+
+/**
  * Supported device types for model processing
  */
 export enum DeviceType {

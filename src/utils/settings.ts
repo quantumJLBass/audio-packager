@@ -1,12 +1,14 @@
-import { AudioSettings } from '@/types/audio/settings';
+/**
+ * Settings management utilities
+ */
+export type { AudioSettings } from '@/types/audio/settings';
 import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
-
-export { AudioSettings };
+import { DebugLogger } from './debug';
 
 /**
  * Default configuration for audio processing
  */
-const defaultSettings: AudioSettings = {
+const defaultSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
@@ -135,6 +137,7 @@ const defaultSettings: AudioSettings = {
     cursor: '#718096'
   },
   waveformHeight: 128,
+  minPxPerSec: 100,
 
   minVolume: 0,
   maxVolume: 200,
@@ -148,7 +151,6 @@ const defaultSettings: AudioSettings = {
   timeFormat: 'HH:mm:ss',
   showMilliseconds: true,
 
-  minPxPerSec: 100,
   initialState: {
     currentTime: 0,
     isPlaying: false,
@@ -158,12 +160,12 @@ const defaultSettings: AudioSettings = {
     transcriptions: [],
     error: null
   }
-};
+} as const;
 
 /**
  * Retrieves the current audio settings
  */
-export const getSettings = (): AudioSettings => {
+export const getSettings = () => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {
     return { ...defaultSettings, ...JSON.parse(savedSettings) };
@@ -174,7 +176,7 @@ export const getSettings = (): AudioSettings => {
 /**
  * Saves updated audio settings
  */
-export const saveSettings = (settings: Partial<AudioSettings>): AudioSettings => {
+export const saveSettings = (settings: Partial<AudioSettings>) => {
   const currentSettings = getSettings();
   const newSettings = { ...currentSettings, ...settings };
   localStorage.setItem('audioSettings', JSON.stringify(newSettings));
