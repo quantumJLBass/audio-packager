@@ -32,70 +32,102 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [zoom, setZoom] = useState(50);
   const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
+  const abortController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    try {
-      wavesurfer.current = WaveSurfer.create({
-        container: containerRef.current,
-        height,
-        waveColor,
-        progressColor,
-        cursorWidth: 1,
-        cursorColor: '#718096',
-        normalize: true,
-        minPxPerSec: zoom,
-        fillParent: true,
-        interact: true,
-        autoScroll: true,
-      });
+    const initWaveSurfer = async () => {
+      try {
+        // Cleanup previous instance and abort controller
+        if (wavesurfer.current) {
+          wavesurfer.current.destroy();
+          wavesurfer.current = null;
+        }
+        if (abortController.current) {
+          abortController.current.abort();
+        }
+        abortController.current = new AbortController();
 
-      wavesurfer.current.load(url);
+        wavesurfer.current = WaveSurfer.create({
+          container: containerRef.current,
+          height,
+          waveColor,
+          progressColor,
+          cursorWidth: 1,
+          cursorColor: '#718096',
+          normalize: true,
+          minPxPerSec: zoom,
+          fillParent: true,
+          interact: true,
+          autoScroll: true,
+        });
 
-      wavesurfer.current.on('ready', () => {
-        console.log('WaveSurfer ready');
-        setDuration(wavesurfer.current?.getDuration() || 0);
-        setIsReady(true);
-        onReady?.();
-      });
+        // Load audio with abort signal
+        await wavesurfer.current.load(url, undefined, abortController.current.signal);
 
-      wavesurfer.current.on('error', (err) => {
-        console.error('WaveSurfer error:', err);
+        wavesurfer.current.on('ready', () => {
+          console.log('WaveSurfer ready');
+          setDuration(wavesurfer.current?.getDuration() || 0);
+          setIsReady(true);
+          onReady?.();
+        });
+
+        wavesurfer.current.on('error', (err) => {
+          // Ignore abort errors during cleanup
+          if (err.name === 'AbortError') {
+            console.log('Audio loading aborted');
+            return;
+          }
+          console.error('WaveSurfer error:', err);
+          toast({
+            title: "Error",
+            description: "Failed to load audio file. Please try again.",
+            variant: "destructive",
+          });
+        });
+
+        wavesurfer.current.on('audioprocess', (time) => {
+          setCurrentTime(time);
+          onTimeUpdate?.(time);
+        });
+
+        wavesurfer.current.on('interaction', () => {
+          const time = wavesurfer.current?.getCurrentTime() || 0;
+          setCurrentTime(time);
+          onSeek?.(time);
+        });
+
+        wavesurfer.current.on('finish', () => {
+          setIsPlaying(false);
+        });
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log('Audio loading aborted');
+          return;
+        }
+        console.error('Error initializing WaveSurfer:', err);
         toast({
           title: "Error",
-          description: "Failed to load audio file. Please try again.",
+          description: "Failed to initialize audio player. Please try again.",
           variant: "destructive",
         });
-      });
+      }
+    };
 
-      wavesurfer.current.on('audioprocess', (time) => {
-        setCurrentTime(time);
-        onTimeUpdate?.(time);
-      });
+    initWaveSurfer();
 
-      wavesurfer.current.on('interaction', () => {
-        const time = wavesurfer.current?.getCurrentTime() || 0;
-        setCurrentTime(time);
-        onSeek?.(time);
-      });
-
-      wavesurfer.current.on('finish', () => {
-        setIsPlaying(false);
-      });
-
-      return () => {
-        wavesurfer.current?.destroy();
-      };
-    } catch (err) {
-      console.error('Error initializing WaveSurfer:', err);
-      toast({
-        title: "Error",
-        description: "Failed to initialize audio player. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate]);
+    return () => {
+      // Cleanup on unmount
+      if (abortController.current) {
+        abortController.current.abort();
+      }
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+        wavesurfer.current = null;
+      }
+    };
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
 
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
