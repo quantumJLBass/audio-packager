@@ -1,6 +1,9 @@
 import { Transcription } from './transcription';
-import { ModelConfig } from './processing';
+import { DeviceType, DType, ProcessingTask } from './processing';
 
+/**
+ * Metrics for sentiment analysis performance
+ */
 export interface SentimentMetrics {
   value: number;
   precision: number;
@@ -8,14 +11,31 @@ export interface SentimentMetrics {
   f1: number;
 }
 
+/**
+ * Configuration for sentiment analysis
+ */
 export interface SentimentConfig {
   provider: string;
   model: string;
+  defaultLabel: string;
   thresholds: {
     [emotion: string]: SentimentMetrics;
   };
 }
 
+/**
+ * Configuration for tone analysis
+ */
+export interface ToneConfig {
+  defaultTone: string;
+  toneThresholds: {
+    [tone: string]: number;
+  };
+}
+
+/**
+ * Complete audio processing settings
+ */
 export interface AudioSettings {
   // Debug Mode
   debugMode: boolean;
@@ -25,10 +45,21 @@ export interface AudioSettings {
   openAIKey: string;
 
   // Model Configuration
-  modelConfig: ModelConfig;
-  sentimentAnalysis: SentimentConfig;
-  useOnnx: boolean; // Global flag for ONNX usage
+  modelConfig: {
+    provider: string;
+    model: string;
+    useOnnx: boolean;
+    useQuantized: boolean;
+    device: DeviceType;
+    dtype: DType;
+  };
   
+  // Sentiment Analysis
+  sentimentAnalysis: SentimentConfig;
+  
+  // Tone Analysis
+  toneAnalysis: ToneConfig;
+
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -40,12 +71,18 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
-
-  // Speaker Settings
-  speakerIdTemplate: string;
-  speakerNameTemplate: string;
-  speakerColors: string[];
-  maxSpeakers: number;
+  
+  // Processing Options
+  processingTask: ProcessingTask;
+  defaultChunkLength: number;
+  defaultStrideLength: number;
+  defaultFloatingPoint: number;
+  defaultDiarization: boolean;
+  returnTimestamps: boolean;
+  maxNewTokens: number;
+  numBeams: number;
+  temperature: number;
+  noRepeatNgramSize: number;
 
   // Model Settings
   supportedModels: Array<{
@@ -60,6 +97,12 @@ export interface AudioSettings {
     name: string;
   }>;
   defaultLanguage: string;
+
+  // Speaker Settings
+  speakerIdTemplate: string;
+  speakerNameTemplate: string;
+  speakerColors: string[];
+  maxSpeakers: number;
 
   // Visualization
   waveformColors: {
@@ -85,17 +128,6 @@ export interface AudioSettings {
   // Time Format
   timeFormat: string;
   showMilliseconds: boolean;
-
-  // Processing Options
-  defaultChunkLength: number;
-  defaultStrideLength: number;
-  defaultFloatingPoint: number;
-  defaultDiarization: boolean;
-  returnTimestamps: boolean;
-  maxNewTokens: number;
-  numBeams: number;
-  temperature: number;
-  noRepeatNgramSize: number;
 
   // Initial State
   initialState: {

@@ -1,17 +1,42 @@
 /**
  * Audio analysis utilities for sentiment and tone analysis
- * Processes audio data to determine emotional content and speaking tone
  */
-
-import { PretrainedModelOptions } from '@/types/audio/processing';
+import { PretrainedModelOptions, DeviceType, DType } from '@/types/audio/processing';
 import { pipeline } from '@huggingface/transformers';
 import { getSettings } from '../settings';
 import { DebugLogger } from '../debug';
 
 /**
+ * Determines the MIME type of an audio file
+ * @param audioData - The audio data to analyze
+ * @returns The MIME type of the audio file
+ */
+const determineAudioType = (audioData: ArrayBuffer): string => {
+  // Check file signature bytes to determine format
+  const header = new Uint8Array(audioData.slice(0, 4));
+  
+  // WAV: 'RIFF'
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+    return 'audio/wav';
+  }
+  
+  // MP3: 'ID3' or 0xFF 0xFB
+  if ((header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) ||
+      (header[0] === 0xFF && header[1] === 0xFB)) {
+    return 'audio/mp3';
+  }
+  
+  // M4A/AAC: 'ftyp'
+  if (header[0] === 0x66 && header[1] === 0x74 && header[2] === 0x79 && header[3] === 0x70) {
+    return 'audio/mp4';
+  }
+  
+  // Default to WAV if unknown
+  return 'audio/wav';
+};
+
+/**
  * Analyzes the sentiment of transcribed audio
- * @param {Float32Array} audioData - Processed audio data
- * @returns {Promise<string>} Detected sentiment label
  */
 export const analyzeSentiment = async (audioData: Float32Array): Promise<string> => {
   const text = await convertAudioToText(audioData);
@@ -24,10 +49,10 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
   const settings = getSettings();
 
   const modelOptions: PretrainedModelOptions = {
-    device: "webgpu",
+    device: settings.modelConfig.device,
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
-    dtype: "fp32"
+    dtype: settings.modelConfig.dtype
   };
 
   try {
@@ -39,7 +64,7 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
     
     const result = await classifier(text);
     const output = Array.isArray(result) ? result[0] : result;
-    const label = ((output as any).label || 'neutral').toString();
+    const label = ((output as any).label || settings.sentimentAnalysis.defaultLabel).toString();
     
     DebugLogger.log('Sentiment', 'Analysis result:', {
       label,
@@ -50,14 +75,12 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
     return label;
   } catch (error) {
     DebugLogger.error('Sentiment', 'Analysis error:', error);
-    return settings.sentimentAnalysis.defaultLabel || 'neutral';
+    return settings.sentimentAnalysis.defaultLabel;
   }
 };
 
 /**
  * Analyzes the speaking tone of audio
- * @param {Float32Array} audioData - Processed audio data
- * @returns {Promise<string>} Detected tone label
  */
 export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   DebugLogger.log('Tone', 'Starting tone analysis');
@@ -66,9 +89,7 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   try {
     const avgAmplitude = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
     
-    // Map amplitude to tone based on configured thresholds
-    const { toneThresholds } = settings;
-    for (const [tone, threshold] of Object.entries(toneThresholds)) {
+    for (const [tone, threshold] of Object.entries(settings.toneAnalysis.toneThresholds)) {
       if (avgAmplitude > threshold) {
         DebugLogger.log('Tone', `Detected tone: ${tone} (amplitude: ${avgAmplitude})`);
         return tone;
@@ -76,24 +97,22 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
     }
     
     DebugLogger.log('Tone', 'No specific tone detected, using default');
-    return settings.defaultTone;
+    return settings.toneAnalysis.defaultTone;
   } catch (error) {
     DebugLogger.error('Tone', 'Analysis error:', error);
-    return settings.defaultTone;
+    return settings.toneAnalysis.defaultTone;
   }
 };
 
 /**
  * Converts audio data to text for analysis
- * @param {Float32Array} audioData - Processed audio data
- * @returns {Promise<string>} Transcribed text
  */
 async function convertAudioToText(audioData: Float32Array): Promise<string> {
   const settings = getSettings();
   DebugLogger.log('Transcription', 'Converting audio to text');
 
   const audioBlob = new Blob([audioData], {
-    type: settings.audioFormat || 'audio/wav'
+    type: determineAudioType(audioData.buffer)
   });
   
   const base64String = await new Promise<string>((resolve) => {
@@ -110,17 +129,17 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
       "automatic-speech-recognition",
       settings.modelConfig.model,
       {
-        device: "webgpu",
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: "fp32"
+        dtype: settings.modelConfig.dtype
       }
     );
 
     const result = await transcriber(base64String);
     const text = Array.isArray(result) 
-      ? result[0]?.chunks?.[0]?.text 
-      : result.chunks?.[0]?.text;
+      ? result[0]?.text 
+      : result.text;
       
     DebugLogger.log('Transcription', 'Converted text:', text);
     return text || '';

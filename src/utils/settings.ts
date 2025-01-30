@@ -1,38 +1,29 @@
-/**
- * This module handles all audio processing settings and configuration.
- * It provides a centralized way to manage settings with proper defaults
- * and type safety.
- */
+import { AudioSettings } from '@/types/audio/settings';
+import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 
-import { AudioSettings as AudioSettingsType } from '@/types/audio/settings';
-import { SentimentMetrics } from '@/types/audio/settings';
-
-// Re-export the type to fix the module error
-export type { AudioSettings } from '@/types/audio/settings';
+export { AudioSettings };
 
 /**
  * Default configuration for audio processing
- * Includes all necessary settings for model configuration,
- * sentiment analysis, and audio processing parameters
  */
-const defaultSettings: AudioSettingsType = {
+const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
-  useOnnx: true,
-
+  
   modelConfig: {
     provider: 'onnx-community',
     model: 'large-v3-turbo',
     useOnnx: true,
     useQuantized: true,
-    device: 'webgpu',
-    dtype: 'fp32'
+    device: DeviceType.WebGPU,
+    dtype: DType.FP32
   },
 
   sentimentAnalysis: {
     provider: 'SamLowe',
     model: 'roberta-base-go_emotions',
+    defaultLabel: 'neutral',
     thresholds: {
       admiration: { value: 0.25, precision: 0.725, recall: 0.675, f1: 0.699 },
       amusement: { value: 0.45, precision: 0.790, recall: 0.871, f1: 0.829 },
@@ -65,6 +56,16 @@ const defaultSettings: AudioSettingsType = {
     }
   },
 
+  toneAnalysis: {
+    defaultTone: 'neutral',
+    toneThresholds: {
+      whisper: 0.2,
+      normal: 0.4,
+      loud: 0.6,
+      shouting: 0.8
+    }
+  },
+
   audioSampleRate: 44100,
   fftSize: 2048,
   minPitchLag: 20,
@@ -76,6 +77,17 @@ const defaultSettings: AudioSettingsType = {
   noSpeechText: "(no speech detected)",
   defaultModel: "large-v3-turbo",
   
+  processingTask: ProcessingTask.Transcribe,
+  defaultChunkLength: 30,
+  defaultStrideLength: 5,
+  defaultFloatingPoint: 32,
+  defaultDiarization: true,
+  returnTimestamps: true,
+  maxNewTokens: 128,
+  numBeams: 1,
+  temperature: 0,
+  noRepeatNgramSize: 3,
+
   speakerIdTemplate: "speaker-{?}",
   speakerNameTemplate: "Speaker {?}",
   speakerColors: [
@@ -136,17 +148,6 @@ const defaultSettings: AudioSettingsType = {
   timeFormat: 'HH:mm:ss',
   showMilliseconds: true,
 
-  defaultChunkLength: 30,
-  defaultStrideLength: 5,
-  defaultFloatingPoint: 32,
-  defaultDiarization: true,
-
-  returnTimestamps: true,
-  maxNewTokens: 128,
-  numBeams: 1,
-  temperature: 0,
-  noRepeatNgramSize: 3,
-
   minPxPerSec: 100,
   initialState: {
     currentTime: 0,
@@ -161,10 +162,8 @@ const defaultSettings: AudioSettingsType = {
 
 /**
  * Retrieves the current audio settings
- * Combines default settings with any saved user preferences
- * @returns {AudioSettingsType} The complete audio settings object
  */
-export const getSettings = (): AudioSettingsType => {
+export const getSettings = (): AudioSettings => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {
     return { ...defaultSettings, ...JSON.parse(savedSettings) };
@@ -174,11 +173,8 @@ export const getSettings = (): AudioSettingsType => {
 
 /**
  * Saves updated audio settings
- * Merges new settings with existing ones and persists to localStorage
- * @param {Partial<AudioSettingsType>} settings - Partial settings to update
- * @returns {AudioSettingsType} The complete updated settings
  */
-export const saveSettings = (settings: Partial<AudioSettingsType>): AudioSettingsType => {
+export const saveSettings = (settings: Partial<AudioSettings>): AudioSettings => {
   const currentSettings = getSettings();
   const newSettings = { ...currentSettings, ...settings };
   localStorage.setItem('audioSettings', JSON.stringify(newSettings));
