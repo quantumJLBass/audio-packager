@@ -1,3 +1,6 @@
+import { Transcription } from './transcription';
+import { Speaker } from './speaker';
+
 export enum DeviceType {
   CPU = "cpu",
   CUDA = "cuda",
@@ -23,31 +26,12 @@ export enum ProcessingTask {
   Translate = "translate"
 }
 
-export type SupportedAudioType = 
-  | 'audio/mpeg' 
-  | 'audio/wav' 
-  | 'audio/ogg' 
-  | 'audio/aac'
-  | 'audio/flac' 
-  | 'audio/alac' 
-  | 'audio/aiff' 
-  | 'audio/m4a'
-  | 'audio/pcm' 
-  | 'audio/dsd' 
-  | 'audio/mp4' 
-  | 'audio/webm'
-  | 'audio/opus' 
-  | 'audio/midi' 
-  | 'audio/vorbis';
-
-export interface AudioProcessingState {
-  currentTime: number;
-  isPlaying: boolean;
-  duration: number;
-  isReady: boolean;
-  isTranscribing: boolean;
-  transcriptions: Transcription[];
-  error: string | null;
+export interface ModelUrlOptions {
+  provider: string;
+  model: string;
+  isQuantized?: boolean;
+  isOnnx?: boolean;
+  language?: string;
 }
 
 export interface PretrainedModelOptions {
@@ -68,3 +52,30 @@ export interface AudioProcessingOptions {
   temperature: number;
   no_repeat_ngram_size: number;
 }
+
+export interface AudioProcessingState {
+  currentTime: number;
+  isPlaying: boolean;
+  duration: number;
+  isReady: boolean;
+  isTranscribing: boolean;
+  transcriptions: Transcription[];
+  error: string | null;
+}
+
+export type SupportedAudioType = 
+  | 'audio/mpeg' 
+  | 'audio/wav' 
+  | 'audio/ogg' 
+  | 'audio/aac'
+  | 'audio/flac' 
+  | 'audio/alac' 
+  | 'audio/aiff' 
+  | 'audio/m4a'
+  | 'audio/pcm' 
+  | 'audio/dsd' 
+  | 'audio/mp4' 
+  | 'audio/webm'
+  | 'audio/opus' 
+  | 'audio/midi' 
+  | 'audio/vorbis';

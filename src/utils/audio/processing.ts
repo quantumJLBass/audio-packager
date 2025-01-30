@@ -9,9 +9,14 @@ import { DebugLogger } from '../debug';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   DebugLogger.log('Processing', 'Processing audio buffer');
-  const audioContext = new AudioContext();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  return audioBuffer.getChannelData(0);
+  try {
+    const audioContext = new AudioContext();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    return audioBuffer.getChannelData(0);
+  } catch (error) {
+    DebugLogger.error('Processing', 'Error processing audio buffer:', error);
+    throw error;
+  }
 };
 
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {

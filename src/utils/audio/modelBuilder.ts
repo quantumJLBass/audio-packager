@@ -1,13 +1,7 @@
-/**
- * Utility functions for building model configurations and paths
- */
-import { ModelUrlOptions, DeviceType, DType } from '@/types/audio/processing';
+import { DeviceType, DType, ModelUrlOptions } from '@/types/audio/processing';
 import { getSettings } from '../settings';
 import { DebugLogger } from '../debug';
 
-/**
- * Builds the complete model path based on configuration
- */
 export const buildModelPath = (modelId: string): string => {
   const settings = getSettings();
   const model = settings.supportedModels.find(m => m.id === modelId);
@@ -25,9 +19,6 @@ export const buildModelPath = (modelId: string): string => {
   return `${provider}/${modelName}${quantizedSuffix}${onnxSuffix}`;
 };
 
-/**
- * Creates model configuration options
- */
 export const createModelConfig = () => {
   const settings = getSettings();
   
@@ -39,9 +30,6 @@ export const createModelConfig = () => {
   };
 };
 
-/**
- * Creates transcription configuration options
- */
 export const createTranscriptionConfig = () => {
   const settings = getSettings();
   
