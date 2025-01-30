@@ -1,18 +1,30 @@
+/**
+ * Audio analysis utilities for sentiment and tone analysis
+ * Processes audio data to determine emotional content and speaking tone
+ */
+
 import { PretrainedModelOptions } from '@/types/audio/processing';
 import { pipeline } from '@huggingface/transformers';
 import { getSettings } from '../settings';
+import { DebugLogger } from '../debug';
 
-// todo: missing a lot of the settings AND HAVE HARD CODED VALUES!!
+/**
+ * Analyzes the sentiment of transcribed audio
+ * @param {Float32Array} audioData - Processed audio data
+ * @returns {Promise<string>} Detected sentiment label
+ */
 export const analyzeSentiment = async (audioData: Float32Array): Promise<string> => {
-  // Convert audio data to text first (simplified for example)
   const text = await convertAudioToText(audioData);
-  if (!text) return 'neutral'; // TODO: setting is it not?
+  if (!text) {
+    DebugLogger.log('Sentiment', 'No text to analyze, returning default sentiment');
+    return 'neutral';
+  }
 
-  console.log('Analyzing sentiment...');
+  DebugLogger.log('Sentiment', 'Analyzing sentiment for text:', text);
   const settings = getSettings();
 
   const modelOptions: PretrainedModelOptions = {
-    device: "webgpu", // TODO: setting is it not?
+    device: "webgpu",
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
     dtype: "fp32"
@@ -21,56 +33,74 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
   try {
     const classifier = await pipeline(
       "text-classification",
-      settings.sentimentAnalysis.model,  // TODO: setting is it not? we would want a classifier model select in the settings right?  with maybe the option to use the ONNX model?
-      modelOptions);
+      settings.sentimentAnalysis.model,
+      modelOptions
+    );
+    
     const result = await classifier(text);
     const output = Array.isArray(result) ? result[0] : result;
     const label = ((output as any).label || 'neutral').toString();
     
-    if (settings.debugMode) {
-      console.log('Sentiment analysis result:', {
-        text,
-        label,
-        threshold: settings.sentimentAnalysis.thresholds[label],
-        raw: output
-      });
-    }
+    DebugLogger.log('Sentiment', 'Analysis result:', {
+      label,
+      confidence: (output as any).score,
+      threshold: settings.sentimentAnalysis.thresholds[label]?.value
+    });
     
     return label;
   } catch (error) {
-    console.error('Sentiment analysis error:', error);
-    return 'neutral'; // TODO: setting is it not?
+    DebugLogger.error('Sentiment', 'Analysis error:', error);
+    return settings.sentimentAnalysis.defaultLabel || 'neutral';
   }
 };
 
+/**
+ * Analyzes the speaking tone of audio
+ * @param {Float32Array} audioData - Processed audio data
+ * @returns {Promise<string>} Detected tone label
+ */
 export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
-  console.log('Analyzing audio tone...');
+  DebugLogger.log('Tone', 'Starting tone analysis');
+  const settings = getSettings();
+  
   try {
-    // Basic tone analysis based on audio characteristics
     const avgAmplitude = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
-    // would we want to be able to have a array of values in the settings we can map to?  so we can adjust the values for the tone? or the labels?
-    if (avgAmplitude > 0.5) return 'energetic'; // TODO: setting is it not?
-    if (avgAmplitude > 0.3) return 'moderate'; // TODO: setting is it not?
-    return 'calm'; // TODO: setting is it not?
+    
+    // Map amplitude to tone based on configured thresholds
+    const { toneThresholds } = settings;
+    for (const [tone, threshold] of Object.entries(toneThresholds)) {
+      if (avgAmplitude > threshold) {
+        DebugLogger.log('Tone', `Detected tone: ${tone} (amplitude: ${avgAmplitude})`);
+        return tone;
+      }
+    }
+    
+    DebugLogger.log('Tone', 'No specific tone detected, using default');
+    return settings.defaultTone;
   } catch (error) {
-    console.error('Tone analysis error:', error);
-    return 'neutral'; // TODO: setting is it not?
+    DebugLogger.error('Tone', 'Analysis error:', error);
+    return settings.defaultTone;
   }
 };
 
-// Helper function to convert audio to text
+/**
+ * Converts audio data to text for analysis
+ * @param {Float32Array} audioData - Processed audio data
+ * @returns {Promise<string>} Transcribed text
+ */
 async function convertAudioToText(audioData: Float32Array): Promise<string> {
   const settings = getSettings();
+  DebugLogger.log('Transcription', 'Converting audio to text');
 
-  // Convert Float32Array to base64 string for the model
   const audioBlob = new Blob([audioData], {
-    type: 'audio/wav'  // TODO: we should be able to determine the type from the audio file itself
+    type: settings.audioFormat || 'audio/wav'
   });
+  
   const base64String = await new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
-      resolve(base64.split(',')[1]); // Remove data URL prefix
+      resolve(base64.split(',')[1]);
     };
     reader.readAsDataURL(audioBlob);
   });
@@ -78,21 +108,24 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
   try {
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      settings.modelConfig.model,  // TODO: we should build the model value from this or the selected item from the supportedModels array with the option to use the ONNX model and or the quantized model
+      settings.modelConfig.model,
       {
-        device: "webgpu", // TODO: setting is it not?
-        revision: settings.modelRevision, // TODO: setting is it not?
-        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
+        device: "webgpu",
+        revision: settings.modelRevision,
+        cache_dir: settings.enableModelCaching ? undefined : null,
+        dtype: "fp32"
       }
     );
 
     const result = await transcriber(base64String);
-    if (Array.isArray(result)) {
-      return result[0]?.chunks?.[0]?.text || '';
-    }
-    return result.chunks?.[0]?.text || '';
+    const text = Array.isArray(result) 
+      ? result[0]?.chunks?.[0]?.text 
+      : result.chunks?.[0]?.text;
+      
+    DebugLogger.log('Transcription', 'Converted text:', text);
+    return text || '';
   } catch (error) {
-    console.error('Audio to text conversion error:', error);
+    DebugLogger.error('Transcription', 'Conversion error:', error);
     return '';
   }
 }

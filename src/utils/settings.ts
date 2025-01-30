@@ -1,7 +1,21 @@
-import { AudioSettings, SentimentMetrics } from '@/types/audio/settings';
-import { Transcription } from '@/types/audio/transcription';
+/**
+ * This module handles all audio processing settings and configuration.
+ * It provides a centralized way to manage settings with proper defaults
+ * and type safety.
+ */
 
-const defaultSettings: AudioSettings = {
+import { AudioSettings as AudioSettingsType } from '@/types/audio/settings';
+import { SentimentMetrics } from '@/types/audio/settings';
+
+// Re-export the type to fix the module error
+export type { AudioSettings } from '@/types/audio/settings';
+
+/**
+ * Default configuration for audio processing
+ * Includes all necessary settings for model configuration,
+ * sentiment analysis, and audio processing parameters
+ */
+const defaultSettings: AudioSettingsType = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
@@ -145,7 +159,12 @@ const defaultSettings: AudioSettings = {
   }
 };
 
-export const getSettings = (): AudioSettings => {
+/**
+ * Retrieves the current audio settings
+ * Combines default settings with any saved user preferences
+ * @returns {AudioSettingsType} The complete audio settings object
+ */
+export const getSettings = (): AudioSettingsType => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {
     return { ...defaultSettings, ...JSON.parse(savedSettings) };
@@ -153,7 +172,13 @@ export const getSettings = (): AudioSettings => {
   return defaultSettings;
 };
 
-export const saveSettings = (settings: Partial<AudioSettings>) => {
+/**
+ * Saves updated audio settings
+ * Merges new settings with existing ones and persists to localStorage
+ * @param {Partial<AudioSettingsType>} settings - Partial settings to update
+ * @returns {AudioSettingsType} The complete updated settings
+ */
+export const saveSettings = (settings: Partial<AudioSettingsType>): AudioSettingsType => {
   const currentSettings = getSettings();
   const newSettings = { ...currentSettings, ...settings };
   localStorage.setItem('audioSettings', JSON.stringify(newSettings));

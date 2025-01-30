@@ -1,21 +1,15 @@
-import { ModelConfig } from '@/types/audio/processing';
+/**
+ * URL builder utilities for model and configuration paths
+ * Constructs URLs for accessing models and their configurations
+ */
+
+import { ModelUrlOptions } from '@/types/audio/processing';
 import { DebugLogger } from '../debug';
 
 /**
- * Options for building model URLs
- */
-export interface ModelUrlOptions {
-  provider: string;
-  model: string;
-  isQuantized?: boolean;
-  isOnnx?: boolean;
-  language?: string;
-}
-
-/**
- * Builds the base model URL based on configuration
- * @param options Model URL configuration options
- * @returns Constructed model URL
+ * Builds the complete model URL based on configuration
+ * @param {ModelUrlOptions} options - Configuration for model URL
+ * @returns {string} Constructed model URL
  */
 export const buildModelUrl = (options: ModelUrlOptions): string => {
   const {
@@ -28,7 +22,7 @@ export const buildModelUrl = (options: ModelUrlOptions): string => {
 
   const modelSuffix = isOnnx ? '-ONNX' : '';
   const quantizedSuffix = isQuantized ? '-quantized' : '';
-  const langSuffix = language ? `.${language}` : '';
+  const langSuffix = language && language !== 'auto' ? `.${language}` : '';
 
   const url = `${provider}/whisper-${model}${langSuffix}${quantizedSuffix}${modelSuffix}`;
   
@@ -38,8 +32,8 @@ export const buildModelUrl = (options: ModelUrlOptions): string => {
 
 /**
  * Builds the configuration URL for a model
- * @param modelUrl Base model URL
- * @returns Configuration file URL
+ * @param {string} modelUrl - Base model URL
+ * @returns {string} Configuration file URL
  */
 export const buildConfigUrl = (modelUrl: string): string => {
   const url = `https://huggingface.co/${modelUrl}/resolve/main/config.json`;
@@ -49,8 +43,8 @@ export const buildConfigUrl = (modelUrl: string): string => {
 
 /**
  * Builds URLs for ONNX model files
- * @param modelUrl Base model URL
- * @returns Object containing encoder and decoder URLs
+ * @param {string} modelUrl - Base model URL
+ * @returns {{ encoder: string, decoder: string }} ONNX model URLs
  */
 export const buildOnnxModelUrls = (modelUrl: string) => {
   const base = `https://huggingface.co/${modelUrl}/resolve/main/onnx`;
@@ -61,18 +55,4 @@ export const buildOnnxModelUrls = (modelUrl: string) => {
   
   DebugLogger.log('URL Builder', 'Built ONNX URLs:', urls);
   return urls;
-};
-
-/**
- * Builds sentiment model URL based on settings
- * @param config Sentiment analysis configuration
- * @param useOnnx Whether to use ONNX version
- * @returns Sentiment model URL
- */
-export const buildSentimentModelUrl = (config: { provider: string; model: string }, useOnnx: boolean): string => {
-  const { provider, model } = config;
-  const url = `${provider}/${model}${useOnnx ? '-onnx' : ''}`;
-  
-  DebugLogger.log('URL Builder', 'Built sentiment model URL:', url);
-  return url;
 };

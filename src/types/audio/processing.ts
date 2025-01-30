@@ -1,17 +1,27 @@
+/**
+ * Type definitions for audio processing functionality
+ */
+
 import { Transcription } from './transcription';
 
+/**
+ * Options for pretrained model configuration
+ */
 export interface PretrainedModelOptions {
-  device: "webgpu"; // Must be webgpu only as per current implementation
+  device: "webgpu";
   revision: string;
   cache_dir: string | null | undefined;
-  dtype: "fp32"; // Must be fp32 only as per current implementation
+  dtype: "fp32";
 }
 
+/**
+ * Options for audio processing configuration
+ */
 export interface AudioProcessingOptions {
   chunkLength: number;
   strideLength: number;
   language: string;
-  task: "transcribe"; // Currently only supports transcribe
+  task: "transcribe";
   return_timestamps: boolean;
   max_new_tokens: number;
   num_beams: number;
@@ -19,6 +29,20 @@ export interface AudioProcessingOptions {
   no_repeat_ngram_size: number;
 }
 
+/**
+ * Configuration for model URL construction
+ */
+export interface ModelUrlOptions {
+  provider: string;
+  model: string;
+  isQuantized?: boolean;
+  isOnnx?: boolean;
+  language?: string;
+}
+
+/**
+ * Result of audio processing
+ */
 export interface ProcessingResult {
   text: string;
   start: number;
@@ -26,6 +50,9 @@ export interface ProcessingResult {
   confidence: number;
 }
 
+/**
+ * State of audio processing
+ */
 export interface AudioProcessingState {
   currentTime: number;
   isPlaying: boolean;
@@ -36,10 +63,12 @@ export interface AudioProcessingState {
   error: string | null;
 }
 
-// Device options for future implementation
-export type DeviceType = "webgpu";  // Restricted to webgpu only for now
-export type DTypeOption = "fp32";   // Restricted to fp32 only for now
+export type DeviceType = "webgpu";
+export type DTypeOption = "fp32";
 
+/**
+ * Model configuration
+ */
 export interface ModelConfig {
   provider: string;
   model: string;
