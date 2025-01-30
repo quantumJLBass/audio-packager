@@ -1,16 +1,18 @@
 import { Transcription } from './transcription';
 import { ModelConfig } from './processing';
 
+export interface SentimentMetrics {
+  value: number;
+  precision: number;
+  recall: number;
+  f1: number;
+}
+
 export interface SentimentConfig {
   provider: string;
   model: string;
   thresholds: {
-    [emotion: string]: {
-      value: number;
-      precision: number;
-      recall: number;
-      f1: number;
-    };
+    [emotion: string]: SentimentMetrics;
   };
 }
 
@@ -67,6 +69,7 @@ export interface AudioSettings {
     cursor: string;
   };
   waveformHeight: number;
+  minPxPerSec: number;
 
   // Volume Settings
   minVolume: number;
@@ -94,8 +97,7 @@ export interface AudioSettings {
   temperature: number;
   noRepeatNgramSize: number;
 
-  // Required properties that were missing
-  minPxPerSec: number;
+  // Initial State
   initialState: {
     currentTime: number;
     isPlaying: boolean;

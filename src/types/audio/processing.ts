@@ -1,3 +1,5 @@
+import { Transcription } from './transcription';
+
 export interface PretrainedModelOptions {
   device: "webgpu"; // Must be webgpu only as per current implementation
   revision: string;
@@ -35,8 +37,8 @@ export interface AudioProcessingState {
 }
 
 // Device options for future implementation
-export type DeviceType = "webgpu" | "cpu" | "wasm";
-export type DTypeOption = "fp32" | "fp16";
+export type DeviceType = "webgpu";  // Restricted to webgpu only for now
+export type DTypeOption = "fp32";   // Restricted to fp32 only for now
 
 export interface ModelConfig {
   provider: string;

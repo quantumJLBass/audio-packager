@@ -14,17 +14,29 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
   const modelOptions: PretrainedModelOptions = {
     device: "webgpu", // TODO: setting is it not?
     revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null // TODO: this doesn't seem right
+    cache_dir: settings.enableModelCaching ? undefined : null,
+    dtype: "fp32"
   };
 
   try {
     const classifier = await pipeline(
       "text-classification",
-      "SamLowe/roberta-base-go_emotions",  // TODO: setting is it not? we would want a classifier model select in the settings right?  with maybe the option to use the ONNX model?
+      settings.sentimentAnalysis.model,  // TODO: setting is it not? we would want a classifier model select in the settings right?  with maybe the option to use the ONNX model?
       modelOptions);
     const result = await classifier(text);
     const output = Array.isArray(result) ? result[0] : result;
-    return ((output as any).label || 'neutral').toString();
+    const label = ((output as any).label || 'neutral').toString();
+    
+    if (settings.debugMode) {
+      console.log('Sentiment analysis result:', {
+        text,
+        label,
+        threshold: settings.sentimentAnalysis.thresholds[label],
+        raw: output
+      });
+    }
+    
+    return label;
   } catch (error) {
     console.error('Sentiment analysis error:', error);
     return 'neutral'; // TODO: setting is it not?
@@ -66,7 +78,7 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
   try {
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      "openai/whisper-small",  // TODO: we should build the model value from this or the selected item from the supportedModels array with the option to use the ONNX model and or the quantized model
+      settings.modelConfig.model,  // TODO: we should build the model value from this or the selected item from the supportedModels array with the option to use the ONNX model and or the quantized model
       {
         device: "webgpu", // TODO: setting is it not?
         revision: settings.modelRevision, // TODO: setting is it not?

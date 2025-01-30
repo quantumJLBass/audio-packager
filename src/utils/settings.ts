@@ -1,118 +1,11 @@
+import { AudioSettings, SentimentMetrics } from '@/types/audio/settings';
 import { Transcription } from '@/types/audio/transcription';
-
-export interface ModelConfig {
-  provider: string;
-  model: string;
-  useOnnx: boolean;
-  useQuantized: boolean;
-  device: 'webgpu' | 'cpu' | 'wasm';
-  dtype: 'fp16' | 'fp32';
-}
-
-export interface SentimentConfig {
-  provider: string;
-  model: string;
-  thresholds: {
-    [emotion: string]: number;
-  };
-}
-
-export interface AudioSettings {
-  // Debug Mode
-  debugMode: boolean;
-
-  // API Keys
-  huggingFaceToken: string;
-  openAIKey: string;
-
-  // Model Configuration
-  modelConfig: ModelConfig;
-  sentimentAnalysis: SentimentConfig;
-  
-  // Audio Processing
-  audioSampleRate: number;
-  fftSize: number;
-  minPitchLag: number;
-  maxPitchLag: number;
-  onsetThreshold: number;
-  defaultPitch: number;
-  defaultTempo: number;
-  defaultConfidence: number;
-  noSpeechText: string;
-  defaultModel: string;
-  useOnnx: boolean;
-
-  // Speaker Settings
-  speakerIdTemplate: string;
-  speakerNameTemplate: string;
-  speakerColors: string[];
-  maxSpeakers: number;
-
-  // Model Settings
-  supportedModels: Array<{
-    id: string;
-    name: string;
-  }>;
-  modelRevision: string;
-  enableModelCaching: boolean;
-  sentimentModel: string;
-  supportedLanguages: Array<{
-    code: string;
-    name: string;
-  }>;
-  defaultLanguage: string;
-
-  // Visualization
-  waveformColors: {
-    background: string;
-    waveform: string;
-    progress: string;
-    cursor: string;
-  };
-  waveformHeight: number;
-
-  // Volume Settings
-  minVolume: number;
-  maxVolume: number;
-  volumeStep: number;
-
-  // Zoom Settings
-  minZoom: number;
-  maxZoom: number;
-  defaultZoom: number;
-  zoomStep: number;
-
-  // Time Format
-  timeFormat: string;
-  showMilliseconds: boolean;
-
-  // Processing Options
-  defaultChunkLength: number;
-  defaultStrideLength: number;
-  defaultFloatingPoint: number;
-  defaultDiarization: boolean;
-  returnTimestamps: boolean;
-  maxNewTokens: number;
-  numBeams: number;
-  temperature: number;
-  noRepeatNgramSize: number;
-
-  minPxPerSec: number;
-  initialState: {
-    currentTime: number;
-    isPlaying: boolean;
-    duration: number;
-    isReady: boolean;
-    isTranscribing: boolean;
-    transcriptions: Transcription[];
-    error: string | null;
-  };
-}
 
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
+  useOnnx: true,
 
   modelConfig: {
     provider: 'onnx-community',
@@ -127,34 +20,34 @@ const defaultSettings: AudioSettings = {
     provider: 'SamLowe',
     model: 'roberta-base-go_emotions',
     thresholds: {
-      admiration: 0.25,
-      amusement: 0.45,
-      anger: 0.15,
-      annoyance: 0.10,
-      approval: 0.30,
-      caring: 0.40,
-      confusion: 0.55,
-      curiosity: 0.25,
-      desire: 0.25,
-      disappointment: 0.40,
-      disapproval: 0.30,
-      disgust: 0.20,
-      embarrassment: 0.10,
-      excitement: 0.35,
-      fear: 0.40,
-      gratitude: 0.45,
-      grief: 0.05,
-      joy: 0.40,
-      love: 0.25,
-      nervousness: 0.25,
-      optimism: 0.20,
-      pride: 0.10,
-      realization: 0.15,
-      relief: 0.05,
-      remorse: 0.10,
-      sadness: 0.40,
-      surprise: 0.15,
-      neutral: 0.25
+      admiration: { value: 0.25, precision: 0.725, recall: 0.675, f1: 0.699 },
+      amusement: { value: 0.45, precision: 0.790, recall: 0.871, f1: 0.829 },
+      anger: { value: 0.15, precision: 0.652, recall: 0.379, f1: 0.479 },
+      annoyance: { value: 0.10, precision: 0.472, recall: 0.159, f1: 0.238 },
+      approval: { value: 0.30, precision: 0.609, recall: 0.302, f1: 0.404 },
+      caring: { value: 0.40, precision: 0.448, recall: 0.319, f1: 0.372 },
+      confusion: { value: 0.55, precision: 0.500, recall: 0.431, f1: 0.463 },
+      curiosity: { value: 0.25, precision: 0.537, recall: 0.356, f1: 0.428 },
+      desire: { value: 0.25, precision: 0.630, recall: 0.410, f1: 0.496 },
+      disappointment: { value: 0.40, precision: 0.625, recall: 0.199, f1: 0.302 },
+      disapproval: { value: 0.30, precision: 0.494, recall: 0.307, f1: 0.379 },
+      disgust: { value: 0.20, precision: 0.707, recall: 0.333, f1: 0.453 },
+      embarrassment: { value: 0.10, precision: 0.750, recall: 0.243, f1: 0.367 },
+      excitement: { value: 0.35, precision: 0.603, recall: 0.340, f1: 0.435 },
+      fear: { value: 0.40, precision: 0.758, recall: 0.603, f1: 0.671 },
+      gratitude: { value: 0.45, precision: 0.960, recall: 0.881, f1: 0.919 },
+      grief: { value: 0.05, precision: 0.333, recall: 0.333, f1: 0.333 },
+      joy: { value: 0.40, precision: 0.647, recall: 0.559, f1: 0.600 },
+      love: { value: 0.25, precision: 0.773, recall: 0.832, f1: 0.802 },
+      nervousness: { value: 0.25, precision: 0.600, recall: 0.130, f1: 0.214 },
+      optimism: { value: 0.20, precision: 0.667, recall: 0.376, f1: 0.481 },
+      pride: { value: 0.10, precision: 0.875, recall: 0.438, f1: 0.583 },
+      realization: { value: 0.15, precision: 0.541, recall: 0.138, f1: 0.220 },
+      relief: { value: 0.05, precision: 0.152, recall: 0.636, f1: 0.246 },
+      remorse: { value: 0.10, precision: 0.553, recall: 0.750, f1: 0.636 },
+      sadness: { value: 0.40, precision: 0.621, recall: 0.494, f1: 0.550 },
+      surprise: { value: 0.15, precision: 0.750, recall: 0.404, f1: 0.525 },
+      neutral: { value: 0.25, precision: 0.694, recall: 0.604, f1: 0.646 }
     }
   },
 
@@ -238,7 +131,18 @@ const defaultSettings: AudioSettings = {
   maxNewTokens: 128,
   numBeams: 1,
   temperature: 0,
-  noRepeatNgramSize: 3
+  noRepeatNgramSize: 3,
+
+  minPxPerSec: 100,
+  initialState: {
+    currentTime: 0,
+    isPlaying: false,
+    duration: 0,
+    isReady: false,
+    isTranscribing: false,
+    transcriptions: [],
+    error: null
+  }
 };
 
 export const getSettings = (): AudioSettings => {
