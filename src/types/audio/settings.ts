@@ -1,7 +1,6 @@
 /**
  * Audio settings type definitions for configuring audio processing behavior
  */
-
 import { Transcription } from './transcription';
 import { DeviceType, DType, ProcessingTask } from './processing';
 
@@ -143,4 +142,4 @@ export interface AudioSettings {
     transcriptions: Transcription[];
     error: string | null;
   };
-};
+}

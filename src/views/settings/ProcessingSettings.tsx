@@ -1,7 +1,3 @@
-/**
- * Component for managing audio processing settings
- * Handles model configuration, sentiment analysis, and processing options
- */
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -48,7 +44,6 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                 />
               </SettingField>
 
-              {/* Fix for missing children prop */}
               <SettingField
                 id="sentimentThresholds"
                 label="Thresholds"
@@ -226,15 +221,6 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                     }
                   })}
                 />
-              </SettingField>
-
-              <SettingField
-                id="sentimentThresholds"
-                label="Thresholds"
-                tooltip="Set thresholds for different emotions"
-              >
-                {/* Add UI for thresholds settings here */}
-                {/* This part can be expanded based on the specific requirements for thresholds */}
               </SettingField>
             </div>
           </AccordionContent>

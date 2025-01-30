@@ -3,11 +3,7 @@
  */
 import type { AudioSettings } from '@/types/audio/settings';
 import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
-import { DebugLogger } from './debug';
 
-/**
- * Default configuration for audio processing
- */
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
@@ -165,6 +161,7 @@ const defaultSettings: AudioSettings = {
 /**
  * Retrieves the current audio settings
  */
+export { type AudioSettings };
 export const getSettings = (): AudioSettings => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {

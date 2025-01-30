@@ -79,3 +79,28 @@ export const validateAudioFile = (file: File): { valid: boolean; error?: string 
 
   return { valid: true };
 };
+
+/**
+ * Determines the audio type from file data
+ */
+export const determineAudioType = async (file: File): Promise<SupportedAudioType | null> => {
+  const buffer = await file.arrayBuffer();
+  const view = new DataView(buffer);
+
+  // Check file signatures
+  if (view.getUint32(0) === 0x52494646) { // "RIFF"
+    return 'audio/wav';
+  }
+  if (view.getUint32(0) === 0x4F676753) { // "OggS"
+    return 'audio/ogg';
+  }
+  if (view.getUint32(0) === 0x664C6143) { // "fLaC"
+    return 'audio/flac';
+  }
+  if (view.getUint16(0) === 0xFFFA || view.getUint16(0) === 0xFFFB) {
+    return 'audio/mpeg';
+  }
+
+  // Default to the file's reported type if supported
+  return isSupportedAudioType(file.type) ? file.type as SupportedAudioType : null;
+};
