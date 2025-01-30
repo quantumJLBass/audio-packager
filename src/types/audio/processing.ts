@@ -1,17 +1,15 @@
-import { Transcription } from './transcription';
-
 export interface PretrainedModelOptions {
-  device: "webgpu"; // TODO: setting is it not? but is this really correct given this is a types file?
+  device: "webgpu"; // Must be webgpu only as per current implementation
   revision: string;
   cache_dir: string | null | undefined;
-  dtype?: "fp32"; // TODO: setting is it not? but is this really correct given this is a types file?
+  dtype: "fp32"; // Must be fp32 only as per current implementation
 }
 
 export interface AudioProcessingOptions {
   chunkLength: number;
   strideLength: number;
   language: string;
-  task: "transcribe";// TODO: setting is it not?  but is this really correct given this is a types file?
+  task: "transcribe"; // Currently only supports transcribe
   return_timestamps: boolean;
   max_new_tokens: number;
   num_beams: number;
@@ -34,4 +32,17 @@ export interface AudioProcessingState {
   isTranscribing: boolean;
   transcriptions: Transcription[];
   error: string | null;
+}
+
+// Device options for future implementation
+export type DeviceType = "webgpu" | "cpu" | "wasm";
+export type DTypeOption = "fp32" | "fp16";
+
+export interface ModelConfig {
+  provider: string;
+  model: string;
+  useOnnx: boolean;
+  useQuantized: boolean;
+  device: DeviceType;
+  dtype: DTypeOption;
 }

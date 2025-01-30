@@ -1,19 +1,16 @@
 import { Transcription } from './transcription';
-
-export interface ModelConfig {
-  provider: string;
-  model: string;
-  useOnnx: boolean;
-  useQuantized: boolean;
-  device: 'webgpu' | 'cpu' | 'wasm';
-  dtype: 'fp16' | 'fp32';
-}
+import { ModelConfig } from './processing';
 
 export interface SentimentConfig {
   provider: string;
   model: string;
   thresholds: {
-    [emotion: string]: number;
+    [emotion: string]: {
+      value: number;
+      precision: number;
+      recall: number;
+      f1: number;
+    };
   };
 }
 
@@ -28,6 +25,7 @@ export interface AudioSettings {
   // Model Configuration
   modelConfig: ModelConfig;
   sentimentAnalysis: SentimentConfig;
+  useOnnx: boolean; // Global flag for ONNX usage
   
   // Audio Processing
   audioSampleRate: number;
@@ -40,7 +38,6 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
-  useOnnx: boolean;
 
   // Speaker Settings
   speakerIdTemplate: string;
@@ -97,6 +94,7 @@ export interface AudioSettings {
   temperature: number;
   noRepeatNgramSize: number;
 
+  // Required properties that were missing
   minPxPerSec: number;
   initialState: {
     currentTime: number;
