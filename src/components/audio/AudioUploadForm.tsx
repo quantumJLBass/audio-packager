@@ -35,7 +35,7 @@ export const AudioUploadForm = () => {
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
-    setPackageName(file.name.replace(/\.[^/.]+$/, '')); // Remove extension
+    setPackageName(file.name.replace(/\.[^/.]+$/, ''));
     if (autoProcess) {
       handleSubmit();
     }
@@ -43,12 +43,7 @@ export const AudioUploadForm = () => {
   };
 
   const handleSubmit = () => {
-    if (!selectedFile) {  // TODO: when we click "select auido" button it is showing this error message before we even see the file explorer window.  this is not correct way to do this.  we should only show this error message after clicking the process audio button and there is no file selected.
-      toast({
-        title: "Error",
-        description: "Please select a file first",
-        variant: "destructive",
-      });
+    if (!selectedFile) {
       return;
     }
     onFileSelect(selectedFile);

@@ -34,54 +34,24 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     if (!audioUrl) return;
 
     try {
-      const response = await fetch(audioUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch audio file');
-      }
+      setState(prev => ({ ...prev, isTranscribing: true, error: null }));
       
+      const response = await fetch(audioUrl);
       const arrayBuffer = await response.arrayBuffer();
       const audioData = await processAudioBuffer(arrayBuffer);
 
-      // Start transcription process
-      setState(prev => ({ ...prev, isTranscribing: true }));
+      const transcriptionResult = await transcribeAudio(audioData);
       
-      // Run transcription, sentiment and tone analysis in parallel
-      const [transcriptionResult, sentimentResult, toneResult] = await Promise.allSettled([
-        transcribeAudio(audioData),
-        analyzeSentiment(audioData),
-        analyzeTone(audioData)
-      ]);
+      setState(prev => ({ 
+        ...prev, 
+        transcriptions: transcriptionResult,
+        isTranscribing: false 
+      }));
 
-      // Handle transcription results
-      if (transcriptionResult.status === 'fulfilled' && transcriptionResult.value.length > 0) {
-        setState(prev => ({ 
-          ...prev, 
-          transcriptions: transcriptionResult.value,
-          isTranscribing: false 
-        }));
-
-        toast({
-          title: "Processing complete",
-          description: "Audio has been successfully transcribed",
-        });
-      } else {
-        console.warn('Transcription failed or returned empty results');
-        setState(prev => ({ ...prev, isTranscribing: false }));
-        toast({
-          title: "Warning",
-          description: "Transcription completed but no results were found",
-          variant: "destructive",
-        });
-      }
-
-      // Handle sentiment and tone results independently
-      if (sentimentResult.status === 'fulfilled') {
-        console.log('Sentiment analysis complete:', sentimentResult.value);
-      }
-
-      if (toneResult.status === 'fulfilled') {
-        console.log('Tone analysis complete:', toneResult.value);
-      }
+      toast({
+        title: "Processing complete",
+        description: "Audio has been successfully transcribed",
+      });
 
     } catch (error) {
       console.error('Error processing audio:', error);
