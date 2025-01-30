@@ -29,16 +29,14 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       "automatic-speech-recognition",
       modelPath,
       {
+        isQuantized: true,
         device: "cpu", // Fallback to CPU for reliability
-        revision: settings.modelRevision,
-        quantized: true
+        revision: settings.modelRevision
       }
     );
 
     // Convert Float32Array to base64 for the model
-    const audioBlob = new Blob([audioData], {
-      type: 'audio/wav'
-    });
+    const audioBlob = new Blob([audioData], { type: 'audio/wav' });
     const base64String = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {

@@ -112,9 +112,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
-        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
-        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
@@ -179,9 +177,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onZoomChange={handleZoomChange}
+        onZoomIn={() => handleZoom(Math.min(500, zoom + 50))}
+        onZoomOut={() => handleZoom(Math.max(50, zoom - 50))}
+        onZoomChange={handleZoom}
       />
     </div>
   );

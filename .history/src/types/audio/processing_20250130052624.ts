@@ -34,6 +34,8 @@ export interface ModelUrlOptions {
 }
 
 export interface PretrainedModelOptions {
+  quantized: boolean;
+  onnx: boolean;
   device: DeviceType;
   revision: string;
   cache_dir: string | null | undefined;
