@@ -32,22 +32,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [zoom, setZoom] = useState(50);
   const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
-  const abortController = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !url) return;
 
     const initWaveSurfer = async () => {
       try {
-        // Cleanup previous instance and abort controller
+        // Cleanup previous instance
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
-          wavesurfer.current = null;
         }
-        if (abortController.current) {
-          abortController.current.abort();
-        }
-        abortController.current = new AbortController();
 
         wavesurfer.current = WaveSurfer.create({
           container: containerRef.current,
@@ -63,8 +57,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           autoScroll: true,
         });
 
-        // Load audio with abort signal
-        await wavesurfer.current.load(url, undefined, abortController.current.signal);
+        // Load audio
+        await wavesurfer.current.load(url);
 
         wavesurfer.current.on('ready', () => {
           console.log('WaveSurfer ready');
@@ -74,11 +68,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
 
         wavesurfer.current.on('error', (err) => {
-          // Ignore abort errors during cleanup
-          if (err.name === 'AbortError') {
-            console.log('Audio loading aborted');
-            return;
-          }
           console.error('WaveSurfer error:', err);
           toast({
             title: "Error",
@@ -102,10 +91,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           setIsPlaying(false);
         });
       } catch (err) {
-        if (err.name === 'AbortError') {
-          console.log('Audio loading aborted');
-          return;
-        }
         console.error('Error initializing WaveSurfer:', err);
         toast({
           title: "Error",
@@ -118,13 +103,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     initWaveSurfer();
 
     return () => {
-      // Cleanup on unmount
-      if (abortController.current) {
-        abortController.current.abort();
-      }
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
-        wavesurfer.current = null;
       }
     };
   }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
@@ -132,9 +112,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
-        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
-        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
@@ -146,20 +124,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       }
     }
   }, 100);
-
-  const handleZoomIn = () => {
-    const newZoom = Math.min(zoom + 10, 100);
-    handleZoom(newZoom);
-  };
-
-  const handleZoomOut = () => {
-    const newZoom = Math.max(zoom - 10, 20);
-    handleZoom(newZoom);
-  };
-
-  const handleZoomChange = (newZoom: number) => {
-    handleZoom(newZoom);
-  };
 
   const togglePlayPause = () => {
     if (wavesurfer.current) {
@@ -198,9 +162,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onZoomChange={handleZoomChange}
+        onZoomIn={() => handleZoom(Math.min(500, zoom + 50))}
+        onZoomOut={() => handleZoom(Math.max(50, zoom - 50))}
       />
     </div>
   );
