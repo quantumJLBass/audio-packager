@@ -1,5 +1,5 @@
 /**
- * Utility functions for determining audio file types
+ * Utility functions for determining audio file types based on file signatures
  */
 
 /**

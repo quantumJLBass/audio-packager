@@ -1,5 +1,5 @@
 /**
- * Utility functions for building model configurations
+ * Utility functions for building model configurations and paths
  */
 import { ModelUrlOptions, DeviceType, DType } from '@/types/audio/processing';
 import { getSettings } from '../settings';

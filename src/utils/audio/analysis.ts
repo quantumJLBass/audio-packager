@@ -6,7 +6,7 @@ import { pipeline } from '@huggingface/transformers';
 import { getSettings } from '../settings';
 import { DebugLogger } from '../debug';
 import { determineAudioType } from './fileType';
-import { buildModelPath, createModelConfig } from './modelBuilder';
+import { buildModelPath, createModelConfig, createTranscriptionConfig } from './modelBuilder';
 
 /**
  * Analyzes the sentiment of transcribed audio
@@ -15,7 +15,8 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
   const text = await convertAudioToText(audioData);
   if (!text) {
     DebugLogger.log('Sentiment', 'No text to analyze, returning default sentiment');
-    return getSettings().sentimentAnalysis.defaultLabel;
+    const settings = getSettings();
+    return settings.sentimentAnalysis.defaultLabel;
   }
 
   DebugLogger.log('Sentiment', 'Analyzing sentiment for text:', text);
@@ -36,7 +37,7 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
     DebugLogger.log('Sentiment', 'Analysis result:', {
       label,
       confidence: (output as any).score,
-      threshold: settings.sentimentAnalysis.thresholds[label]?.value
+      threshold: settings.sentimentAnalysis.thresholds[label]?.value || 0
     });
     
     return label;
@@ -55,9 +56,10 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   
   try {
     const avgAmplitude = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
+    const thresholds = settings.toneAnalysis.toneThresholds;
     
-    for (const [tone, threshold] of Object.entries(settings.toneAnalysis.toneThresholds)) {
-      if (avgAmplitude > threshold) {
+    for (const [tone, threshold] of Object.entries(thresholds)) {
+      if (typeof threshold === 'number' && avgAmplitude > threshold) {
         DebugLogger.log('Tone', `Detected tone: ${tone} (amplitude: ${avgAmplitude})`);
         return tone;
       }
@@ -94,6 +96,7 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
   try {
     const modelPath = buildModelPath(settings.defaultModel);
     const modelConfig = createModelConfig();
+    const transcriptionConfig = createTranscriptionConfig();
     
     const transcriber = await pipeline(
       "automatic-speech-recognition",
@@ -101,7 +104,7 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
       modelConfig
     );
 
-    const result = await transcriber(base64String, createTranscriptionConfig());
+    const result = await transcriber(base64String, transcriptionConfig);
     
     if (Array.isArray(result)) {
       return result[0]?.text || '';

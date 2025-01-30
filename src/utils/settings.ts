@@ -1,14 +1,14 @@
 /**
- * Settings management utilities
+ * Settings management utilities for audio processing configuration
  */
-export type { AudioSettings } from '@/types/audio/settings';
+import type { AudioSettings } from '@/types/audio/settings';
 import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 import { DebugLogger } from './debug';
 
 /**
  * Default configuration for audio processing
  */
-const defaultSettings = {
+const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
@@ -160,12 +160,12 @@ const defaultSettings = {
     transcriptions: [],
     error: null
   }
-} as const;
+};
 
 /**
  * Retrieves the current audio settings
  */
-export const getSettings = () => {
+export const getSettings = (): AudioSettings => {
   const savedSettings = localStorage.getItem('audioSettings');
   if (savedSettings) {
     return { ...defaultSettings, ...JSON.parse(savedSettings) };
@@ -176,7 +176,7 @@ export const getSettings = () => {
 /**
  * Saves updated audio settings
  */
-export const saveSettings = (settings: Partial<AudioSettings>) => {
+export const saveSettings = (settings: Partial<AudioSettings>): AudioSettings => {
   const currentSettings = getSettings();
   const newSettings = { ...currentSettings, ...settings };
   localStorage.setItem('audioSettings', JSON.stringify(newSettings));

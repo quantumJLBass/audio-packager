@@ -1,6 +1,7 @@
 /**
- * Audio processing type definitions
+ * Audio processing type definitions for handling audio data and transcription
  */
+
 import { Transcription } from './transcription';
 
 /**
@@ -46,11 +47,11 @@ export interface AudioProcessingOptions {
   strideLength: number;
   language: string;
   task: ProcessingTask;
-  return_timestamps: boolean;
-  max_new_tokens: number;
-  num_beams: number;
+  returnTimestamps: boolean;
+  maxNewTokens: number;
+  numBeams: number;
   temperature: number;
-  no_repeat_ngram_size: number;
+  noRepeatNgramSize: number;
 }
 
 /**

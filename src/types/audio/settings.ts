@@ -1,11 +1,12 @@
 /**
- * Audio settings type definitions
+ * Audio settings type definitions for configuring audio processing behavior
  */
+
 import { Transcription } from './transcription';
 import { DeviceType, DType, ProcessingTask } from './processing';
 
 /**
- * Metrics for sentiment analysis performance
+ * Metrics for sentiment analysis performance evaluation
  */
 export interface SentimentMetrics {
   value: number;
@@ -15,7 +16,7 @@ export interface SentimentMetrics {
 }
 
 /**
- * Configuration for sentiment analysis
+ * Configuration for sentiment analysis models and thresholds
  */
 export interface SentimentConfig {
   provider: string;
@@ -27,7 +28,7 @@ export interface SentimentConfig {
 }
 
 /**
- * Configuration for tone analysis
+ * Configuration for tone analysis and detection
  */
 export interface ToneConfig {
   defaultTone: string;
@@ -37,9 +38,9 @@ export interface ToneConfig {
 }
 
 /**
- * Complete audio processing settings
+ * Complete audio processing settings configuration
  */
-export interface AudioSettings {
+export type AudioSettings = {
   // Debug Mode
   debugMode: boolean;
 
@@ -142,4 +143,4 @@ export interface AudioSettings {
     transcriptions: Transcription[];
     error: string | null;
   };
-}
+};
