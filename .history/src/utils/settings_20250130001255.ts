@@ -92,21 +92,18 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: "large-v3-turbo", // TODO:  we must build the model value from this or the selected item from the supportedModels array
+  defaultModel: "large-v3-turbo", // we must build the model value from this or the selected item from the supportedModels array
 
-  speakerIdTemplate: "speaker-{idx}", // TODO: lets change this from {idx} to {?} if we can
-  speakerNameTemplate: "Speaker {idx}", // TODO: lets change this from {idx} to {?} if we can
+  speakerIdTemplate: "speaker-{idx}",
+  speakerNameTemplate: "Speaker {idx}",
   speakerColors: [
     '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
     '#16a34a', '#2563eb', '#9333ea', '#c026d3'
   ],
   maxSpeakers: 8,
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  add the ONNX option
-  // TODO:  add the quantized option and use it to build just like the ONNX option
+  // GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
+  // WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
+  // isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
   supportedModels: [
     { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
     { id: 'large-v3', name: 'Whisper Large v3' },

@@ -1,16 +1,16 @@
-import { AudioUploader } from '@/components/AudioUploader';
-import { SettingField } from '@/components/settings/SettingField';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from "@/components/ui/switch";
-import { useToast } from '@/hooks/use-toast';
-import { getSettings } from '@/utils/settings';
-import { ChevronDown } from "lucide-react";
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AudioUploader } from '@/components/AudioUploader';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import { ChevronDown } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
+import { SettingField } from '@/components/settings/SettingField';
+import { getSettings } from '@/utils/settings';
 
 interface OutletContext {
   onFileSelect: (file: File) => void;
@@ -43,7 +43,7 @@ export const AudioUploadForm = () => {
   };
 
   const handleSubmit = () => {
-    if (!selectedFile) {  // TODO: when we click "select auido" button it is showing this error message before we even see the file explorer window.  this is not correct way to do this.  we should only show this error message after clicking the process audio button and there is no file selected.
+    if (!selectedFile) {
       toast({
         title: "Error",
         description: "Please select a file first",
@@ -63,7 +63,7 @@ export const AudioUploadForm = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <AudioUploader onFileSelect={handleFileSelect} />
-
+            
             <SettingField
               id="packageName"
               label="Package Name"

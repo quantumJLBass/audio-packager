@@ -1,10 +1,10 @@
 import { Transcription } from './transcription';
-// TODO: setting seems like its not complete
+
 export interface AudioSettings {
   // API Keys
   huggingFaceToken: string;
   openAIKey: string;
-
+  
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -16,13 +16,13 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
-
+  
   // Speaker Settings
   speakerIdTemplate: string;
   speakerNameTemplate: string;
   speakerColors: string[];
   maxSpeakers: number;
-
+  
   // Model Settings
   supportedModels: Array<{
     id: string;
@@ -36,7 +36,7 @@ export interface AudioSettings {
     name: string;
   }>;
   defaultLanguage: string;
-
+  
   // Visualization
   waveformColors: {
     background: string;
@@ -45,22 +45,22 @@ export interface AudioSettings {
     cursor: string;
   };
   waveformHeight: number;  // Added this property
-
+  
   // Volume Settings
   minVolume: number;
   maxVolume: number;
   volumeStep: number;
-
+  
   // Zoom Settings
   minZoom: number;
   maxZoom: number;
   defaultZoom: number;
   zoomStep: number;
-
+  
   // Time Format
   timeFormat: string;
   showMilliseconds: boolean;
-
+  
   // Processing Options
   defaultChunkLength: number;
   defaultStrideLength: number;

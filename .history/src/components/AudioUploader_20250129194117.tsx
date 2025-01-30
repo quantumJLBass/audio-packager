@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
-import { Check, Upload } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Upload, Check, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface AudioUploaderProps {
   onFileSelect: (file: File) => void;
@@ -39,7 +39,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({ onFileSelect }) =>
 
     onFileSelect(file);
     setIsUploading(false);
-
+    
     toast({
       title: "File uploaded successfully",
       description: `${file.name} is ready for processing`,
@@ -63,7 +63,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({ onFileSelect }) =>
       ) : (
         <Upload className="w-12 h-12 text-muted-foreground" />
       )}
-
+      
       {isUploading ? (
         <div className="w-full space-y-2">
           <Progress value={uploadProgress} className="w-full" />
@@ -72,14 +72,14 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({ onFileSelect }) =>
           </p>
         </div>
       ) : (
-        <Button
-          variant="outline"
+        <Button 
+          variant="outline" 
           onClick={() => inputRef.current?.click()}
         >
           {uploadedFile ? 'Select Different File' : 'Select Audio File'}
         </Button>
       )}
-
+      
       <p className="text-sm text-muted-foreground">
         Supported formats: MP3, WAV, M4A
       </p>

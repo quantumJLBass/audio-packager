@@ -55,7 +55,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     const result = await transcriber(base64String, {
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: true // TODO: setting is it not?
+      return_timestamps: true
     });
 
     console.log('Transcription result:', result);
@@ -70,8 +70,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         end: chunk.timestamp[1] || 0,
         confidence: chunk.confidence || settings.defaultConfidence,
         speaker: {
-          id: `speaker-${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
-          name: `Speaker ${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
+          id: `speaker-${Math.floor(index / 2) + 1}`,
+          name: `Speaker ${Math.floor(index / 2) + 1}`,
           color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
         }
       }));

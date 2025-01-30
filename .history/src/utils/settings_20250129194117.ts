@@ -4,7 +4,7 @@ export interface AudioSettings {
   // API Keys
   huggingFaceToken: string;
   openAIKey: string;
-
+  
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -16,13 +16,13 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
-
+  
   // Speaker Settings
   speakerIdTemplate: string;
   speakerNameTemplate: string;
   speakerColors: string[];
   maxSpeakers: number;
-
+  
   // Model Settings
   supportedModels: Array<{
     id: string;
@@ -36,7 +36,7 @@ export interface AudioSettings {
     name: string;
   }>;
   defaultLanguage: string;
-
+  
   // Visualization
   waveformColors: {
     background: string;
@@ -45,22 +45,22 @@ export interface AudioSettings {
     cursor: string;
   };
   waveformHeight: number;
-
+  
   // Volume Settings
   minVolume: number;
   maxVolume: number;
   volumeStep: number;
-
+  
   // Zoom Settings
   minZoom: number;
   maxZoom: number;
   defaultZoom: number;
   zoomStep: number;
-
+  
   // Time Format
   timeFormat: string;
   showMilliseconds: boolean;
-
+  
   // Processing Options
   defaultChunkLength: number;
   defaultStrideLength: number;
@@ -82,7 +82,7 @@ export interface AudioSettings {
 const defaultSettings: AudioSettings = {
   huggingFaceToken: '',
   openAIKey: '',
-
+  
   audioSampleRate: 44100,
   fftSize: 2048,
   minPitchLag: 20,
@@ -92,21 +92,16 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: "large-v3-turbo", // TODO:  we must build the model value from this or the selected item from the supportedModels array
-
-  speakerIdTemplate: "speaker-{idx}", // TODO: lets change this from {idx} to {?} if we can
-  speakerNameTemplate: "Speaker {idx}", // TODO: lets change this from {idx} to {?} if we can
+  defaultModel: "distil-whisper/distil-small.en",
+  
+  speakerIdTemplate: "speaker-{idx}",
+  speakerNameTemplate: "Speaker {idx}",
   speakerColors: [
     '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
     '#16a34a', '#2563eb', '#9333ea', '#c026d3'
   ],
   maxSpeakers: 8,
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  add the ONNX option
-  // TODO:  add the quantized option and use it to build just like the ONNX option
+  
   supportedModels: [
     { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
     { id: 'large-v3', name: 'Whisper Large v3' },
@@ -137,7 +132,7 @@ const defaultSettings: AudioSettings = {
     { code: 'zh', name: 'Chinese' },
   ],
   defaultLanguage: 'auto',
-
+  
   waveformColors: {
     background: '#ffffff',
     waveform: '#4a5568',
@@ -145,19 +140,19 @@ const defaultSettings: AudioSettings = {
     cursor: '#718096'
   },
   waveformHeight: 128,
-
+  
   minVolume: 0,
   maxVolume: 200,
   volumeStep: 1,
-
+  
   minZoom: 1,
   maxZoom: 1000,
   defaultZoom: 100,
   zoomStep: 10,
-
+  
   timeFormat: 'HH:mm:ss',
   showMilliseconds: true,
-
+  
   defaultChunkLength: 30,
   defaultStrideLength: 5,
   defaultFloatingPoint: 32,

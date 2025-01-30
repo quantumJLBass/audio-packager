@@ -70,8 +70,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         end: chunk.timestamp[1] || 0,
         confidence: chunk.confidence || settings.defaultConfidence,
         speaker: {
-          id: `speaker-${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
-          name: `Speaker ${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
+          id: `speaker-${Math.floor(index / 2) + 1}`,
+          name: `Speaker ${Math.floor(index / 2) + 1}`,
           color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
         }
       }));

@@ -1,8 +1,9 @@
-import { AudioAnalysis } from '@/types/audio/analysis';
-import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from './settings';
+import { Transcription } from '@/types/audio/transcription';
+import { AudioAnalysis } from '@/types/audio/analysis';
+import { PretrainedModelOptions } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
@@ -20,36 +21,31 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
   const settings = getSettings();
   console.log('Starting transcription with settings:', settings);
-
+  
   try {
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  use the quantized option and use it to build just like the ONNX option
     const modelPath = 'onnx-community/whisper-tiny.en';
     console.log('Using model path:', modelPath);
-
+    
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
-      {
-        device: "webgpu", // TODO: setting is it not?
+      { 
+        device: "webgpu",
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
+        cache_dir: settings.enableModelCaching ? undefined : null
       }
     );
-
+    
     const result = await transcriber(audioData, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
       task: "transcribe",
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: true // TODO: setting is it not?
+      return_timestamps: true
     });
-
+    
     console.log('Transcription result:', result);
-
+    
     const chunks = Array.isArray(result) ? result : [result];
     return chunks.map((chunk: any): Transcription => ({
       id: uuidv4(),
@@ -75,13 +71,13 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentModel,
-      {
-        device: "webgpu", // TODO: setting is it not?
+      { 
+        device: "webgpu",
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
+        cache_dir: settings.enableModelCaching ? undefined : null
       }
     );
-
+    
     const result = await classifier(text);
     return (result as any)[0]?.label || 'neutral';
   } catch (error) {
@@ -108,7 +104,7 @@ const calculatePitch = (audioData: Float32Array): number => {
   try {
     const sampleRate = settings.audioSampleRate;
     const bufferSize = settings.fftSize;
-
+    
     // Implement autocorrelation-based pitch detection
     const correlations = new Float32Array(bufferSize);
     for (let lag = 0; lag < bufferSize; lag++) {
@@ -118,7 +114,7 @@ const calculatePitch = (audioData: Float32Array): number => {
       }
       correlations[lag] = correlation;
     }
-
+    
     // Find the highest correlation peak
     let maxCorrelation = 0;
     let maxLag = 0;
@@ -128,7 +124,7 @@ const calculatePitch = (audioData: Float32Array): number => {
         maxLag = lag;
       }
     }
-
+    
     return sampleRate / maxLag;
   } catch (error) {
     console.error('Pitch calculation error:', error);
@@ -141,7 +137,7 @@ const calculateTempo = (audioData: Float32Array): number => {
   try {
     const sampleRate = settings.audioSampleRate;
     const bufferSize = settings.fftSize;
-
+    
     // Implement onset detection for tempo estimation
     const energyProfile = new Float32Array(Math.floor(audioData.length / bufferSize));
     for (let i = 0; i < energyProfile.length; i++) {
@@ -151,23 +147,23 @@ const calculateTempo = (audioData: Float32Array): number => {
       }
       energyProfile[i] = sum;
     }
-
+    
     // Find peaks in energy profile
     const peaks = [];
     for (let i = 1; i < energyProfile.length - 1; i++) {
-      if (energyProfile[i] > energyProfile[i - 1] &&
+      if (energyProfile[i] > energyProfile[i - 1] && 
           energyProfile[i] > energyProfile[i + 1] &&
           energyProfile[i] > settings.onsetThreshold) {
         peaks.push(i);
       }
     }
-
+    
     // Calculate average time between peaks
     if (peaks.length < 2) return settings.defaultTempo;
-
+    
     const avgTimeBetweenPeaks = (peaks[peaks.length - 1] - peaks[0]) / (peaks.length - 1);
     const bpm = 60 / (avgTimeBetweenPeaks * bufferSize / sampleRate);
-
+    
     return Math.round(bpm);
   } catch (error) {
     console.error('Tempo calculation error:', error);

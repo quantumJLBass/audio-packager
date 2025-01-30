@@ -1,17 +1,18 @@
+import { Pipeline } from '@huggingface/transformers';
 import { Transcription } from './transcription';
 
 export interface PretrainedModelOptions {
-  device: "webgpu"; // TODO: setting is it not? but is this really correct given this is a types file?
+  device: "webgpu";
   revision: string;
   cache_dir: string | null | undefined;
-  dtype?: "fp32"; // TODO: setting is it not? but is this really correct given this is a types file?
+  dtype?: "fp32";
 }
 
 export interface AudioProcessingOptions {
   chunkLength: number;
   strideLength: number;
   language: string;
-  task: "transcribe";// TODO: setting is it not?  but is this really correct given this is a types file?
+  task: "transcribe";
   return_timestamps: boolean;
   max_new_tokens: number;
   num_beams: number;

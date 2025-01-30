@@ -89,7 +89,7 @@ export const reducer = (state: State, action: Action): State => {
 
     case "DISMISS_TOAST": {
       const { toastId } = action
-      // TODO: This is a bit of a hack to allow dismissing all toasts
+
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
@@ -188,4 +188,4 @@ function useToast() {
   }
 }
 
-export { toast, useToast }
+export { useToast, toast }
