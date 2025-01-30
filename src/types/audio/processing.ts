@@ -1,6 +1,7 @@
 /**
  * Audio processing type definitions
  */
+import { Transcription } from './transcription';
 
 /**
  * Supported audio MIME types
@@ -15,45 +16,41 @@ export type SupportedAudioType =
  * Supported device types for model processing
  */
 export enum DeviceType {
-  WebGPU = "webgpu",
-  CPU = "cpu",
-  WASM = "wasm"
+  CPU = 'cpu',
+  CUDA = 'cuda',
+  WebGPU = 'webgpu',
+  WebGL = 'webgl',
+  WASM = 'wasm'
 }
 
 /**
- * Supported floating point precision types
+ * Supported data types for model processing
  */
 export enum DType {
-  FP32 = "fp32",
-  FP16 = "fp16"
+  FP32 = 'float32',
+  FP16 = 'float16',
+  INT8 = 'int8'
 }
 
 /**
- * Supported audio processing tasks
+ * Processing task types
  */
 export enum ProcessingTask {
-  Transcribe = "transcribe",
-  Translate = "translate"
+  Transcribe = 'transcribe',
+  Translate = 'translate'
 }
 
 /**
- * Options for pretrained model configuration
+ * Audio processing configuration
  */
-export interface PretrainedModelOptions {
+export interface ProcessingConfig {
+  task: ProcessingTask;
+  language?: string;
+  model: string;
   device: DeviceType;
-  revision: string;
-  cache_dir: string | null | undefined;
   dtype: DType;
-}
-
-/**
- * Options for audio processing configuration
- */
-export interface AudioProcessingOptions {
   chunkLength: number;
   strideLength: number;
-  language: string;
-  task: ProcessingTask;
   returnTimestamps: boolean;
   maxNewTokens: number;
   numBeams: number;
@@ -62,37 +59,13 @@ export interface AudioProcessingOptions {
 }
 
 /**
- * Result of audio processing
+ * Audio processing result
  */
 export interface ProcessingResult {
+  id: string;
   text: string;
-  start: number;
-  end: number;
-  confidence: number;
-}
-
-/**
- * State of audio processing
- */
-export interface AudioProcessingState {
-  currentTime: number;
-  isPlaying: boolean;
-  duration: number;
-  isReady: boolean;
-  isTranscribing: boolean;
-  transcriptions: Transcription[];
-  error: string | null;
-}
-
-/**
- * Configuration for model URL construction
- */
-export interface ModelUrlOptions {
-  provider: string;
-  model: string;
-  isQuantized?: boolean;
-  isOnnx?: boolean;
-  language?: string;
+  segments: Transcription[];
+  language: string;
 }
 
 /**

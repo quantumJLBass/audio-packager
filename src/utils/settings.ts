@@ -95,6 +95,7 @@ const defaultSettings: AudioSettings = {
   maxSpeakers: 8,
 
   supportedModels: [
+    { id: 'tiny', name: 'Whisper Tiny' },
     { id: 'base', name: 'Whisper Base' },
     { id: 'small', name: 'Whisper Small' },
     { id: 'medium', name: 'Whisper Medium' },
