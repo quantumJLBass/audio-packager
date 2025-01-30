@@ -5,7 +5,6 @@ export const determineAudioType = (file: File): SupportedAudioType => {
 };
 
 export const determineAudioTypeFromBuffer = (buffer: ArrayBuffer): SupportedAudioType => {
-  // Check magic numbers in buffer to identify format
   const view = new Uint8Array(buffer);
   
   // WAV: RIFF header
@@ -26,4 +25,10 @@ export const determineAudioTypeFromBuffer = (buffer: ArrayBuffer): SupportedAudi
   
   // Default to WAV if unknown
   return 'audio/wav';
+};
+
+export const createAudioFileFromBuffer = (buffer: ArrayBuffer, name: string = 'audio'): File => {
+  const type = determineAudioTypeFromBuffer(buffer);
+  const extension = type.split('/')[1];
+  return new File([buffer], `${name}.${extension}`, { type });
 };

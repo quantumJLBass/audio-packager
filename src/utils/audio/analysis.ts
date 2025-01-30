@@ -1,16 +1,10 @@
-/**
- * Audio analysis utilities for sentiment and tone analysis
- */
 import { PretrainedModelOptions } from '@/types/audio/processing';
 import { pipeline } from '@huggingface/transformers';
 import { getSettings } from '../settings';
 import { DebugLogger } from '../debug';
-import { determineAudioType } from './fileType';
+import { determineAudioTypeFromBuffer, createAudioFileFromBuffer } from './fileType';
 import { buildModelPath, createModelConfig, createTranscriptionConfig } from './modelBuilder';
 
-/**
- * Analyzes the sentiment of transcribed audio
- */
 export const analyzeSentiment = async (audioData: Float32Array): Promise<string> => {
   const text = await convertAudioToText(audioData);
   if (!text) {
@@ -47,9 +41,6 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
   }
 };
 
-/**
- * Analyzes the speaking tone of audio
- */
 export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   DebugLogger.log('Tone', 'Starting tone analysis');
   const settings = getSettings();
@@ -73,16 +64,12 @@ export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
   }
 };
 
-/**
- * Converts audio data to text for analysis
- */
 async function convertAudioToText(audioData: Float32Array): Promise<string> {
   const settings = getSettings();
   DebugLogger.log('Transcription', 'Converting audio to text');
 
-  const audioBlob = new Blob([audioData], {
-    type: determineAudioType(audioData.buffer)
-  });
+  const audioBuffer = audioData.buffer;
+  const audioFile = createAudioFileFromBuffer(audioBuffer);
   
   const base64String = await new Promise<string>((resolve) => {
     const reader = new FileReader();
@@ -90,7 +77,7 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
       const base64 = reader.result as string;
       resolve(base64.split(',')[1]);
     };
-    reader.readAsDataURL(audioBlob);
+    reader.readAsDataURL(audioFile);
   });
 
   try {

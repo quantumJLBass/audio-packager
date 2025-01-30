@@ -1,18 +1,12 @@
-/**
- * Audio processing utilities for transcription and analysis
- */
 import { PretrainedModelOptions } from '@/types/audio/processing';
 import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
-import { determineAudioType } from './fileType';
+import { determineAudioTypeFromBuffer, createAudioFileFromBuffer } from './fileType';
 import { buildModelPath, createModelConfig, createTranscriptionConfig } from './modelBuilder';
 import { DebugLogger } from '../debug';
 
-/**
- * Processes an audio buffer into a Float32Array for analysis
- */
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   DebugLogger.log('Processing', 'Processing audio buffer');
   const audioContext = new AudioContext();
@@ -20,16 +14,12 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   return audioBuffer.getChannelData(0);
 };
 
-/**
- * Transcribes audio data into text segments
- */
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
   DebugLogger.log('Transcription', 'Starting transcription');
   const settings = getSettings();
 
-  const audioBlob = new Blob([audioData], {
-    type: determineAudioType(audioData.buffer)
-  });
+  const audioBuffer = audioData.buffer;
+  const audioFile = createAudioFileFromBuffer(audioBuffer);
   
   const base64String = await new Promise<string>((resolve) => {
     const reader = new FileReader();
@@ -37,7 +27,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       const base64 = reader.result as string;
       resolve(base64.split(',')[1]);
     };
-    reader.readAsDataURL(audioBlob);
+    reader.readAsDataURL(audioFile);
   });
 
   try {
