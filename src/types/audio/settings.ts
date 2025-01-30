@@ -40,7 +40,7 @@ export interface ToneConfig {
 /**
  * Complete audio processing settings configuration
  */
-export type AudioSettings = {
+export interface AudioSettings {
   // Debug Mode
   debugMode: boolean;
 

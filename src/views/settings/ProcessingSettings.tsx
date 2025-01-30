@@ -1,3 +1,7 @@
+/**
+ * Component for managing audio processing settings
+ * Handles model configuration, sentiment analysis, and processing options
+ */
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -19,10 +23,6 @@ interface ProcessingSettingsProps {
   onChange: (settings: AudioSettings) => void;
 }
 
-/**
- * Component for managing audio processing settings
- * Handles model configuration, sentiment analysis, and processing options
- */
 export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
   settings,
   onChange
@@ -46,6 +46,44 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                     modelConfig: { ...settings.modelConfig, useOnnx: checked }
                   })}
                 />
+              </SettingField>
+
+              {/* Fix for missing children prop */}
+              <SettingField
+                id="sentimentThresholds"
+                label="Thresholds"
+                tooltip="Set thresholds for different emotions"
+              >
+                <div className="space-y-2">
+                  {Object.entries(settings.sentimentAnalysis.thresholds).map(([emotion, metrics]) => (
+                    <div key={emotion} className="flex items-center space-x-2">
+                      <Label>{emotion}</Label>
+                      <Input
+                        type="number"
+                        value={metrics.value}
+                        onChange={(e) => {
+                          const newThresholds = {
+                            ...settings.sentimentAnalysis.thresholds,
+                            [emotion]: {
+                              ...metrics,
+                              value: parseFloat(e.target.value)
+                            }
+                          };
+                          onChange({
+                            ...settings,
+                            sentimentAnalysis: {
+                              ...settings.sentimentAnalysis,
+                              thresholds: newThresholds
+                            }
+                          });
+                        }}
+                        step="0.01"
+                        min="0"
+                        max="1"
+                      />
+                    </div>
+                  ))}
+                </div>
               </SettingField>
 
               <SettingField
