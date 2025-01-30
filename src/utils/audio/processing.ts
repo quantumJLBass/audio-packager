@@ -3,11 +3,11 @@ import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
-
-// todo: missing a lot of the settings AND HAVE HARD CODED VALUES!!
+import { buildModelUrl, buildConfigUrl, buildOnnxModelUrls } from './urlBuilder';
+import { DebugLogger } from '../debug';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
-  console.log('Processing audio buffer...');
+  DebugLogger.logProcessingStep('Processing audio buffer');
   const audioContext = new AudioContext();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   const channelData = audioBuffer.getChannelData(0);
@@ -15,53 +15,53 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
 };
 
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
-  console.log('Transcribing audio...');
+  DebugLogger.logProcessingStep('Starting transcription');
   const settings = getSettings();
 
-  // Convert Float32Array to base64 string for the model
-  const audioBlob = new Blob([audioData], {
-    type: 'audio/wav' // TODO: THIS SHOULD BE DETERMINED BY THE AUDIO FILE ITSELF, NOT HARD CODED
-   });
-  const base64String = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      resolve(base64.split(',')[1]); // Remove data URL prefix
-    };
-    reader.readAsDataURL(audioBlob);
-  });
-
   const modelOptions: PretrainedModelOptions = {
-    device: "webgpu", // TODO: setting is it not?
+    device: settings.modelConfig.device,
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
-    dtype: "fp32" // TODO: setting is it not?
+    dtype: settings.modelConfig.dtype
   };
 
   try {
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  use the quantized option and use it to build just like the ONNX option
-    const modelUsed = settings.supportedModels.find((model) => model.id === settings.defaultModel)?.name || settings.defaultModel
+    const modelUrl = buildModelUrl({
+      provider: settings.modelConfig.provider,
+      model: settings.modelConfig.model,
+      isQuantized: settings.modelConfig.useQuantized,
+      isOnnx: settings.modelConfig.useOnnx,
+      language: settings.defaultLanguage
+    });
+
+    DebugLogger.logModelPath(modelUrl);
+
+    if (settings.modelConfig.useOnnx) {
+      const onnxUrls = buildOnnxModelUrls(modelUrl);
+      DebugLogger.log('ONNX model URLs:', onnxUrls);
+    }
+
+    const configUrl = buildConfigUrl(modelUrl);
+    DebugLogger.log('Config URL:', configUrl);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
-      modelUsed,
+      modelUrl,
       modelOptions
     );
 
-    const result = await transcriber(base64String, {
+    const result = await transcriber(audioData, {
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: true // TODO: setting is it not?
+      return_timestamps: settings.returnTimestamps,
+      max_new_tokens: settings.maxNewTokens,
+      num_beams: settings.numBeams,
+      temperature: settings.temperature,
+      no_repeat_ngram_size: settings.noRepeatNgramSize
     });
 
-    console.log('Transcription result:', result);
-    // ToDo: needs to be implemented
-    // speakerIdTemplate
-    // speakerNameTemplate
+    DebugLogger.log('Transcription result:', result);
+
     if (!Array.isArray(result) && result.chunks) {
       return result.chunks.map((chunk: any, index: number) => ({
         id: uuidv4(),
@@ -70,8 +70,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         end: chunk.timestamp[1] || 0,
         confidence: chunk.confidence || settings.defaultConfidence,
         speaker: {
-          id: `speaker-${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
-          name: `Speaker ${Math.floor(index / 2) + 1}`, // TODO: setting is it not?
+          id: settings.speakerIdTemplate.replace('{?}', String(Math.floor(index / 2) + 1)),
+          name: settings.speakerNameTemplate.replace('{?}', String(Math.floor(index / 2) + 1)),
           color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
         }
       }));
@@ -79,7 +79,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
     return [];
   } catch (error) {
-    console.error('Transcription error:', error);
+    DebugLogger.error('Transcription error:', error);
     throw error;
   }
 };

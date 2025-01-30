@@ -1,10 +1,34 @@
 import { Transcription } from './transcription';
-// TODO: setting seems like its not complete
+
+export interface ModelConfig {
+  provider: string;
+  model: string;
+  useOnnx: boolean;
+  useQuantized: boolean;
+  device: 'webgpu' | 'cpu' | 'wasm';
+  dtype: 'fp16' | 'fp32';
+}
+
+export interface SentimentConfig {
+  provider: string;
+  model: string;
+  thresholds: {
+    [emotion: string]: number;
+  };
+}
+
 export interface AudioSettings {
+  // Debug Mode
+  debugMode: boolean;
+
   // API Keys
   huggingFaceToken: string;
   openAIKey: string;
 
+  // Model Configuration
+  modelConfig: ModelConfig;
+  sentimentAnalysis: SentimentConfig;
+  
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -16,6 +40,7 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
+  useOnnx: boolean;
 
   // Speaker Settings
   speakerIdTemplate: string;
@@ -44,7 +69,7 @@ export interface AudioSettings {
     progress: string;
     cursor: string;
   };
-  waveformHeight: number;  // Added this property
+  waveformHeight: number;
 
   // Volume Settings
   minVolume: number;
@@ -66,6 +91,11 @@ export interface AudioSettings {
   defaultStrideLength: number;
   defaultFloatingPoint: number;
   defaultDiarization: boolean;
+  returnTimestamps: boolean;
+  maxNewTokens: number;
+  numBeams: number;
+  temperature: number;
+  noRepeatNgramSize: number;
 
   minPxPerSec: number;
   initialState: {

@@ -1,10 +1,34 @@
 import { Transcription } from '@/types/audio/transcription';
 
+export interface ModelConfig {
+  provider: string;
+  model: string;
+  useOnnx: boolean;
+  useQuantized: boolean;
+  device: 'webgpu' | 'cpu' | 'wasm';
+  dtype: 'fp16' | 'fp32';
+}
+
+export interface SentimentConfig {
+  provider: string;
+  model: string;
+  thresholds: {
+    [emotion: string]: number;
+  };
+}
+
 export interface AudioSettings {
+  // Debug Mode
+  debugMode: boolean;
+
   // API Keys
   huggingFaceToken: string;
   openAIKey: string;
 
+  // Model Configuration
+  modelConfig: ModelConfig;
+  sentimentAnalysis: SentimentConfig;
+  
   // Audio Processing
   audioSampleRate: number;
   fftSize: number;
@@ -16,6 +40,7 @@ export interface AudioSettings {
   defaultConfidence: number;
   noSpeechText: string;
   defaultModel: string;
+  useOnnx: boolean;
 
   // Speaker Settings
   speakerIdTemplate: string;
@@ -66,6 +91,11 @@ export interface AudioSettings {
   defaultStrideLength: number;
   defaultFloatingPoint: number;
   defaultDiarization: boolean;
+  returnTimestamps: boolean;
+  maxNewTokens: number;
+  numBeams: number;
+  temperature: number;
+  noRepeatNgramSize: number;
 
   minPxPerSec: number;
   initialState: {
@@ -80,8 +110,53 @@ export interface AudioSettings {
 }
 
 const defaultSettings: AudioSettings = {
+  debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
+
+  modelConfig: {
+    provider: 'onnx-community',
+    model: 'large-v3-turbo',
+    useOnnx: true,
+    useQuantized: true,
+    device: 'webgpu',
+    dtype: 'fp32'
+  },
+
+  sentimentAnalysis: {
+    provider: 'SamLowe',
+    model: 'roberta-base-go_emotions',
+    thresholds: {
+      admiration: 0.25,
+      amusement: 0.45,
+      anger: 0.15,
+      annoyance: 0.10,
+      approval: 0.30,
+      caring: 0.40,
+      confusion: 0.55,
+      curiosity: 0.25,
+      desire: 0.25,
+      disappointment: 0.40,
+      disapproval: 0.30,
+      disgust: 0.20,
+      embarrassment: 0.10,
+      excitement: 0.35,
+      fear: 0.40,
+      gratitude: 0.45,
+      grief: 0.05,
+      joy: 0.40,
+      love: 0.25,
+      nervousness: 0.25,
+      optimism: 0.20,
+      pride: 0.10,
+      realization: 0.15,
+      relief: 0.05,
+      remorse: 0.10,
+      sadness: 0.40,
+      surprise: 0.15,
+      neutral: 0.25
+    }
+  },
 
   audioSampleRate: 44100,
   fftSize: 2048,
@@ -92,21 +167,16 @@ const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: "large-v3-turbo", // TODO:  we must build the model value from this or the selected item from the supportedModels array
-
-  speakerIdTemplate: "speaker-{idx}", // TODO: lets change this from {idx} to {?} if we can
-  speakerNameTemplate: "Speaker {idx}", // TODO: lets change this from {idx} to {?} if we can
+  defaultModel: "large-v3-turbo",
+  
+  speakerIdTemplate: "speaker-{?}",
+  speakerNameTemplate: "Speaker {?}",
   speakerColors: [
     '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
     '#16a34a', '#2563eb', '#9333ea', '#c026d3'
   ],
   maxSpeakers: 8,
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  add the ONNX option
-  // TODO:  add the quantized option and use it to build just like the ONNX option
+
   supportedModels: [
     { id: 'large-v3-turbo', name: 'Whisper Large v3 Turbo' },
     { id: 'large-v3', name: 'Whisper Large v3' },
@@ -118,6 +188,7 @@ const defaultSettings: AudioSettings = {
     { id: 'tiny', name: 'Whisper Tiny' },
     { id: 'distil-small', name: 'Distil Whisper Small' }
   ],
+
   modelRevision: 'main',
   enableModelCaching: true,
   sentimentModel: 'SamLowe/roberta-base-go_emotions',
@@ -163,16 +234,11 @@ const defaultSettings: AudioSettings = {
   defaultFloatingPoint: 32,
   defaultDiarization: true,
 
-  minPxPerSec: 100,
-  initialState: {
-    currentTime: 0,
-    isPlaying: false,
-    duration: 0,
-    isReady: false,
-    isTranscribing: false,
-    transcriptions: [],
-    error: null
-  }
+  returnTimestamps: true,
+  maxNewTokens: 128,
+  numBeams: 1,
+  temperature: 0,
+  noRepeatNgramSize: 3
 };
 
 export const getSettings = (): AudioSettings => {
