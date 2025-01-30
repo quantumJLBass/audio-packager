@@ -71,3 +71,6 @@ export const determineAudioTypeFromBuffer = (buffer: ArrayBuffer): SupportedAudi
   // Default to MP3 if no signature match
   return 'audio/mpeg';
 };
+
+// Re-export for backward compatibility
+export const determineAudioType = determineAudioTypeFromBuffer;

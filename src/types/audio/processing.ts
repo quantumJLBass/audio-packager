@@ -2,7 +2,14 @@
  * Audio processing type definitions
  */
 
-import { Transcription } from './transcription';
+/**
+ * Supported audio MIME types
+ */
+export type SupportedAudioType = 
+  | 'audio/mpeg' | 'audio/wav' | 'audio/ogg' | 'audio/aac'
+  | 'audio/flac' | 'audio/alac' | 'audio/aiff' | 'audio/m4a'
+  | 'audio/pcm' | 'audio/dsd' | 'audio/mp4' | 'audio/webm'
+  | 'audio/opus' | 'audio/midi' | 'audio/vorbis';
 
 /**
  * Supported device types for model processing
