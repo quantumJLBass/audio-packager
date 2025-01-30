@@ -5,7 +5,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsSection } from './SettingsSection';
 import { SettingField } from '@/components/settings/SettingField';
-import type { AudioSettings } from '@/utils/settings';
+import type { AudioSettings } from '@/types/audio/settings';
+import { DeviceType, DType } from '@/types/audio/processing';
 import { 
   Accordion,
   AccordionContent,
@@ -30,20 +31,74 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           <AccordionContent>
             <div className="space-y-4">
               <SettingField
-                id="defaultModel"
-                label="Default Model"
-                tooltip="Select the AI model to use for audio processing. Larger models are more accurate but slower."
+                id="useOnnx"
+                label="Use ONNX Model"
+                tooltip="Enable ONNX model optimization for better performance"
+              >
+                <Switch
+                  checked={settings.modelConfig.useOnnx}
+                  onCheckedChange={(checked) => onChange({
+                    ...settings,
+                    modelConfig: { ...settings.modelConfig, useOnnx: checked }
+                  })}
+                />
+              </SettingField>
+
+              <SettingField
+                id="useQuantized"
+                label="Use Quantized Model"
+                tooltip="Enable quantized model for reduced memory usage"
+              >
+                <Switch
+                  checked={settings.modelConfig.useQuantized}
+                  onCheckedChange={(checked) => onChange({
+                    ...settings,
+                    modelConfig: { ...settings.modelConfig, useQuantized: checked }
+                  })}
+                />
+              </SettingField>
+
+              <SettingField
+                id="device"
+                label="Processing Device"
+                tooltip="Select the device to use for model processing"
               >
                 <Select
-                  value={settings.defaultModel}
-                  onValueChange={(value) => onChange({ ...settings, defaultModel: value })}
+                  value={settings.modelConfig.device}
+                  onValueChange={(value: DeviceType) => onChange({
+                    ...settings,
+                    modelConfig: { ...settings.modelConfig, device: value }
+                  })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select model" />
+                    <SelectValue placeholder="Select device" />
                   </SelectTrigger>
                   <SelectContent>
-                    {settings.supportedModels.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                    {Object.values(DeviceType).map((device) => (
+                      <SelectItem key={device} value={device}>{device}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </SettingField>
+
+              <SettingField
+                id="dtype"
+                label="Data Type"
+                tooltip="Select the floating-point precision for model computations"
+              >
+                <Select
+                  value={settings.modelConfig.dtype}
+                  onValueChange={(value: DType) => onChange({
+                    ...settings,
+                    modelConfig: { ...settings.modelConfig, dtype: value }
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select data type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(DType).map((dtype) => (
+                      <SelectItem key={dtype} value={dtype}>{dtype}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -76,6 +131,73 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           </AccordionContent>
         </AccordionItem>
 
+        <AccordionItem value="sentiment">
+          <AccordionTrigger>Sentiment Analysis</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4">
+              <SettingField
+                id="sentimentProvider"
+                label="Provider"
+                tooltip="Select the sentiment analysis model provider"
+              >
+                <Input
+                  value={settings.sentimentAnalysis.provider}
+                  onChange={(e) => onChange({
+                    ...settings,
+                    sentimentAnalysis: {
+                      ...settings.sentimentAnalysis,
+                      provider: e.target.value
+                    }
+                  })}
+                />
+              </SettingField>
+
+              <SettingField
+                id="sentimentModel"
+                label="Model"
+                tooltip="Select the sentiment analysis model"
+              >
+                <Input
+                  value={settings.sentimentAnalysis.model}
+                  onChange={(e) => onChange({
+                    ...settings,
+                    sentimentAnalysis: {
+                      ...settings.sentimentAnalysis,
+                      model: e.target.value
+                    }
+                  })}
+                />
+              </SettingField>
+
+              <SettingField
+                id="defaultLabel"
+                label="Default Label"
+                tooltip="Default sentiment label when analysis fails"
+              >
+                <Input
+                  value={settings.sentimentAnalysis.defaultLabel}
+                  onChange={(e) => onChange({
+                    ...settings,
+                    sentimentAnalysis: {
+                      ...settings.sentimentAnalysis,
+                      defaultLabel: e.target.value
+                    }
+                  })}
+                />
+              </SettingField>
+
+              <SettingField
+                id="sentimentThresholds"
+                label="Thresholds"
+                tooltip="Set thresholds for different emotions"
+              >
+                {/* Add UI for thresholds settings here */}
+                {/* This part can be expanded based on the specific requirements for thresholds */}
+              </SettingField>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
         <AccordionItem value="processing">
           <AccordionTrigger>Processing Options</AccordionTrigger>
           <AccordionContent>
@@ -96,25 +218,6 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                     {settings.supportedLanguages.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </SettingField>
-
-              <SettingField
-                id="defaultFloatingPoint"
-                label="Floating Point Precision"
-                tooltip="Precision level for audio processing. Higher precision (32-bit) is more accurate but uses more memory."
-              >
-                <Select
-                  value={settings.defaultFloatingPoint.toString()}
-                  onValueChange={(value) => onChange({ ...settings, defaultFloatingPoint: parseInt(value) })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select precision" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="16">16-bit</SelectItem>
-                    <SelectItem value="32">32-bit</SelectItem>
                   </SelectContent>
                 </Select>
               </SettingField>

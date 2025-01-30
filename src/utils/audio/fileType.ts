@@ -3,44 +3,102 @@
  */
 
 /**
+ * Supported audio MIME types
+ */
+export enum AudioMimeType {
+  MP3 = 'audio/mpeg',
+  WAV = 'audio/wav',
+  OGG = 'audio/ogg',
+  AAC = 'audio/aac',
+  FLAC = 'audio/flac',
+  ALAC = 'audio/alac',
+  AIFF = 'audio/aiff',
+  M4A = 'audio/m4a',
+  PCM = 'audio/pcm',
+  DSD = 'audio/dsd',
+  MP4 = 'audio/mp4',
+  WEBM = 'audio/webm',
+  OPUS = 'audio/opus',
+  MIDI = 'audio/midi',
+  VORBIS = 'audio/vorbis'
+}
+
+/**
+ * File signature patterns for audio formats
+ */
+const SIGNATURES = {
+  WAV: [0x52, 0x49, 0x46, 0x46], // 'RIFF'
+  MP3: [0x49, 0x44, 0x33], // 'ID3'
+  OGG: [0x4F, 0x67, 0x67, 0x53], // 'OggS'
+  FLAC: [0x66, 0x4C, 0x61, 0x43], // 'fLaC'
+  M4A: [0x66, 0x74, 0x79, 0x70], // 'ftyp'
+  AAC: [0x41, 0x44, 0x49, 0x46], // 'ADIF'
+  AIFF: [0x46, 0x4F, 0x52, 0x4D], // 'FORM'
+  MIDI: [0x4D, 0x54, 0x68, 0x64], // 'MThd'
+  WEBM: [0x1A, 0x45, 0xDF, 0xA3], // WEBM signature
+};
+
+/**
  * Determines the MIME type of an audio file based on its header signature
  * @param audioData - The audio data buffer to analyze
  * @returns The detected MIME type
  */
-export const determineAudioType = (audioData: ArrayBuffer): string => {
+export const determineAudioType = (audioData: ArrayBuffer): AudioMimeType => {
   const header = new Uint8Array(audioData.slice(0, 12));
   
-  // WAV: 'RIFF' header
-  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
-    return 'audio/wav';
+  // Check for WAV
+  if (matchSignature(header, SIGNATURES.WAV)) {
+    return AudioMimeType.WAV;
   }
   
-  // MP3: ID3v2 header or MPEG sync
-  if ((header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) ||
+  // Check for MP3 (ID3v2 header or MPEG sync)
+  if (matchSignature(header, SIGNATURES.MP3) || 
       (header[0] === 0xFF && (header[1] & 0xE0) === 0xE0)) {
-    return 'audio/mpeg';
+    return AudioMimeType.MP3;
   }
   
-  // AAC: ADIF header
-  if (header[0] === 0x41 && header[1] === 0x44 && header[2] === 0x49 && header[3] === 0x46) {
-    return 'audio/aac';
+  // Check for AAC
+  if (matchSignature(header, SIGNATURES.AAC)) {
+    return AudioMimeType.AAC;
   }
   
-  // M4A/AAC: ftyp header
-  if (header[4] === 0x66 && header[5] === 0x74 && header[6] === 0x79 && header[7] === 0x70) {
-    return 'audio/mp4';
+  // Check for M4A/MP4
+  if (matchSignature(header.slice(4), SIGNATURES.M4A)) {
+    return AudioMimeType.M4A;
   }
   
-  // OGG: OggS header
-  if (header[0] === 0x4F && header[1] === 0x67 && header[2] === 0x67 && header[3] === 0x53) {
-    return 'audio/ogg';
+  // Check for OGG
+  if (matchSignature(header, SIGNATURES.OGG)) {
+    return AudioMimeType.OGG;
   }
   
-  // FLAC: fLaC header
-  if (header[0] === 0x66 && header[1] === 0x4C && header[2] === 0x61 && header[3] === 0x43) {
-    return 'audio/flac';
+  // Check for FLAC
+  if (matchSignature(header, SIGNATURES.FLAC)) {
+    return AudioMimeType.FLAC;
+  }
+  
+  // Check for AIFF
+  if (matchSignature(header, SIGNATURES.AIFF)) {
+    return AudioMimeType.AIFF;
+  }
+  
+  // Check for MIDI
+  if (matchSignature(header, SIGNATURES.MIDI)) {
+    return AudioMimeType.MIDI;
+  }
+  
+  // Check for WEBM
+  if (matchSignature(header, SIGNATURES.WEBM)) {
+    return AudioMimeType.WEBM;
   }
   
   // Default to WAV if unknown
-  return 'audio/wav';
+  return AudioMimeType.WAV;
+};
+
+/**
+ * Helper function to match byte signatures
+ */
+const matchSignature = (header: Uint8Array, signature: number[]): boolean => {
+  return signature.every((byte, index) => header[index] === byte);
 };

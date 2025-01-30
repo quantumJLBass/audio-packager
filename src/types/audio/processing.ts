@@ -1,5 +1,5 @@
 /**
- * Audio processing type definitions for handling audio data and transcription
+ * Audio processing type definitions
  */
 
 import { Transcription } from './transcription';
