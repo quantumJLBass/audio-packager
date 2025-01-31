@@ -44,7 +44,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       {
         device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        useQuantized: settings.modelConfig.useQuantized
+        cache_dir: settings.enableModelCaching ? undefined : null,
+        dtype: settings.modelConfig.dtype
       }
     );
 
