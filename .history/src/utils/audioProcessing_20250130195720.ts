@@ -48,7 +48,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       task:settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: settings.returnTimestamps
+      return_timestamps: true // TODO: setting is it not?
     });
 
     console.log('Transcription result:', result);

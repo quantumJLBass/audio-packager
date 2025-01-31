@@ -1,26 +1,27 @@
-import { DebugLogger } from '../debug';
+import { DeviceType, DType, ModelUrlOptions } from '@/types/audio/processing';
 import { getSettings } from '../settings';
+import { DebugLogger } from '../debug';
 
 export const buildModelPath = (modelId: string): string => {
   const settings = getSettings();
   const model = settings.supportedModels.find(m => m.id === modelId);
-
+  
   if (!model) {
     DebugLogger.error('ModelBuilder', `Model ${modelId} not found in supported models`);
     return settings.defaultModel;
   }
 
-  //const provider = settings.modelConfig.useOnnx ? 'onnx-community' : 'openai';
-  //const modelName = model.name.toLowerCase().replace(/\s+/g, '-');
-  // const quantizedSuffix = settings.modelConfig.useQuantized ? '-quantized' : '';
-  // const onnxSuffix = settings.modelConfig.useOnnx ? '-ONNX' : '';
-
-  return `${model.provider}/${model.id}`;
+  const provider = settings.modelConfig.useOnnx ? 'onnx-community' : 'openai';
+  const modelName = model.name.toLowerCase().replace(/\s+/g, '-');
+  const quantizedSuffix = settings.modelConfig.useQuantized ? '-quantized' : '';
+  const onnxSuffix = settings.modelConfig.useOnnx ? '-ONNX' : '';
+  
+  return `${provider}/${modelName}${quantizedSuffix}${onnxSuffix}`;
 };
 
 export const createModelConfig = () => {
   const settings = getSettings();
-
+  
   return {
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
@@ -31,7 +32,7 @@ export const createModelConfig = () => {
 
 export const createTranscriptionConfig = () => {
   const settings = getSettings();
-
+  
   return {
     language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
     task: settings.processingTask,
