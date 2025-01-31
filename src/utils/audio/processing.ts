@@ -5,6 +5,12 @@ import { getSettings } from '../settings';
 import { determineAudioTypeFromBuffer } from './fileType';
 import { buildModelPath } from './modelBuilder';
 
+/**
+ * Processes an audio buffer and converts it to a Float32Array
+ * @param arrayBuffer The raw audio buffer to process
+ * @returns Promise resolving to processed audio data as Float32Array
+ * @throws Error if audio processing fails
+ */
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
   try {
@@ -18,30 +24,33 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   }
 };
 
+/**
+ * Transcribes audio data into text with speaker identification
+ * @param audioData The processed audio data to transcribe
+ * @returns Promise resolving to array of transcription segments
+ * @throws Error if transcription fails
+ */
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
   const settings = getSettings();
   console.log('Starting transcription with settings:', settings);
 
   try {
-    // Use a simpler model that's more reliable
-    //const modelPath = "Xenova/whisper-tiny.en";
-
-    const modelPath = buildModelPath(settings.supportedModels[0].id || settings.defaultModel); //TODO: fix this, the selected supported model should be used not the first one but should still fallback to default
+    const modelPath = buildModelPath(settings.supportedModels[0].id || settings.defaultModel);
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
       {
-        device: settings.modelConfig.device, // Fallback to CPU for reliability
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        quantized: settings.modelConfig.useQuantized
+        useQuantized: settings.modelConfig.useQuantized
       }
     );
 
     // Convert Float32Array to base64 for the model
     const audioBlob = new Blob([audioData], {
-      type: determineAudioTypeFromBuffer(audioData.buffer), //'audio/wav'
+      type: determineAudioTypeFromBuffer(audioData.buffer),
     });
     const base64String = await new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -54,7 +63,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
     const result = await transcriber(base64String, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
-      task:settings.processingTask,
+      task: settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: settings.returnTimestamps

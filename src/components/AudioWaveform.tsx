@@ -1,7 +1,6 @@
-import { useToast } from '@/hooks/use-toast';
-import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import { useToast } from '@/hooks/use-toast';
 import { WaveformControls } from './audio/WaveformControls';
 
 interface AudioWaveformProps {
@@ -14,6 +13,10 @@ interface AudioWaveformProps {
   progressColor?: string;
 }
 
+/**
+ * AudioWaveform component for visualizing and controlling audio playback
+ * @param props Component properties including URL and event handlers
+ */
 export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   url,
   onReady,
@@ -90,11 +93,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         wavesurfer.current.on('finish', () => {
           setIsPlaying(false);
         });
-        return () => {
-          if (!wavesurfer.current) {
-            wavesurfer.current.destroy();
-          }
-        };
       } catch (err) {
         console.error('Error initializing WaveSurfer:', err);
         toast({
@@ -104,13 +102,17 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
       }
     };
-    if (wavesurfer.current) {
-    initWaveSurfer();
-    }
 
+    initWaveSurfer();
+
+    return () => {
+      if (wavesurfer.current) {
+        wavesurfer.current.destroy();
+      }
+    };
   }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
 
-  const handleZoom = debounce((newZoom: number) => {
+  const handleZoom = (newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
         const currentTime = wavesurfer.current.getCurrentTime();
@@ -126,7 +128,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
       }
     }
-  }, 100);
+  };
 
   const handleZoomIn = () => {
     const newZoom = Math.min(zoom + 10, 100);
@@ -141,7 +143,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const handleZoomChange = (newZoom: number) => {
     handleZoom(newZoom);
   };
-
 
   const togglePlayPause = () => {
     if (wavesurfer.current) {
