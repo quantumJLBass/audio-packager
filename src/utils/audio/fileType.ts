@@ -1,34 +1,40 @@
 import { SupportedAudioType } from '@/types/audio/processing';
+import { DebugLogger } from '../debug';
 
-export const determineAudioType = (file: File): SupportedAudioType => {
-  return file.type as SupportedAudioType || 'audio/wav';
+/**
+ * Creates an audio file from an ArrayBuffer with the appropriate MIME type
+ * @param buffer - The audio data buffer
+ * @returns A File object containing the audio data
+ */
+export const createAudioFileFromBuffer = (buffer: ArrayBuffer): File => {
+  const type = determineAudioTypeFromBuffer(buffer);
+  DebugLogger.log('FileType', `Creating audio file with type: ${type}`);
+  return new File([buffer], 'audio', { type });
 };
 
+/**
+ * Determines the audio MIME type from an ArrayBuffer by checking its header
+ * @param buffer - The audio data buffer
+ * @returns The detected MIME type
+ */
 export const determineAudioTypeFromBuffer = (buffer: ArrayBuffer): SupportedAudioType => {
-  const view = new Uint8Array(buffer);
-  
-  // WAV: RIFF header
-  if (view[0] === 0x52 && view[1] === 0x49 && view[2] === 0x46 && view[3] === 0x46) {
-    return 'audio/wav';
-  }
-  
-  // MP3: ID3 or MPEG sync
-  if ((view[0] === 0x49 && view[1] === 0x44 && view[2] === 0x33) || 
-      (view[0] === 0xFF && (view[1] & 0xE0) === 0xE0)) {
+  const header = new Uint8Array(buffer.slice(0, 4));
+  DebugLogger.log('FileType', 'Analyzing file header:', Array.from(header));
+
+  // Check file signatures
+  if (header[0] === 0xFF && header[1] === 0xFB) {
+    DebugLogger.log('FileType', 'Detected MP3 format');
     return 'audio/mpeg';
   }
-  
-  // OGG: OggS
-  if (view[0] === 0x4F && view[1] === 0x67 && view[2] === 0x67 && view[3] === 0x53) {
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46) {
+    DebugLogger.log('FileType', 'Detected WAV format');
+    return 'audio/wav';
+  }
+  if (header[0] === 0x4F && header[1] === 0x67 && header[2] === 0x67 && header[3] === 0x53) {
+    DebugLogger.log('FileType', 'Detected OGG format');
     return 'audio/ogg';
   }
-  
-  // Default to WAV if unknown
-  return 'audio/wav';
-};
 
-export const createAudioFileFromBuffer = (buffer: ArrayBuffer, name: string = 'audio'): File => {
-  const type = determineAudioTypeFromBuffer(buffer);
-  const extension = type.split('/')[1];
-  return new File([buffer], `${name}.${extension}`, { type });
+  DebugLogger.log('FileType', 'Defaulting to MP3 format');
+  return 'audio/mpeg';
 };

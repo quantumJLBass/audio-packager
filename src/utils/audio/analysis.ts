@@ -3,7 +3,6 @@
  * @module audio/analysis
  */
 import { pipeline } from '@huggingface/transformers';
-import type { TextClassificationOutput } from '@huggingface/transformers';
 import { DebugLogger } from '../debug';
 import { getSettings } from '../settings';
 import { createAudioFileFromBuffer } from './fileType';
@@ -30,12 +29,12 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
 
     const result = await classifier(text);
     const output = Array.isArray(result) ? result[0] : result;
-    // Type assertion since we know the shape from HuggingFace
-    const label = ((output as TextClassificationOutput).label || settings.sentimentAnalysis.defaultLabel).toString();
+    const outputObj = output as { [key: string]: any };
+    const label = (outputObj?.label || settings.sentimentAnalysis.defaultLabel).toString();
 
     DebugLogger.log('Sentiment', 'Analysis result:', {
       label,
-      confidence: (output as TextClassificationOutput).score,
+      confidence: outputObj?.score,
       threshold: settings.sentimentAnalysis.thresholds[label]?.value || 0
     });
 
