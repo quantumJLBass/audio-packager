@@ -24,8 +24,8 @@ export const buildModelUrl = (options: ModelUrlOptions): string => {
   const quantizedSuffix = isQuantized ? '-quantized' : '';
   const langSuffix = language && language !== 'auto' ? `.${language}` : '';
 
-  const url = `${provider}/${model}`;
-
+  const url = `${provider}/whisper-${model}${langSuffix}${quantizedSuffix}${modelSuffix}`;
+  
   DebugLogger.log('URL Builder', 'Built model URL:', url);
   return url;
 };
@@ -52,7 +52,7 @@ export const buildOnnxModelUrls = (modelUrl: string) => {
     encoder: `${base}/encoder_model_quantized.onnx`,
     decoder: `${base}/decoder_model_merged_quantized.onnx`
   };
-
+  
   DebugLogger.log('URL Builder', 'Built ONNX URLs:', urls);
   return urls;
 };
