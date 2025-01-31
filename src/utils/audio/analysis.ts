@@ -1,104 +1,124 @@
-//import { PretrainedModelOptions } from '@/types/audio/processing';
+/**
+ * Audio analysis utilities for processing and analyzing audio data
+ * @module audio/analysis
+ */
+import { AudioSettings } from '@/types/audio/settings';
+import { ProcessingTask } from '@/types/audio/processing';
 import { pipeline } from '@huggingface/transformers';
-import { DebugLogger } from '../debug';
-import { getSettings } from '../settings';
-import { createAudioFileFromBuffer } from './fileType';
-import { buildModelPath, createModelConfig, createTranscriptionConfig } from './modelBuilder';
 
-export const analyzeSentiment = async (audioData: Float32Array): Promise<string> => {
-  const text = await convertAudioToText(audioData);
-  if (!text) {
-    DebugLogger.log('Sentiment', 'No text to analyze, returning default sentiment');
-    const settings = getSettings();
-    return settings.sentimentAnalysis.defaultLabel;
+/**
+ * Error class for audio analysis related errors
+ */
+export class AudioAnalysisError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = 'AudioAnalysisError';
   }
+}
 
-  DebugLogger.log('Sentiment', 'Analyzing sentiment for text:', text);
-  const settings = getSettings();
-  const modelConfig = createModelConfig();
-
+/**
+ * Analyzes the sentiment of transcribed text using the configured model
+ * @param text - The text to analyze
+ * @param settings - Audio processing settings
+ * @returns Promise resolving to sentiment analysis results
+ * @throws {AudioAnalysisError} If sentiment analysis fails
+ */
+export const analyzeSentiment = async (
+  text: string,
+  settings: AudioSettings
+): Promise<Record<string, number>> => {
   try {
-    const classifier = await pipeline(
-      "text-classification",
-      settings.sentimentAnalysis.model,
-      modelConfig
-    );
+    if (!text?.trim()) {
+      throw new Error('No text provided for sentiment analysis');
+    }
 
-    const result = await classifier(text);
-    const output = Array.isArray(result) ? result[0] : result;
-    const label = ((output as any).label || settings.sentimentAnalysis.defaultLabel).toString();
+    const classifier = await pipeline('text-classification', settings.sentimentModel);
+    const results = await classifier(text);
 
-    DebugLogger.log('Sentiment', 'Analysis result:', {
-      label,
-      confidence: (output as any).score,
-      threshold: settings.sentimentAnalysis.thresholds[label]?.value || 0
-    });
+    if (!Array.isArray(results)) {
+      throw new Error('Invalid sentiment analysis results format');
+    }
 
-    return label;
+    return results.reduce((acc, { label, score }) => {
+      acc[label] = score;
+      return acc;
+    }, {} as Record<string, number>);
+
   } catch (error) {
-    DebugLogger.error('Sentiment', 'Analysis error:', error);
-    return settings.sentimentAnalysis.defaultLabel;
+    throw new AudioAnalysisError(
+      `Failed to analyze sentiment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error
+    );
   }
 };
 
-export const analyzeTone = async (audioData: Float32Array): Promise<string> => {
-  DebugLogger.log('Tone', 'Starting tone analysis');
-  const settings = getSettings();
-
+/**
+ * Analyzes the tone of audio based on various acoustic features
+ * @param audioData - Raw audio data for analysis
+ * @param settings - Audio processing settings
+ * @returns Promise resolving to tone analysis results
+ * @throws {AudioAnalysisError} If tone analysis fails
+ */
+export const analyzeTone = async (
+  audioData: Float32Array,
+  settings: AudioSettings
+): Promise<string> => {
   try {
-    const avgAmplitude = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
-    const thresholds = settings.toneAnalysis.toneThresholds;
+    if (!audioData?.length) {
+      throw new Error('No audio data provided for tone analysis');
+    }
 
-    for (const [tone, threshold] of Object.entries(thresholds)) {
-      if (typeof threshold === 'number' && avgAmplitude > threshold) {
-        DebugLogger.log('Tone', `Detected tone: ${tone} (amplitude: ${avgAmplitude})`);
+    // Calculate average amplitude
+    const amplitude = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
+
+    // Determine tone based on amplitude thresholds
+    const { toneThresholds, defaultTone } = settings.toneAnalysis;
+    
+    for (const [tone, threshold] of Object.entries(toneThresholds)) {
+      if (amplitude >= threshold) {
         return tone;
       }
     }
 
-    DebugLogger.log('Tone', 'No specific tone detected, using default');
-    return settings.toneAnalysis.defaultTone;
+    return defaultTone;
+
   } catch (error) {
-    DebugLogger.error('Tone', 'Analysis error:', error);
-    return settings.toneAnalysis.defaultTone;
+    throw new AudioAnalysisError(
+      `Failed to analyze tone: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error
+    );
   }
 };
 
-async function convertAudioToText(audioData: Float32Array): Promise<string> {
-  const settings = getSettings();
-  DebugLogger.log('Transcription', 'Converting audio to text');
-
-  const audioBuffer = audioData.buffer;
-  const audioFile = createAudioFileFromBuffer(audioBuffer);
-
-  const base64String = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      resolve(base64.split(',')[1]);
-    };
-    reader.readAsDataURL(audioFile);
-  });
-
+/**
+ * Processes audio data for the specified task using configured settings
+ * @param audioData - Raw audio data to process
+ * @param task - Processing task to perform
+ * @param settings - Audio processing settings
+ * @returns Promise resolving to processing results
+ * @throws {AudioAnalysisError} If processing fails
+ */
+export const processAudioData = async (
+  audioData: Float32Array,
+  task: ProcessingTask,
+  settings: AudioSettings
+): Promise<unknown> => {
   try {
-    const modelPath = buildModelPath(settings.supportedModels[0].id || settings.defaultModel); //TODO: fix this, the selected supported model should be used not the first one but should still fallback to default
-    const modelConfig = createModelConfig();
-    const transcriptionConfig = createTranscriptionConfig();
-
-    const transcriber = await pipeline(
-      "automatic-speech-recognition",
-      modelPath,
-      modelConfig
-    );
-
-    const result = await transcriber(base64String, transcriptionConfig);
-
-    if (Array.isArray(result)) {
-      return result[0]?.text || '';
+    switch (task) {
+      case ProcessingTask.Transcribe:
+        // Transcription logic goes here
+        break;
+      
+      case ProcessingTask.Analyze:
+        return analyzeTone(audioData, settings);
+      
+      default:
+        throw new Error(`Unsupported processing task: ${task}`);
     }
-    return result.text || '';
   } catch (error) {
-    DebugLogger.error('Transcription', 'Conversion error:', error);
-    return '';
+    throw new AudioAnalysisError(
+      `Failed to process audio data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error
+    );
   }
-}
+};
