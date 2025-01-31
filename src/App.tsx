@@ -1,29 +1,32 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import Index from '@/pages/Index';
-import { SettingsView } from '@/views/SettingsView';
-import './App.css';
+import { ToastProvider } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import { SettingsView } from "./views/SettingsView";
+import { AudioUploadForm } from "./components/audio/AudioUploadForm";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="app-container">
-          <div className="content-container">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/settings" element={<SettingsView />} />
-            </Routes>
-          </div>
-        </div>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <ToastProvider>
         <Toaster />
-      </Router>
-    </QueryClientProvider>
-  );
-}
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="*" element={<Index />}>
+              <Route index element={<AudioUploadForm />} />
+              <Route path="settings" element={<SettingsView />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
