@@ -14,11 +14,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-interface ProcessingSettingsProps {
-  settings: AudioSettings;
-  onChange: (settings: AudioSettings) => void;
-}
-
 export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
   settings,
   onChange
@@ -141,7 +136,6 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                 <Input
                   value={settings.sentimentAnalysis.provider}
                   onChange={(e) => onChange({
-                    ...settings,
                     sentimentAnalysis: {
                       ...settings.sentimentAnalysis,
                       provider: e.target.value
@@ -158,7 +152,6 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                 <Input
                   value={settings.sentimentAnalysis.model}
                   onChange={(e) => onChange({
-                    ...settings,
                     sentimentAnalysis: {
                       ...settings.sentimentAnalysis,
                       model: e.target.value
@@ -170,38 +163,17 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
               <SettingField
                 id="sentimentThresholds"
                 label="Sentiment Thresholds"
-                tooltip="Set thresholds for different emotions"
+                tooltip="Configure thresholds and metrics for emotion detection"
               >
-                <div className="space-y-2">
-                  {Object.entries(settings.sentimentAnalysis.thresholds).map(([emotion, metrics]) => (
-                    <div key={emotion} className="flex items-center space-x-2">
-                      <Label>{emotion}</Label>
-                      <Input
-                        type="number"
-                        value={metrics.value}
-                        onChange={(e) => {
-                          const newThresholds = {
-                            ...settings.sentimentAnalysis.thresholds,
-                            [emotion]: {
-                              ...metrics,
-                              value: parseFloat(e.target.value)
-                            }
-                          };
-                          onChange({
-                            ...settings,
-                            sentimentAnalysis: {
-                              ...settings.sentimentAnalysis,
-                              thresholds: newThresholds
-                            }
-                          });
-                        }}
-                        step="0.01"
-                        min="0"
-                        max="1"
-                      />
-                    </div>
-                  ))}
-                </div>
+                <SentimentThresholdMatrix
+                  thresholds={settings.sentimentAnalysis.thresholds}
+                  onChange={(thresholds) => onChange({
+                    sentimentAnalysis: {
+                      ...settings.sentimentAnalysis,
+                      thresholds
+                    }
+                  })}
+                />
               </SettingField>
             </div>
           </AccordionContent>
@@ -328,6 +300,13 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
                 />
               </SettingField>
             </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="speakers">
+          <AccordionTrigger>Speaker Settings</AccordionTrigger>
+          <AccordionContent>
+            <SpeakerSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
