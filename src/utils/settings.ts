@@ -4,6 +4,9 @@
 import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
+// Current settings schema version
+const SETTINGS_VERSION = '1.0.0';
+
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
@@ -174,16 +177,57 @@ const defaultSettings: AudioSettings = {
   }
 };
 
-export type { AudioSettings };
+/**
+ * Updates settings structure based on version changes
+ */
+const migrateSettings = (oldSettings: any, currentVersion: string): AudioSettings => {
+  // Start with default settings to ensure all new fields are present
+  const newSettings = { ...defaultSettings };
+
+  // Preserve user's existing preferences while ensuring new options are available
+  Object.keys(oldSettings).forEach(key => {
+    if (key in newSettings) {
+      if (key === 'supportedModels') {
+        // Always use latest models list
+        newSettings.supportedModels = defaultSettings.supportedModels;
+      } else if (key === 'supportedLanguages') {
+        // Always use latest languages list
+        newSettings.supportedLanguages = defaultSettings.supportedLanguages;
+      } else {
+        // Preserve user's setting if it exists
+        newSettings[key as keyof AudioSettings] = oldSettings[key];
+      }
+    }
+  });
+
+  return newSettings;
+};
 
 /**
  * Retrieves the current audio settings
  */
 export const getSettings = (): AudioSettings => {
-  const savedSettings = localStorage.getItem('audioSettings');
-  if (savedSettings) {
-    return { ...defaultSettings, ...JSON.parse(savedSettings) };
+  const savedData = localStorage.getItem('audioSettings');
+  
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      const savedVersion = parsed._version || '0.0.0';
+      
+      // If versions don't match, migrate settings
+      if (savedVersion !== SETTINGS_VERSION) {
+        const migratedSettings = migrateSettings(parsed, SETTINGS_VERSION);
+        saveSettings(migratedSettings);
+        return migratedSettings;
+      }
+      
+      return { ...defaultSettings, ...parsed };
+    } catch (e) {
+      console.error('Error parsing saved settings:', e);
+      return defaultSettings;
+    }
   }
+  
   return defaultSettings;
 };
 
@@ -192,7 +236,13 @@ export const getSettings = (): AudioSettings => {
  */
 export const saveSettings = (settings: Partial<AudioSettings>): AudioSettings => {
   const currentSettings = getSettings();
-  const newSettings = { ...currentSettings, ...settings };
+  const newSettings = { 
+    ...currentSettings, 
+    ...settings,
+    _version: SETTINGS_VERSION 
+  };
   localStorage.setItem('audioSettings', JSON.stringify(newSettings));
   return newSettings;
 };
+
+export type { AudioSettings };
