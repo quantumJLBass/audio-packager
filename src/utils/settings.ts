@@ -180,7 +180,7 @@ const defaultSettings: AudioSettings = {
 /**
  * Updates settings structure based on version changes
  */
-const migrateSettings = (oldSettings: any, currentVersion: string): AudioSettings => {
+const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVersion: string): AudioSettings => {
   // Start with default settings to ensure all new fields are present
   const newSettings = { ...defaultSettings };
 
@@ -195,7 +195,8 @@ const migrateSettings = (oldSettings: any, currentVersion: string): AudioSetting
         newSettings.supportedLanguages = defaultSettings.supportedLanguages;
       } else {
         // Preserve user's setting if it exists
-        newSettings[key as keyof AudioSettings] = oldSettings[key];
+        const settingKey = key as keyof AudioSettings;
+        (newSettings[settingKey] as any) = oldSettings[settingKey];
       }
     }
   });

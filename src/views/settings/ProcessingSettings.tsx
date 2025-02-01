@@ -5,6 +5,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SettingsSection } from './SettingsSection';
 import { SettingField } from '@/components/settings/SettingField';
+import { SentimentThresholdMatrix } from '@/components/settings/SentimentThresholdMatrix';
+import { SpeakerSettings } from '@/views/settings/SpeakerSettings';
 import type { AudioSettings } from '@/types/audio/settings';
 import { DeviceType, DType } from '@/types/audio/processing';
 import { 
@@ -13,6 +15,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+interface ProcessingSettingsProps {
+  settings: AudioSettings;
+  onChange: (settings: Partial<AudioSettings>) => void;
+}
 
 export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
   settings,
