@@ -6,8 +6,8 @@ export enum DeviceType {
 }
 
 export enum DType {
-  FP32 = 'fp32',
-  FP16 = 'fp16',
+  FP32 = 'float32',
+  FP16 = 'float16',
   INT8 = 'int8'
 }
 

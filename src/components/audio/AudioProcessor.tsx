@@ -21,7 +21,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 }) => {
   const { toast } = useToast();
   const processingRef = useRef(false);
-  const [state, setState] = useState<ProcessingState>({
+  const [state, setState] = useState<AudioProcessingState>({
     currentTime: 0,
     isPlaying: false,
     duration: 0,

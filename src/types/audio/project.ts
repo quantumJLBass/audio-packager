@@ -1,6 +1,6 @@
 import { AudioAnalysis } from './analysis';
 import { AudioMetadata } from './metadata';
-import { ProcessingOptions } from './processing';
+import { AudioProcessingOptions } from './processing';
 import { Speaker } from './speaker';
 import { Transcription } from './transcription';
 
@@ -10,7 +10,7 @@ export interface AudioProject {
   transcriptions: Transcription[];
   analysis: AudioAnalysis;
   speakers: Speaker[];
-  processingOptions: ProcessingOptions;
-  status: 'idle' | 'processing' | 'completed' | 'error';
+  processingOptions: AudioProcessingOptions;
+  status: 'idle' | 'processing' | 'completed' | 'error'; // TODO: setting is it not? but is this really correct given this is a types file?
   error?: string;
 }
