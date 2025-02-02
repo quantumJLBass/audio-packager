@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { AudioProcessingState } from '@/types/audio/processing';
+import { ProcessingState } from '@/types/audio/processing';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
 import { analyzeSentiment, analyzeTone } from '@/utils/audio/analysis';
 import { AudioProcessingControls } from './AudioProcessingControls';

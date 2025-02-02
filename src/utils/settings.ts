@@ -1,7 +1,8 @@
 /**
  * Settings management utilities for audio processing configuration
  */
-import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
+import { DeviceType, DType } from '@/types/audio/common';
+import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
 // Current settings schema version

@@ -1,4 +1,4 @@
-import { DeviceType, DType } from './common';
+import { DeviceType, DType, SupportedAudioType } from './common';
 import { Transcription } from './transcription';
 
 export enum ProcessingTask {
@@ -18,7 +18,6 @@ export interface ProcessingState {
 
 export interface ProcessingOptions {
   task?: ProcessingTask;
-  language?: string;
   chunk_length_s?: number;
   stride_length_s?: number;
   return_timestamps?: boolean;
@@ -61,3 +60,5 @@ export interface ModelUrlOptions {
   isOnnx?: boolean;
   language?: string;
 }
+
+export { DeviceType, DType, SupportedAudioType };

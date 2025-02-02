@@ -1,9 +1,9 @@
 import React from 'react';
 import { ProcessingStatus } from '../processing/ProcessingStatus';
 import { TranscriptionSection } from '../TranscriptionSection';
-import { AudioProcessingState } from '@/types/audio/processing';
+import { ProcessingState } from '@/types/audio/processing';
 
-interface AudioProcessingStateProps extends AudioProcessingState {
+interface AudioProcessingStateProps extends ProcessingState {
   onTimeUpdate: (time: number) => void;
 }
 

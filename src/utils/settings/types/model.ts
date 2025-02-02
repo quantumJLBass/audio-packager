@@ -1,4 +1,4 @@
-import { DeviceType, DType } from '@/types/audio/processing';
+import { DeviceType, DType } from '@/types/audio/common';
 
 export interface ModelSettings {
   provider: string;

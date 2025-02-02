@@ -1,4 +1,4 @@
-import { DeviceType, DType } from '@/types/audio/processing';
+import { DeviceType, DType } from '@/types/audio/common';
 import type { AutoSaveSettings, InitialState, Language, ModelSettings, SupportedModel, WaveformColors } from './types';
 
 export const AUTO_SAVE_DEFAULTS: AutoSaveSettings = {
