@@ -25,14 +25,13 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
   const wavesurfer = useRef<WaveSurfer | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
-  const urlRef = useRef(url);
+  const previousUrl = useRef<string | null>(null);
 
-  // Single initialization effect
   useEffect(() => {
     let isMounted = true;
 
     const initWaveSurfer = async () => {
-      if (!containerRef.current || isInitialized || !url) {
+      if (!containerRef.current || !url || url === previousUrl.current) {
         return;
       }
 
@@ -41,6 +40,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
+          wavesurfer.current = null;
         }
 
         const instance = WaveSurfer.create({
@@ -60,6 +60,8 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         instance.on('ready', () => {
           if (isMounted) {
             console.log('WaveSurfer ready');
+            setIsInitialized(true);
+            previousUrl.current = url;
             onReady();
           }
         });
@@ -85,8 +87,6 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         
         if (isMounted) {
           wavesurfer.current = instance;
-          setIsInitialized(true);
-          urlRef.current = url;
         } else {
           instance.destroy();
         }
@@ -102,9 +102,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
       }
     };
 
-    if (!isInitialized || url !== urlRef.current) {
-      initWaveSurfer();
-    }
+    initWaveSurfer();
 
     return () => {
       isMounted = false;

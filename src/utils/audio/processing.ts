@@ -6,10 +6,6 @@ import { determineAudioTypeFromBuffer } from './fileType';
 import { buildModelPath } from './modelBuilder';
 import { toast } from '@/components/ui/use-toast';
 
-// Create a worker pool for transcription tasks
-const workerPool = new Set<Worker>();
-const MAX_WORKERS = 4;
-
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
   try {
@@ -27,22 +23,17 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const settings = getSettings();
   console.log('Starting transcription with settings:', settings);
 
-  // Create an AbortController for cancellation
-  const abortController = new AbortController();
-  const { signal } = abortController;
+  const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
+  if (!selectedModel) {
+    console.warn('Selected model not found, falling back to default:', settings.defaultModel);
+  }
+  const modelToUse = selectedModel?.id || settings.defaultModel;
+  console.log('Selected model:', modelToUse);
+
+  const modelPath = buildModelPath(modelToUse);
+  console.log('Using model path:', modelPath);
 
   try {
-    const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
-    if (!selectedModel) {
-      console.warn('Selected model not found, falling back to default:', settings.defaultModel);
-    }
-    const modelToUse = selectedModel?.id || settings.defaultModel;
-    console.log('Selected model:', modelToUse);
-
-    const modelPath = buildModelPath(modelToUse);
-    console.log('Using model path:', modelPath);
-
-    // Create transcription pipeline with proper configuration
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
@@ -54,7 +45,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       }
     );
 
-    // Convert Float32Array to base64 in a non-blocking way
+    // Convert Float32Array to base64
     const audioBlob = new Blob([audioData], {
       type: determineAudioTypeFromBuffer(audioData.buffer),
     });
@@ -69,98 +60,49 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       reader.readAsDataURL(audioBlob);
     });
 
-    // Show progress toast
     toast({
-      title: "Transcription in progress",
-      description: "Processing audio file...",
-      duration: null // Keep until complete
+      title: "Processing Audio",
+      description: "Transcription in progress...",
+      duration: null
     });
 
-    // Process transcription in chunks to prevent UI blocking
-    const chunkSize = 30 * settings.audioSampleRate; // 30 seconds chunks
-    const transcriptions: Transcription[] = [];
+    const result = await transcriber(base64String, {
+      language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
+      task: settings.processingTask,
+      chunk_length_s: settings.defaultChunkLength,
+      stride_length_s: settings.defaultStrideLength,
+      return_timestamps: settings.returnTimestamps
+    });
+
+    const results = Array.isArray(result) ? result : [result];
     
-    for (let i = 0; i < audioData.length; i += chunkSize) {
-      if (signal.aborted) {
-        throw new Error('Transcription cancelled');
+    const transcriptions = results.map((item, index) => ({
+      id: uuidv4(),
+      text: item.text || settings.noSpeechText,
+      start: Array.isArray(item.timestamp) ? item.timestamp[0] : 0,
+      end: Array.isArray(item.timestamp) ? item.timestamp[1] : 0,
+      confidence: item.confidence || settings.defaultConfidence,
+      speaker: {
+        id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+        name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
+        color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
       }
+    }));
 
-      const chunk = audioData.slice(i, i + chunkSize);
-      const result = await transcriber(chunk, {
-        language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
-        task: settings.processingTask,
-        chunk_length_s: settings.defaultChunkLength,
-        stride_length_s: settings.defaultStrideLength,
-        return_timestamps: settings.returnTimestamps,
-        max_new_tokens: settings.maxNewTokens,
-        num_beams: settings.numBeams,
-        temperature: settings.temperature,
-        no_repeat_ngram_size: settings.noRepeatNgramSize
-      });
-
-      // Handle both single result and array of results
-      const results = Array.isArray(result) ? result : [result];
-      const processedChunks = results.map((chunk: any, index: number) => ({
-        id: uuidv4(),
-        text: chunk.text || settings.noSpeechText,
-        start: chunk.timestamp?.[0] || 0,
-        end: chunk.timestamp?.[1] || 0,
-        confidence: chunk.confidence || settings.defaultConfidence,
-        speaker: {
-          id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-          name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
-          color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
-        }
-      }));
-      transcriptions.push(...processedChunks);
-
-      // Update progress
-      toast({
-        title: "Transcription progress",
-        description: `Processed ${Math.min(((i + chunkSize) / audioData.length) * 100, 100).toFixed(1)}%`,
-        duration: null
-      });
-    }
-
-    // Clear progress toast and show success
     toast({
-      title: "Transcription complete",
-      description: `Successfully processed ${transcriptions.length} segments`,
+      title: "Success",
+      description: "Audio transcription complete",
       duration: 3000
     });
 
     return transcriptions;
   } catch (error) {
     console.error('Transcription error:', error);
-    
-    // Show error toast
     toast({
-      title: "Transcription failed",
-      description: error instanceof Error ? error.message : 'An unknown error occurred',
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to transcribe audio",
       variant: "destructive"
     });
-    
     throw error;
-  } finally {
-    abortController.abort(); // Cleanup
   }
-};
-
-// Helper function to create a transcription worker
-const createTranscriptionWorker = () => {
-  const worker = new Worker(
-    new URL('./transcriptionWorker.ts', import.meta.url),
-    { type: 'module' }
-  );
-  
-  workerPool.add(worker);
-  return worker;
-};
-
-// Cleanup function for workers
-export const cleanupTranscriptionWorkers = () => {
-  workerPool.forEach(worker => {
-    worker.terminate();
-  });
-  workerPool.clear();
 };

@@ -11,12 +11,9 @@ export const buildModelPath = (modelId: string): string => {
   }
 
   DebugLogger.log('ModelBuilder', `Building path for model: ${modelId}`);
-  const provider = model.provider;//settings.modelConfig.useOnnx ? 'onnx-community' : 'openai';
-  const modelName = model.id;//model.name.toLowerCase().replace(/\s+/g, '-');
-  const quantizedSuffix = '';// settings.modelConfig.useQuantized ? '-quantized' : '';
-  const onnxSuffix = '';// settings.modelConfig.useOnnx ? '-ONNX' : '';
-
-  const path = `${provider}/${modelName}`;
+  
+  // Ensure we're using the correct provider and model format
+  const path = `${model.provider}/${model.id}`;
   DebugLogger.log('ModelBuilder', `Built model path: ${path}`);
   return path;
 };
