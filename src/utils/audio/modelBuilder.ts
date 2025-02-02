@@ -1,16 +1,22 @@
 import { DebugLogger } from '../debug';
 import { getSettings } from '../settings';
 
-export const buildModelPath = (modelId: number): string => {
+export const buildModelPath = (modelId: string | number): string => {
   const settings = getSettings();
-  const model = settings.supportedModels.find(m => m.id === modelId);
+  
+  // First try to find by numeric id
+  let model = typeof modelId === 'number' ? 
+    settings.supportedModels.find(m => m.id === modelId) :
+    settings.supportedModels.find(m => m.key === modelId);
 
   if (!model) {
     DebugLogger.error('ModelBuilder', `Model ${modelId} not found in supported models`);
-    return settings.defaultModel;
+    // Find default model
+    model = settings.supportedModels.find(m => m.key === settings.defaultModel) ||
+            settings.supportedModels[0]; // Fallback to first model if default not found
   }
 
-  DebugLogger.log('ModelBuilder', `Building path for model: ${modelId}`);
+  DebugLogger.log('ModelBuilder', `Building path for model: ${model.key}`);
 
   // Ensure we're using the correct provider and model format
   const path = `${model.provider}/${model.key}`;
@@ -31,7 +37,9 @@ export const createModelConfig = () => {
     revision: settings.modelRevision,
     cache_dir: settings.enableModelCaching ? undefined : null,
     device: settings.modelConfig.device,
-    dtype: settings.modelConfig.dtype
+    dtype: settings.modelConfig.dtype,
+    isQuantized: settings.modelConfig.useQuantized,
+    local_files_only: true
   };
 };
 
