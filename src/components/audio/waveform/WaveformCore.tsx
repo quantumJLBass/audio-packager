@@ -36,11 +36,8 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
       }
 
       try {
-        console.log('Initializing WaveSurfer...', { url });
-        
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
-          wavesurfer.current = null;
         }
 
         const instance = WaveSurfer.create({
@@ -84,12 +81,8 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         });
 
         await instance.load(url);
-        
-        if (isMounted) {
-          wavesurfer.current = instance;
-        } else {
-          instance.destroy();
-        }
+        wavesurfer.current = instance;
+
       } catch (error) {
         console.error('Error initializing WaveSurfer:', error);
         if (isMounted) {

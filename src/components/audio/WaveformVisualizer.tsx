@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { WaveformCore } from './waveform/WaveformCore';
 import { WaveformControls } from './waveform/WaveformControls';
 import { WaveformVisualizerProps } from '@/types/audio';
@@ -16,18 +16,20 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   onPlayPause,
   onReady,
   onDurationChange,
+  settings
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(settings.defaultZoom);
   const [volume, setVolume] = useState(1);
   const [showSpectrogram, setShowSpectrogram] = useState(false);
   const [showRegions, setShowRegions] = useState(false);
   const [transcriptions, setTranscriptions] = useState<Transcription[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const { toast } = useToast();
+  const transcriptionStarted = useRef(false);
 
   const handleReady = useCallback(() => {
     setIsReady(true);
@@ -66,9 +68,11 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
 
   useEffect(() => {
     const startTranscription = async () => {
-      if (!url || isTranscribing) return;
+      if (!url || isTranscribing || transcriptionStarted.current) return;
       
+      transcriptionStarted.current = true;
       setIsTranscribing(true);
+      
       try {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
@@ -89,13 +93,16 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
           description: "Failed to transcribe audio",
           variant: "destructive",
         });
+        transcriptionStarted.current = false;
       } finally {
         setIsTranscribing(false);
       }
     };
 
-    startTranscription();
-  }, [url, toast]);
+    if (isReady) {
+      startTranscription();
+    }
+  }, [url, isReady, isTranscribing, toast]);
 
   useEffect(() => {
     if (duration > 0) {
@@ -124,8 +131,8 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         onPlayPause={handlePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={handleMute}
-        onZoomIn={() => handleZoomChange(Math.min(500, zoom + 50))}
-        onZoomOut={() => handleZoomChange(Math.max(50, zoom - 50))}
+        onZoomIn={() => handleZoomChange(Math.min(settings.maxZoom, zoom + settings.zoomStep))}
+        onZoomOut={() => handleZoomChange(Math.max(settings.minZoom, zoom - settings.zoomStep))}
         onZoomChange={handleZoomChange}
         onToggleSpectrogram={() => setShowSpectrogram(prev => !prev)}
         onToggleRegions={() => setShowRegions(prev => !prev)}
