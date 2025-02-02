@@ -36,8 +36,12 @@ export interface ModelUrlOptions {
 export interface PretrainedModelOptions {
   device: DeviceType;
   revision: string;
-  cache_dir: string | null | undefined;
+  cache_dir?: string | null;
   dtype?: DType;
+  quantized?: boolean;
+  model_id?: string;
+  task?: string;
+  subtask?: string;
 }
 
 export interface AudioProcessingOptions {

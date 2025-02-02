@@ -29,10 +29,10 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       console.warn('Selected model not found, falling back to default:', settings.defaultModel);
     }
     const modelToUse = selectedModel?.id || settings.defaultModel;
-    console.log('Using model:', modelToUse);
+    console.log('Selected model:', modelToUse);
 
     const modelPath = buildModelPath(modelToUse);
-    console.log('Built model path:', modelPath);
+    console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
@@ -40,7 +40,11 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       {
         device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        quantized: settings.modelConfig.useQuantized
+        cache_dir: settings.enableModelCaching ? undefined : null,
+        dtype: settings.modelConfig.dtype,
+        quantized: settings.modelConfig.useQuantized,
+        model_id: modelToUse,
+        task: "transcribe"
       }
     );
 
@@ -62,7 +66,11 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       task: settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: settings.returnTimestamps
+      return_timestamps: settings.returnTimestamps,
+      max_new_tokens: settings.maxNewTokens,
+      num_beams: settings.numBeams,
+      temperature: settings.temperature,
+      no_repeat_ngram_size: settings.noRepeatNgramSize
     });
 
     console.log('Transcription result:', result);
