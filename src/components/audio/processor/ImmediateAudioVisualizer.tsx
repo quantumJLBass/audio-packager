@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { transcribeAudio } from '@/utils/audio/processing';
 import { TranscriptionDisplay } from '@/components/TranscriptionDisplay';
 import { Transcription } from '@/types/audio/transcription';
+import { Loader2 } from 'lucide-react';
 
 interface ImmediateAudioVisualizerProps {
   url: string;
@@ -83,9 +84,9 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
       />
       
       {isTranscribing && (
-        <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3">Transcribing audio...</span>
+        <div className="flex items-center justify-center p-4 space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Transcribing audio...</span>
         </div>
       )}
       
