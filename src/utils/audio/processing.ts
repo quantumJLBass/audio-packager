@@ -6,7 +6,7 @@ import { buildModelPath } from './modelBuilder';
 import { toast } from '@/components/ui/use-toast';
 import { DebugLogger } from '../debug';
 import { Transcription } from '@/types/audio/transcription';
-import { TranscriptionResult, TranscriptionChunk } from '@/types/audio/processing';
+import { TranscriptionOutput, TranscriptionChunkOutput } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   DebugLogger.log('Processing', 'Processing audio buffer...');
@@ -44,7 +44,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
         dtype: settings.modelConfig.dtype,
-        quantized: settings.modelConfig.useQuantized,
+        isQuantized: settings.modelConfig.useQuantized,
         local_files_only: true
       }
     );
@@ -75,16 +75,16 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: settings.returnTimestamps
-    }) as TranscriptionResult;
+    }) as TranscriptionOutput;
 
     DebugLogger.log('Transcription', 'Raw transcription result:', result);
 
     // Handle both single result and array of results
     const results = Array.isArray(result) ? result : [result];
     
-    const transcriptions = results.map((item: TranscriptionResult, index: number) => {
+    const transcriptions = results.map((item: TranscriptionOutput, index: number) => {
       // Extract timestamps and confidence from chunks if available
-      const chunk = item.chunks?.[0] as TranscriptionChunk | undefined;
+      const chunk = item.chunks?.[0] as TranscriptionChunkOutput | undefined;
       const timestamps = chunk?.timestamp || [0, 0];
       const confidence = chunk?.confidence || settings.defaultConfidence;
       

@@ -33,15 +33,15 @@ export interface ModelUrlOptions {
   language?: string;
 }
 
-export interface TranscriptionChunk {
+export interface TranscriptionChunkOutput {
   text: string;
   timestamp?: [number, number];
   confidence?: number;
 }
 
-export interface TranscriptionResult {
+export interface TranscriptionOutput {
   text: string;
-  chunks?: TranscriptionChunk[];
+  chunks?: TranscriptionChunkOutput[];
 }
 
 export interface PretrainedModelOptions {
@@ -52,7 +52,7 @@ export interface PretrainedModelOptions {
   model_id?: string;
   task?: string;
   subtask?: string;
-  quantized?: boolean;
+  isQuantized?: boolean;
   local_files_only?: boolean;
 }
 
