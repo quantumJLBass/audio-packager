@@ -69,8 +69,8 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
       >
         <Select
           value={settings.modelConfig.device}
-          onValueChange={(value) => onChange({
-            modelConfig: { ...settings.modelConfig, device: value as DeviceType }
+          onValueChange={(value: DeviceType) => onChange({
+            modelConfig: { ...settings.modelConfig, device: value }
           })}
         >
           <SelectTrigger>
@@ -93,8 +93,8 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
       >
         <Select
           value={settings.modelConfig.dtype}
-          onValueChange={(value) => onChange({
-            modelConfig: { ...settings.modelConfig, dtype: value as DType }
+          onValueChange={(value: DType) => onChange({
+            modelConfig: { ...settings.modelConfig, dtype: value }
           })}
         >
           <SelectTrigger>

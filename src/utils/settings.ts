@@ -2,13 +2,17 @@ import { DeviceTypes, DTypes } from '@/types/audio/common';
 import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
-// Current settings schema version
-const SETTINGS_VERSION = '1.1.0';
-
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
+  speakerIdTemplate: "speaker-{?}",
+  speakerNameTemplate: "Speaker {?}",
+  speakerColors: [
+    '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
+    '#16a34a', '#2563eb', '#9333ea', '#c026d3'
+  ],
+  maxSpeakers: 8,
   modelConfig: {
     provider: 'onnx-community',
     model: 'whisper-large-v3-turbo_timestamped',
@@ -157,21 +161,6 @@ const defaultSettings: AudioSettings = {
     longTermDelay: 30000,
     enabled: true
   }
-};
-
-const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVersion: string): AudioSettings => {
-  const newSettings = { ...defaultSettings };
-
-  Object.entries(oldSettings).forEach(([key, value]) => {
-    if (key in newSettings) {
-      if (key === 'supportedModels' || key === 'supportedLanguages') {
-        return;
-      }
-      (newSettings as any)[key] = value;
-    }
-  });
-
-  return newSettings;
 };
 
 export const getSettings = (): AudioSettings => {
