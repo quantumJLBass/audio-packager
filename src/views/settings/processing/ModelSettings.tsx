@@ -19,15 +19,15 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
         tooltip="Select the AI model to use for audio processing"
       >
         <Select
-          value={settings.defaultModel}
-          onValueChange={(value) => onChange({ defaultModel: value })}
+          value={settings.defaultModel.toString()}
+          onValueChange={(value) => onChange({ defaultModel: parseInt(value, 10) })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
             {settings.supportedModels.map((model) => (
-              <SelectItem key={model.key} value={model.key}>
+              <SelectItem key={model.id} value={model.id.toString()}>
                 {model.name}
               </SelectItem>
             ))}

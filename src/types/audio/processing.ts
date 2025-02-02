@@ -60,5 +60,3 @@ export interface ModelUrlOptions {
   isOnnx?: boolean;
   language?: string;
 }
-
-export { DeviceType, DType, SupportedAudioType };

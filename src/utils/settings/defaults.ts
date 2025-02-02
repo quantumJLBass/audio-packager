@@ -1,4 +1,5 @@
-import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
+import { DeviceType, DType } from '@/types/audio/common';
+import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 import { AUTO_SAVE_DEFAULTS, MODEL_DEFAULTS, SUPPORTED_MODELS, SUPPORTED_LANGUAGES, WAVEFORM_DEFAULTS, INITIAL_STATE } from './constants';
 
@@ -60,7 +61,7 @@ export const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: "base",
+  defaultModel: 1, // Changed from string to number - using ID 1 for default
   processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
   defaultStrideLength: 5,
