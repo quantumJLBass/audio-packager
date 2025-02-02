@@ -24,29 +24,58 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isDestroying, setIsDestroying] = useState(false);
   const { toast } = useToast();
   const urlRef = useRef(url);
+  const initializationAttempts = useRef(0);
+  const MAX_INITIALIZATION_ATTEMPTS = 3;
 
   useEffect(() => {
     let isSubscribed = true;
+    let abortController: AbortController | null = null;
 
     const initWaveSurfer = async () => {
-      if (!containerRef.current || isInitializing) return;
+      if (!containerRef.current || isInitializing || isDestroying) {
+        console.log('Skipping initialization - conditions not met:', {
+          hasContainer: !!containerRef.current,
+          isInitializing,
+          isDestroying
+        });
+        return;
+      }
+
+      if (initializationAttempts.current >= MAX_INITIALIZATION_ATTEMPTS) {
+        console.error('Max initialization attempts reached');
+        toast({
+          title: "Error",
+          description: "Failed to initialize audio player after multiple attempts",
+          variant: "destructive",
+        });
+        return;
+      }
 
       try {
         setIsInitializing(true);
-        console.log('Initializing WaveSurfer...', { url });
+        initializationAttempts.current += 1;
+        console.log('Initializing WaveSurfer...', { 
+          url,
+          attempt: initializationAttempts.current 
+        });
 
         // Cleanup previous instance
         if (wavesurfer.current) {
           console.log('Destroying previous WaveSurfer instance');
+          setIsDestroying(true);
           wavesurfer.current.destroy();
           wavesurfer.current = null;
+          setIsDestroying(false);
         }
 
         // Only create new instance if URL changed
         if (urlRef.current !== url && isSubscribed) {
           console.log('Creating new WaveSurfer instance');
+          abortController = new AbortController();
+
           wavesurfer.current = WaveSurfer.create({
             container: containerRef.current,
             waveColor,
@@ -55,19 +84,22 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
             normalize: true,
             minPxPerSec,
             backend: 'WebAudio',
-            autoCenter: true
+            autoCenter: true,
+            fillParent: true,
+            interact: true,
+            mediaControls: true
           });
 
           wavesurfer.current.on('ready', () => {
             if (isSubscribed) {
               console.log('WaveSurfer ready');
+              initializationAttempts.current = 0;
               onReady();
             }
           });
 
           wavesurfer.current.on('timeupdate', (time) => {
             if (isSubscribed) {
-              console.log('Time update:', time);
               onTimeUpdate(time);
             }
           });
@@ -83,7 +115,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
             }
           });
 
-          await wavesurfer.current.load(url);
+          await wavesurfer.current.load(url, undefined, abortController.signal);
           urlRef.current = url;
         }
       } catch (error) {
@@ -106,10 +138,15 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
 
     return () => {
       isSubscribed = false;
+      if (abortController) {
+        abortController.abort();
+      }
       if (wavesurfer.current) {
         console.log('Cleaning up WaveSurfer');
+        setIsDestroying(true);
         wavesurfer.current.destroy();
         wavesurfer.current = null;
+        setIsDestroying(false);
       }
     };
   }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate, toast]);
