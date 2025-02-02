@@ -1,5 +1,5 @@
 import { Transcription } from '@/types/audio/transcription';
-import { pipeline } from "@huggingface/transformers";
+import { pipeline, AutomaticSpeechRecognitionOutput } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
 import { determineAudioTypeFromBuffer } from './fileType';
@@ -45,7 +45,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       }
     );
 
-    // Convert Float32Array to base64
     const audioBlob = new Blob([audioData], {
       type: determineAudioTypeFromBuffer(audioData.buffer),
     });
@@ -76,18 +75,21 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
     const results = Array.isArray(result) ? result : [result];
     
-    const transcriptions = results.map((item, index) => ({
-      id: uuidv4(),
-      text: item.text || settings.noSpeechText,
-      start: Array.isArray(item.timestamp) ? item.timestamp[0] : 0,
-      end: Array.isArray(item.timestamp) ? item.timestamp[1] : 0,
-      confidence: item.confidence || settings.defaultConfidence,
-      speaker: {
-        id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-        name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
-        color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
-      }
-    }));
+    const transcriptions = results.map((item: AutomaticSpeechRecognitionOutput, index: number) => {
+      const timestamps = item.chunks?.[0]?.timestamp ?? [0, 0];
+      return {
+        id: uuidv4(),
+        text: item.text || settings.noSpeechText,
+        start: timestamps[0],
+        end: timestamps[1],
+        confidence: item.chunks?.[0]?.confidence ?? settings.defaultConfidence,
+        speaker: {
+          id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+          name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+          color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
+        }
+      };
+    });
 
     toast({
       title: "Success",
