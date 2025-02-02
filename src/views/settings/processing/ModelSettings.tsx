@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { SettingField } from '@/components/settings/SettingField';
 import type { AudioSettings } from '@/types/audio/settings';
-import { DeviceType, DType } from '@/types/audio/common';
+import { DeviceTypes, DTypes } from '@/types/audio/common';
 
 interface ModelSettingsProps {
   settings: AudioSettings;
@@ -68,16 +68,18 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
       >
         <Select
           value={settings.modelConfig.device}
-          onValueChange={(value: DeviceType) => onChange({
-            modelConfig: { ...settings.modelConfig, device: value }
+          onValueChange={(value) => onChange({
+            modelConfig: { ...settings.modelConfig, device: value as DeviceType }
           })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select device" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(DeviceType).map((device) => (
-              <SelectItem key={device} value={device}>{device}</SelectItem>
+            {Object.entries(DeviceTypes).map(([key, value]) => (
+              <SelectItem key={key} value={value}>
+                {key}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -90,16 +92,18 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
       >
         <Select
           value={settings.modelConfig.dtype}
-          onValueChange={(value: DType) => onChange({
-            modelConfig: { ...settings.modelConfig, dtype: value }
+          onValueChange={(value) => onChange({
+            modelConfig: { ...settings.modelConfig, dtype: value as DType }
           })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select data type" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(DType).map((dtype) => (
-              <SelectItem key={dtype} value={dtype}>{dtype}</SelectItem>
+            {Object.entries(DTypes).map(([key, value]) => (
+              <SelectItem key={key} value={value}>
+                {key}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
