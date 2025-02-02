@@ -1,5 +1,5 @@
 import { toast } from '@/components/ui/use-toast';
-import { TranscriptionChunkOutput, TranscriptionOutput } from '@/types/audio/processing';
+import { TranscriptionChunkOutput, TranscriptionOutput, PretrainedModelOptions } from '@/types/audio/processing';
 import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
@@ -25,27 +25,28 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const settings = getSettings();
   DebugLogger.log('Transcription', 'Starting transcription with settings:', settings);
 
-  // Find the selected model by ID
   const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
   if (!selectedModel) {
     DebugLogger.warn('Transcription', 'Selected model not found, falling back to default:', settings.defaultModel);
   }
 
-  const modelPath = buildModelPath(settings); // Pass the settings object to buildModelPath
+  const modelPath = buildModelPath(settings);
   DebugLogger.log('Transcription', 'Using model path:', modelPath);
 
   try {
+    const modelOptions: PretrainedModelOptions = {
+      device: settings.modelConfig.device,
+      revision: settings.modelRevision,
+      cache_dir: settings.enableModelCaching ? undefined : null,
+      dtype: settings.modelConfig.dtype,
+      quantized: settings.modelConfig.useQuantized,
+      local_files_only: true
+    };
+
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
-      {
-
-        device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
-        revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-        local_files_only: true
-      }
+      modelOptions
     );
 
     const audioBlob = new Blob([audioData], {

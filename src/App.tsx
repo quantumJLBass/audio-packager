@@ -1,32 +1,32 @@
-import { ToastProvider } from "@/components/ui/toast";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import { SettingsView } from "./views/SettingsView";
-import { AudioUploadForm } from "./components/audio/AudioUploadForm";
+import React, { useState } from 'react';
+import { AudioUploadForm } from './components/audio/AudioUploadForm';
+import { AudioProcessor } from './components/audio/AudioProcessor';
+import { useSettings } from './hooks/useSettings';
+import './App.css';
 
-const queryClient = new QueryClient();
+function App() {
+  const { settings } = useSettings();
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ToastProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="*" element={<Index />}>
-              <Route index element={<AudioUploadForm />} />
-              <Route path="settings" element={<SettingsView />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  const handleUpload = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setAudioUrl(url);
+    setAudioFile(file);
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <AudioUploadForm onUpload={handleUpload} />
+      {audioUrl && audioFile && (
+        <AudioProcessor
+          audioUrl={audioUrl}
+          file={audioFile}
+          settings={settings}
+        />
+      )}
+    </div>
+  );
+}
 
 export default App;

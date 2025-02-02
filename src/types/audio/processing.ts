@@ -44,19 +44,19 @@ export interface PretrainedModelOptions {
   force_download?: boolean;
   resume_download?: boolean;
   proxies?: any;
-  device?: DeviceType;
-  dtype?: DType;
+  device?: string;
+  dtype?: string;
   model_id?: string;
   task?: string;
   subtask?: string;
-  isQuantized?: boolean;
+  quantized?: boolean;
   local_files_only?: boolean;
 }
 
 export interface ModelUrlOptions {
   provider: string;
   model: string;
-  isQuantized?: boolean;
+  quantized?: boolean;
   isOnnx?: boolean;
   language?: string;
 }
