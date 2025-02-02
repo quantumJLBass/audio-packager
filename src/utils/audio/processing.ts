@@ -25,14 +25,13 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const settings = getSettings();
   DebugLogger.log('Transcription', 'Starting transcription with settings:', settings);
 
+  // Find the selected model by ID
   const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
   if (!selectedModel) {
     DebugLogger.warn('Transcription', 'Selected model not found, falling back to default:', settings.defaultModel);
   }
-  const modelToUse = selectedModel?.key || settings.defaultModel;
-  DebugLogger.log('Transcription', 'Selected model:', modelToUse);
 
-  const modelPath = buildModelPath(selectedModel?.key);
+  const modelPath = buildModelPath(selectedModel?.id || 1); // Fallback to first model (ID 1) if not found
   DebugLogger.log('Transcription', 'Using model path:', modelPath);
 
   try {

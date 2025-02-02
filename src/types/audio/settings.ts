@@ -83,7 +83,7 @@ export interface AudioSettings {
   defaultTempo: number;
   defaultConfidence: number;
   noSpeechText: string;
-  defaultModel: string;
+  defaultModel: number; // Changed from string to number
 
   // Processing Options
   processingTask: ProcessingTask;

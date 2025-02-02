@@ -34,3 +34,5 @@ export type SupportedAudioType =
   | 'audio/opus'
   | 'audio/midi'
   | 'audio/vorbis';
+
+export type { DeviceType, DType, SupportedAudioType };

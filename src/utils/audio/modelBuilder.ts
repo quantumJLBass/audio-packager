@@ -1,24 +1,21 @@
 import { DebugLogger } from '../debug';
 import { getSettings } from '../settings';
 
-export const buildModelPath = (modelId: string | number): string => {
+export const buildModelPath = (modelId: number): string => {
   const settings = getSettings();
-  
-  // First try to find by numeric id
-  let model = typeof modelId === 'number' ? 
-    settings.supportedModels.find(m => m.id === modelId) :
-    settings.supportedModels.find(m => m.key === modelId);
+  const model = settings.supportedModels.find(m => m.id === modelId);
 
   if (!model) {
     DebugLogger.error('ModelBuilder', `Model ${modelId} not found in supported models`);
-    // Find default model
-    model = settings.supportedModels.find(m => m.key === settings.defaultModel) ||
-            settings.supportedModels[0]; // Fallback to first model if default not found
+    // Find default model by key
+    const defaultModel = settings.supportedModels.find(m => m.key === settings.defaultModel) ||
+                        settings.supportedModels[0]; // Fallback to first model if default not found
+    return `${defaultModel.provider}/${defaultModel.key}`;
   }
 
   DebugLogger.log('ModelBuilder', `Building path for model: ${model.key}`);
 
-  // Ensure we're using the correct provider and model format
+  // Use the model's key for the path
   const path = `${model.provider}/${model.key}`;
   DebugLogger.log('ModelBuilder', `Built model path: ${path}`);
   return path;
