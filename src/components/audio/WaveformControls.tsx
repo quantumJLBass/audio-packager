@@ -8,7 +8,7 @@ import {
   VolumeX,
   ZoomIn,
   ZoomOut,
-  WaveformIcon,
+  AudioWaveform,
   Layers
 } from 'lucide-react';
 import { formatTimestamp } from '@/utils/timeFormat';
@@ -74,7 +74,7 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
           onClick={onToggleSpectrogram}
           className={showSpectrogram ? 'bg-primary/20' : ''}
         >
-          <WaveformIcon className="h-4 w-4" />
+          <AudioWaveform className="h-4 w-4" />
         </Button>
 
         <Button
