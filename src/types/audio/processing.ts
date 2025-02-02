@@ -33,6 +33,17 @@ export interface ModelUrlOptions {
   language?: string;
 }
 
+export interface TranscriptionChunk {
+  text: string;
+  timestamp?: [number, number];
+  confidence?: number;
+}
+
+export interface TranscriptionResult {
+  text: string;
+  chunks?: TranscriptionChunk[];
+}
+
 export interface PretrainedModelOptions {
   device: DeviceType;
   revision: string;

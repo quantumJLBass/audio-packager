@@ -6,6 +6,7 @@ import { buildModelPath } from './modelBuilder';
 import { toast } from '@/components/ui/use-toast';
 import { DebugLogger } from '../debug';
 import { Transcription } from '@/types/audio/transcription';
+import { TranscriptionResult, TranscriptionChunk } from '@/types/audio/processing';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   DebugLogger.log('Processing', 'Processing audio buffer...');
@@ -74,23 +75,25 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: settings.returnTimestamps
-    });
+    }) as TranscriptionResult;
 
     DebugLogger.log('Transcription', 'Raw transcription result:', result);
 
     // Handle both single result and array of results
     const results = Array.isArray(result) ? result : [result];
     
-    const transcriptions = results.map((item, index) => {
-      // Extract timestamps from chunks if available, otherwise try direct access
-      const timestamps = item.chunks?.[0]?.timestamp || item.timestamp || [0, 0];
+    const transcriptions = results.map((item: TranscriptionResult, index: number) => {
+      // Extract timestamps and confidence from chunks if available
+      const chunk = item.chunks?.[0] as TranscriptionChunk | undefined;
+      const timestamps = chunk?.timestamp || [0, 0];
+      const confidence = chunk?.confidence || settings.defaultConfidence;
       
       return {
         id: uuidv4(),
         text: item.text || settings.noSpeechText,
-        start: timestamps[0] || 0,
-        end: timestamps[1] || 0,
-        confidence: item.confidence || settings.defaultConfidence,
+        start: timestamps[0],
+        end: timestamps[1],
+        confidence,
         speaker: {
           id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
           name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
