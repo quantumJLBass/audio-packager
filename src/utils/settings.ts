@@ -7,6 +7,12 @@ import type { AudioSettings } from '@/types/audio/settings';
 // Current settings schema version
 const SETTINGS_VERSION = '1.0.0';
 
+const autoSaveSettings = {
+  shortTermDelay: 3000, // 3 seconds
+  longTermDelay: 30000, // 30 seconds
+  enabled: true
+};
+
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
@@ -122,7 +128,6 @@ const defaultSettings: AudioSettings = {
     { id: 'whisper-tiny.en', name: 'Whisper Tiny English ONNX', provider:"onnx-community" },
     { id: 'whisper-tiny', name: 'Whisper Tiny ONNX', provider:"onnx-community" },
     { id: 'moonshine-tiny-ONNX', name: 'Whisper Large v3 Turbo ONNX timestamped', provider:"onnx-community" }
-
   ],
 
   modelRevision: 'main',
@@ -174,7 +179,8 @@ const defaultSettings: AudioSettings = {
     isTranscribing: false,
     transcriptions: [],
     error: null
-  }
+  },
+  autoSave: autoSaveSettings,
 };
 
 /**

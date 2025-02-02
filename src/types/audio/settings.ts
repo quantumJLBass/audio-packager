@@ -37,6 +37,15 @@ export interface ToneConfig {
 }
 
 /**
+ * Auto-save settings for the application
+ */
+export interface AutoSaveSettings {
+  shortTermDelay: number;
+  longTermDelay: number;
+  enabled: boolean;
+}
+
+/**
  * Complete audio processing settings configuration
  */
 export interface AudioSettings {
@@ -132,6 +141,9 @@ export interface AudioSettings {
   // Time Format
   timeFormat: string;
   showMilliseconds: boolean;
+
+  // Auto-save settings
+  autoSave: AutoSaveSettings;
 
   // Initial State
   initialState: {
