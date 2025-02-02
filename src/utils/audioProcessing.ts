@@ -23,29 +23,27 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   console.log('Starting transcription with settings:', settings);
 
   try {
-  /* TODO:  GIVEN THAT THERE IS AN ONNX MODEL VERSION, WE SHOULD HAVE A OPTION FOR USING THAT
-   *  WE WOULD THEN HAVE A SOURCE = isOnnxModel ? ONNX : openai
-   *  isOnnxModel ? "onnx-community" : "openai" + "/whisper-" + modelUsed+ isOnnxModel ? "-ONNX":""
-  */
-  // TODO:  use the quantized option and use it to build just like the ONNX option
-    //const modelPath = 'onnx-community/whisper-tiny.en';
+    // Find the selected model from supportedModels, fallback to default if not found
+    const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
+    const modelToUse = selectedModel?.id || settings.defaultModel;
+    console.log('Selected model:', modelToUse);
 
-    const modelPath = buildModelPath(settings.supportedModels[0].id || settings.defaultModel); //TODO: fix this, the selected supported model should be used not the first one but should still fallback to default
+    const modelPath = buildModelPath(modelToUse);
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
       {
-        device: settings.modelConfig.device, // TODO: setting is it not?
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
+        cache_dir: settings.enableModelCaching ? undefined : null
       }
     );
 
     const result = await transcriber(audioData, {
       language: settings.defaultLanguage === 'auto' ? null : settings.defaultLanguage,
-      task:settings.processingTask,
+      task: settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
       return_timestamps: settings.returnTimestamps
@@ -61,9 +59,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       end: chunk.timestamp?.[1] ?? 0,
       confidence: chunk.confidence ?? settings.defaultConfidence,
       speaker: {
-        // id: settings.speakerIdTemplate.replace('{idx}', '1'),
-        // name: settings.speakerNameTemplate.replace('{idx}', '1'),
-        // color: settings.speakerColors[0]
         id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
         name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
         color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
