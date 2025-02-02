@@ -55,8 +55,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
             normalize: true,
             minPxPerSec,
             backend: 'WebAudio',
-            autoCenter: true,
-            responsive: true,
+            autoCenter: true
           });
 
           wavesurfer.current.on('ready', () => {
@@ -113,7 +112,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         wavesurfer.current = null;
       }
     };
-  }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate]);
+  }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate, toast]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };

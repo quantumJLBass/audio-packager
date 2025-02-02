@@ -5,12 +5,6 @@ import { getSettings } from '../settings';
 import { determineAudioTypeFromBuffer } from './fileType';
 import { buildModelPath } from './modelBuilder';
 
-/**
- * Processes an audio buffer and converts it to a Float32Array
- * @param arrayBuffer The raw audio buffer to process
- * @returns Promise resolving to processed audio data as Float32Array
- * @throws Error if audio processing fails
- */
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   console.log('Processing audio buffer...');
   try {
@@ -24,19 +18,21 @@ export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Floa
   }
 };
 
-/**
- * Transcribes audio data into text with speaker identification
- * @param audioData The processed audio data to transcribe
- * @returns Promise resolving to array of transcription segments
- * @throws Error if transcription fails
- */
 export const transcribeAudio = async (audioData: Float32Array): Promise<Transcription[]> => {
   const settings = getSettings();
   console.log('Starting transcription with settings:', settings);
 
   try {
-    const modelPath = buildModelPath(settings.supportedModels[0].id || settings.defaultModel);
-    console.log('Using model path:', modelPath);
+    // Find the selected model from supportedModels, fallback to default if not found
+    const selectedModel = settings.supportedModels.find(m => m.id === settings.defaultModel);
+    if (!selectedModel) {
+      console.warn('Selected model not found, falling back to default:', settings.defaultModel);
+    }
+    const modelToUse = selectedModel?.id || settings.defaultModel;
+    console.log('Using model:', modelToUse);
+
+    const modelPath = buildModelPath(modelToUse);
+    console.log('Built model path:', modelPath);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
@@ -44,8 +40,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       {
         device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype
+        quantized: settings.modelConfig.useQuantized
       }
     );
 
