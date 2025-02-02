@@ -15,10 +15,10 @@ export const WaveformTimeline: React.FC<TimelineProps> = ({ wavesurfer, zoom }) 
       container: '#timeline',
       primaryLabelInterval: zoom < 100 ? 10 : 1,
       secondaryLabelInterval: zoom < 100 ? 5 : 0.5,
-      primaryColor: 'rgb(68, 68, 68)',
-      secondaryColor: 'rgb(128, 128, 128)',
-      primaryFontColor: 'rgb(68, 68, 68)',
-      secondaryFontColor: 'rgb(128, 128, 128)',
+      style: {
+        fontSize: '12px',
+        color: 'rgb(68, 68, 68)'
+      },
       timeInterval: zoom < 50 ? 1 : 0.1,
       formatTimeCallback: (seconds: number) => {
         const hours = Math.floor(seconds / 3600);
@@ -35,7 +35,9 @@ export const WaveformTimeline: React.FC<TimelineProps> = ({ wavesurfer, zoom }) 
     wavesurfer.registerPlugin(timelinePlugin);
 
     return () => {
-      wavesurfer.destroyPlugin('timeline');
+      if (wavesurfer) {
+        wavesurfer.unregisterPlugin('timeline');
+      }
     };
   }, [wavesurfer, zoom]);
 

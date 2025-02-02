@@ -53,9 +53,11 @@ export const WaveformPlugins: React.FC<WaveformPluginsProps> = ({
     }
 
     return () => {
-      wavesurfer.destroyPlugin('minimap');
-      wavesurfer.destroyPlugin('regions');
-      wavesurfer.destroyPlugin('spectrogram');
+      if (wavesurfer) {
+        wavesurfer.unregisterPlugin('minimap');
+        wavesurfer.unregisterPlugin('regions');
+        wavesurfer.unregisterPlugin('spectrogram');
+      }
     };
   }, [wavesurfer, showSpectrogram, showRegions]);
 

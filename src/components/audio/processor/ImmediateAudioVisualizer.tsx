@@ -45,9 +45,6 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
         url={url}
         onReady={onReady}
         onTimeUpdate={onTimeUpdate}
-        height={settings.waveformHeight}
-        waveColor={settings.waveformColors.waveform}
-        progressColor={settings.waveformColors.progress}
         onError={handleError}
       />
     </div>
