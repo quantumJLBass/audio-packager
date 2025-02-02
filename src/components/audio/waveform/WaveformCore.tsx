@@ -23,131 +23,94 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [isDestroying, setIsDestroying] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
   const urlRef = useRef(url);
-  const initializationAttempts = useRef(0);
-  const MAX_INITIALIZATION_ATTEMPTS = 3;
 
+  // Single initialization effect
   useEffect(() => {
-    let isSubscribed = true;
-    let abortController: AbortController | null = null;
+    let isMounted = true;
 
     const initWaveSurfer = async () => {
-      if (!containerRef.current || isInitializing || isDestroying) {
-        console.log('Skipping initialization - conditions not met:', {
-          hasContainer: !!containerRef.current,
-          isInitializing,
-          isDestroying
-        });
-        return;
-      }
-
-      if (initializationAttempts.current >= MAX_INITIALIZATION_ATTEMPTS) {
-        console.error('Max initialization attempts reached');
-        toast({
-          title: "Error",
-          description: "Failed to initialize audio player after multiple attempts",
-          variant: "destructive",
-        });
+      if (!containerRef.current || isInitialized || !url) {
         return;
       }
 
       try {
-        setIsInitializing(true);
-        initializationAttempts.current += 1;
-        console.log('Initializing WaveSurfer...', { 
-          url,
-          attempt: initializationAttempts.current 
-        });
-
-        // Cleanup previous instance
+        console.log('Initializing WaveSurfer...', { url });
+        
         if (wavesurfer.current) {
-          console.log('Destroying previous WaveSurfer instance');
-          setIsDestroying(true);
           wavesurfer.current.destroy();
-          wavesurfer.current = null;
-          setIsDestroying(false);
         }
 
-        // Only create new instance if URL changed
-        if (urlRef.current !== url && isSubscribed) {
-          console.log('Creating new WaveSurfer instance');
-          abortController = new AbortController();
+        const instance = WaveSurfer.create({
+          container: containerRef.current,
+          waveColor,
+          progressColor,
+          height,
+          normalize: true,
+          minPxPerSec,
+          backend: 'WebAudio',
+          autoCenter: true,
+          fillParent: true,
+          interact: true,
+          mediaControls: true
+        });
 
-          wavesurfer.current = WaveSurfer.create({
-            container: containerRef.current,
-            waveColor,
-            progressColor,
-            height,
-            normalize: true,
-            minPxPerSec,
-            backend: 'WebAudio',
-            autoCenter: true,
-            fillParent: true,
-            interact: true,
-            mediaControls: true
-          });
+        instance.on('ready', () => {
+          if (isMounted) {
+            console.log('WaveSurfer ready');
+            onReady();
+          }
+        });
 
-          wavesurfer.current.on('ready', () => {
-            if (isSubscribed) {
-              console.log('WaveSurfer ready');
-              initializationAttempts.current = 0;
-              onReady();
-            }
-          });
+        instance.on('timeupdate', (time) => {
+          if (isMounted) {
+            onTimeUpdate(time);
+          }
+        });
 
-          wavesurfer.current.on('timeupdate', (time) => {
-            if (isSubscribed) {
-              onTimeUpdate(time);
-            }
-          });
+        instance.on('error', (error) => {
+          console.error('WaveSurfer error:', error);
+          if (isMounted) {
+            toast({
+              title: "Error",
+              description: "Failed to load audio waveform",
+              variant: "destructive",
+            });
+          }
+        });
 
-          wavesurfer.current.on('error', (error) => {
-            console.error('WaveSurfer error:', error);
-            if (isSubscribed) {
-              toast({
-                title: "Error",
-                description: "Failed to load audio waveform",
-                variant: "destructive",
-              });
-            }
-          });
-
-          // Load the audio file without the abort signal parameter
-          await wavesurfer.current.load(url);
+        await instance.load(url);
+        
+        if (isMounted) {
+          wavesurfer.current = instance;
+          setIsInitialized(true);
           urlRef.current = url;
+        } else {
+          instance.destroy();
         }
       } catch (error) {
         console.error('Error initializing WaveSurfer:', error);
-        if (isSubscribed) {
+        if (isMounted) {
           toast({
             title: "Error",
             description: "Failed to initialize audio waveform",
             variant: "destructive",
           });
         }
-      } finally {
-        if (isSubscribed) {
-          setIsInitializing(false);
-        }
       }
     };
 
-    initWaveSurfer();
+    if (!isInitialized || url !== urlRef.current) {
+      initWaveSurfer();
+    }
 
     return () => {
-      isSubscribed = false;
-      if (abortController) {
-        abortController.abort();
-      }
+      isMounted = false;
       if (wavesurfer.current) {
-        console.log('Cleaning up WaveSurfer');
-        setIsDestroying(true);
         wavesurfer.current.destroy();
         wavesurfer.current = null;
-        setIsDestroying(false);
       }
     };
   }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate, toast]);
