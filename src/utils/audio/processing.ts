@@ -43,7 +43,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
         dtype: settings.modelConfig.dtype,
-        quantized: settings.modelConfig.useQuantized,
+        isQuantized: settings.modelConfig.useQuantized,
         local_files_only: true // Force using local files to prevent external data loading errors
       }
     );
@@ -85,8 +85,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     const transcriptions = results.map((item, index) => ({
       id: uuidv4(),
       text: item.text || settings.noSpeechText,
-      start: item.timestamp?.[0] ?? 0,
-      end: item.timestamp?.[1] ?? 0,
+      start: item.chunks?.[0]?.timestamp?.[0] ?? 0,
+      end: item.chunks?.[0]?.timestamp?.[1] ?? 0,
       confidence: settings.defaultConfidence,
       speaker: {
         id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
