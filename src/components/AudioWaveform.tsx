@@ -34,9 +34,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [showSpectrogram, setShowSpectrogram] = useState(false);
   const [showRegions, setShowRegions] = useState(false);
   const { toast } = useToast();
+  const urlRef = useRef(url);
 
   useEffect(() => {
-    if (!containerRef.current || !url) return;
+    if (!containerRef.current || url !== urlRef.current) return;
 
     const initWaveSurfer = async () => {
       try {
@@ -56,6 +57,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           fillParent: true,
           interact: true,
           autoScroll: true,
+          responsive: true
         });
 
         wavesurfer.current = ws;
@@ -92,6 +94,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
 
         await ws.load(url);
+        urlRef.current = url;
       } catch (err) {
         console.error('Error initializing WaveSurfer:', err);
         toast({
@@ -109,7 +112,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         wavesurfer.current.destroy();
       }
     };
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
+  }, [url, height, waveColor, progressColor, zoom, onReady, onTimeUpdate, onSeek, toast]);
 
   const handleZoom = debounce((newZoom: number) => {
     console.log('Zooming to:', newZoom);
