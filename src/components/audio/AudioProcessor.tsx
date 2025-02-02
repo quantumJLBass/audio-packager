@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AudioProcessingState } from '@/types/audio/processing';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
@@ -20,6 +20,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   settings 
 }) => {
   const { toast } = useToast();
+  const processingRef = useRef(false);
   const [state, setState] = useState<AudioProcessingState>({
     currentTime: 0,
     isPlaying: false,
@@ -31,9 +32,10 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   });
 
   const processAudio = useCallback(async () => {
-    if (!audioUrl) return;
+    if (!audioUrl || processingRef.current) return;
 
     try {
+      processingRef.current = true;
       setState(prev => ({ ...prev, isTranscribing: true, error: null }));
       
       const response = await fetch(audioUrl);
@@ -66,6 +68,8 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
         description: error instanceof Error ? error.message : "Failed to process audio file",
         variant: "destructive",
       });
+    } finally {
+      processingRef.current = false;
     }
   }, [audioUrl, toast]);
 
@@ -99,6 +103,7 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   return (
     <div className="space-y-4">
       <ImmediateAudioVisualizer
+        key={audioUrl}
         url={audioUrl}
         settings={settings}
         onTimeUpdate={handleTimeUpdate}
