@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AudioWaveform } from '@/components/AudioWaveform';
 import { AudioSettings } from '@/types/audio/settings';
 import { useToast } from '@/hooks/use-toast';
+import { DebugLogger } from '@/utils/debug';
 
 interface ImmediateAudioVisualizerProps {
   url: string;
@@ -21,25 +22,20 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
   onDurationChange,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const initializingRef = useRef(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (url && !initializingRef.current) {
-      initializingRef.current = true;
+    if (url && !isLoaded) {
+      DebugLogger.log('ImmediateAudioVisualizer', 'Loading audio URL:', url);
       setIsLoaded(false);
     }
-  }, [url]);
+  }, [url, isLoaded]);
 
   const handleReady = () => {
     if (!isLoaded) {
       setIsLoaded(true);
-      initializingRef.current = false;
       onReady();
-      toast({
-        title: "Waveform Ready",
-        description: "Audio visualization has been initialized",
-      });
+      DebugLogger.log('ImmediateAudioVisualizer', 'Audio visualization ready');
     }
   };
 
@@ -47,10 +43,13 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
     <div className="space-y-4">
       {url && (
         <AudioWaveform
+          key={url}
           url={url}
           onReady={handleReady}
           onTimeUpdate={onTimeUpdate}
-          height={settings.waveformHeight || 128}
+          onPlayPause={onPlayPause}
+          onDurationChange={onDurationChange}
+          height={settings.waveformHeight}
           waveColor={settings.waveformColors.waveform}
           progressColor={settings.waveformColors.progress}
         />

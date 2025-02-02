@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ProcessingState } from '@/types/audio/processing';
-import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
-import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
 import { ImmediateAudioVisualizer } from './processor/ImmediateAudioVisualizer';
 import { AudioProcessingStateComponent } from './processor/AudioProcessingState';
+import { AudioProcessingControls } from './AudioProcessingControls';
+import { DebugLogger } from '@/utils/debug';
 
 interface AudioProcessorProps {
   audioUrl: string;
@@ -19,7 +19,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
   settings 
 }) => {
   const { toast } = useToast();
-  const processingRef = useRef(false);
   const [state, setState] = useState<ProcessingState>({
     currentTime: 0,
     isPlaying: false,
@@ -29,59 +28,6 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     transcriptions: [],
     error: null
   });
-
-  const processAudio = useCallback(async () => {
-    if (!audioUrl || processingRef.current) return;
-
-    try {
-      processingRef.current = true;
-      setState(prev => ({ ...prev, isTranscribing: true, error: null }));
-      
-      const response = await fetch(audioUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioData = await processAudioBuffer(arrayBuffer);
-
-      const transcriptionResult = await transcribeAudio(audioData);
-      
-      setState(prev => ({ 
-        ...prev, 
-        transcriptions: transcriptionResult,
-        isTranscribing: false 
-      }));
-
-      toast({
-        title: "Processing complete",
-        description: "Audio has been successfully transcribed",
-      });
-
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      setState(prev => ({ 
-        ...prev, 
-        isTranscribing: false,
-        error: error instanceof Error ? error.message : 'Failed to process audio file'
-      }));
-      
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process audio file",
-        variant: "destructive",
-      });
-    } finally {
-      processingRef.current = false;
-    }
-  }, [audioUrl, toast]);
-
-  useEffect(() => {
-    if (audioUrl) {
-      processAudio();
-    }
-    return () => {
-      if (audioUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl, processAudio]);
 
   const handleTimeUpdate = useCallback((time: number) => {
     setState(prev => ({ ...prev, currentTime: time }));
@@ -95,13 +41,22 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
     setState(prev => ({ ...prev, isReady: true }));
     toast({
       title: "Audio Ready",
-      description: "Audio visualization is ready to play",
+      description: "Audio player is ready",
     });
   }, [toast]);
 
   const handleDurationChange = useCallback((duration: number) => {
     setState(prev => ({ ...prev, duration }));
   }, []);
+
+  // Temporarily disable transcription process
+  const handleTranscribe = useCallback(async () => {
+    DebugLogger.log('AudioProcessor', 'Transcription temporarily disabled');
+    toast({
+      title: "Notice",
+      description: "Transcription is temporarily disabled while we fix some issues",
+    });
+  }, [toast]);
 
   return (
     <div className="space-y-4">
