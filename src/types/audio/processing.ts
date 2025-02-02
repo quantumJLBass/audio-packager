@@ -1,7 +1,21 @@
 import { DeviceType, DType } from './common';
-import { Transcription } from './transcription';
 
-export type SupportedAudioType = 'audio/mpeg' | 'audio/wav' | 'audio/ogg';
+export type HFDevice = "cpu" | "webgpu" | "wasm" | "auto" | "gpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
+export type HFDType = "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16";
+
+export type SupportedAudioType =
+  | 'audio/wav'
+  | 'audio/wave'
+  | 'audio/x-wav'
+  | 'audio/mp3'
+  | 'audio/mpeg'
+  | 'audio/mp4'
+  | 'audio/aac'
+  | 'audio/ogg'
+  | 'audio/webm'
+  | 'audio/opus'
+  | 'audio/midi'
+  | 'audio/vorbis';
 
 export enum ProcessingTask {
   Transcribe = 'transcribe',
@@ -52,8 +66,8 @@ export interface PretrainedModelOptions {
   force_download?: boolean;
   resume_download?: boolean;
   proxies?: any;
-  device?: "cpu" | "webgpu" | "wasm" | "auto" | "gpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
-  dtype?: string;
+  device?: HFDevice;
+  dtype?: HFDType;
   model_id?: string;
   task?: string;
   subtask?: string;

@@ -44,3 +44,17 @@ export interface InitialState {
   transcriptions: Transcription[];
   error: string | null;
 }
+
+export interface AudioSettings {
+  debugMode: boolean;
+  huggingFaceToken: string;
+  openAIKey: string;
+  modelConfig: ModelSettings;
+  speakerIdTemplate: string;
+  speakerNameTemplate: string;
+  speakerColors: string[];
+  maxSpeakers: number;
+  autoSave: AutoSaveSettings;
+  initialState: InitialState;
+  // Add other properties as needed
+}

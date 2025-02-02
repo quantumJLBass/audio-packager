@@ -1,5 +1,5 @@
 import { toast } from '@/components/ui/use-toast';
-import { TranscriptionChunkOutput, TranscriptionOutput, PretrainedModelOptions } from '@/types/audio/processing';
+import { TranscriptionChunkOutput, TranscriptionOutput, PretrainedModelOptions, HFDevice, HFDType } from '@/types/audio/processing';
 import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
@@ -35,11 +35,11 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
   try {
     const modelOptions: PretrainedModelOptions = {
-      device: settings.modelConfig.device,
+      device: settings.modelConfig.device as HFDevice,
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      dtype: settings.modelConfig.dtype,
-      local_files_only: false // Changed to false to allow remote model loading
+      dtype: settings.modelConfig.dtype as HFDType,
+      local_files_only: false
     };
 
     const transcriber = await pipeline(
