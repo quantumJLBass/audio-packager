@@ -1,8 +1,8 @@
+import { useToast } from '@/hooks/use-toast';
+import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import { useToast } from '@/hooks/use-toast';
 import { WaveformControls } from './audio/WaveformControls';
-import { debounce } from 'lodash';
 
 interface AudioWaveformProps {
   url: string;
@@ -33,22 +33,19 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
   const isInitializing = useRef(false);
+  const urlRef = useRef(url);
 
   useEffect(() => {
-    if (!containerRef.current || !url || isInitializing.current) return;
+    if (!containerRef.current || !url || isInitializing.current || url === urlRef.current) return;
 
     const initWaveSurfer = async () => {
       try {
         isInitializing.current = true;
+        console.log('Initializing WaveSurfer in AudioWaveform');
 
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
           wavesurfer.current = null;
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to load audio file: ${response.statusText}`);
         }
 
         const instance = WaveSurfer.create({
@@ -66,19 +63,11 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
 
         instance.on('ready', () => {
-          console.log('WaveSurfer ready');
+          console.log('WaveSurfer ready in AudioWaveform');
           setDuration(instance.getDuration());
           setIsReady(true);
+          urlRef.current = url;
           onReady?.();
-        });
-
-        instance.on('error', (err) => {
-          console.error('WaveSurfer error:', err);
-          toast({
-            title: "Error",
-            description: "Failed to load audio file. Please try again.",
-            variant: "destructive",
-          });
         });
 
         instance.on('audioprocess', (time) => {
@@ -99,10 +88,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         await instance.load(url);
         wavesurfer.current = instance;
       } catch (err) {
-        console.error('Error initializing WaveSurfer:', err);
+        console.error('Error initializing WaveSurfer in AudioWaveform:', err);
         toast({
           title: "Error",
-          description: err instanceof Error ? err.message : "Failed to initialize audio player",
+          description: "Failed to initialize audio player. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -162,7 +151,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   return (
     <div className="space-y-4">
       <div ref={containerRef} className="w-full rounded-lg glass p-4" />
-      
+
       <WaveformControls
         isPlaying={isPlaying}
         isReady={isReady}

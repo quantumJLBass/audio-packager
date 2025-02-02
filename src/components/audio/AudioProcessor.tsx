@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ProcessingState } from '@/types/audio/processing';
 import { processAudioBuffer, transcribeAudio } from '@/utils/audio/processing';
-import { analyzeSentiment, analyzeTone } from '@/utils/audio/analysis';
 import { AudioProcessingControls } from './AudioProcessingControls';
 import { AudioSettings } from '@/types/audio/settings';
 import { ImmediateAudioVisualizer } from './processor/ImmediateAudioVisualizer';
@@ -94,7 +93,11 @@ export const AudioProcessor: React.FC<AudioProcessorProps> = ({
 
   const handleReady = useCallback(() => {
     setState(prev => ({ ...prev, isReady: true }));
-  }, []);
+    toast({
+      title: "Audio Ready",
+      description: "Audio visualization is ready to play",
+    });
+  }, [toast]);
 
   const handleDurationChange = useCallback((duration: number) => {
     setState(prev => ({ ...prev, duration }));
