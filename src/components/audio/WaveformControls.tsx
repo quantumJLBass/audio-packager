@@ -110,7 +110,7 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
-          disabled={!isReady || zoom <= 50}
+          disabled={!isReady}
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
@@ -121,7 +121,7 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          disabled={!isReady || zoom >= 500}
+          disabled={!isReady}
         >
           <ZoomIn className="h-4 w-4" />
         </Button>

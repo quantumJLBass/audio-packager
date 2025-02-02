@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { AudioWaveform } from '@/components/AudioWaveform';
 import { AudioSettings } from '@/types/audio/settings';
 import { useToast } from '@/hooks/use-toast';
@@ -21,14 +21,10 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
   onDurationChange,
 }) => {
   const { toast } = useToast();
-  const audioUrlRef = useRef(url);
 
-  useEffect(() => {
-    if (url !== audioUrlRef.current) {
-      audioUrlRef.current = url;
-      console.log('Audio URL updated:', url);
-    }
-  }, [url]);
+  const handleSeek = (time: number) => {
+    onTimeUpdate(time);
+  };
 
   return (
     <div className="space-y-4">
@@ -36,6 +32,10 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
         url={url}
         onReady={onReady}
         onTimeUpdate={onTimeUpdate}
+        onSeek={handleSeek}
+        height={settings.waveformHeight}
+        waveColor={settings.waveformColors.waveform}
+        progressColor={settings.waveformColors.progress}
       />
     </div>
   );

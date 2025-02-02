@@ -40,12 +40,11 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
     const initWaveSurfer = async () => {
       try {
-        // Cleanup previous instance
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
         }
 
-        wavesurfer.current = WaveSurfer.create({
+        const ws = WaveSurfer.create({
           container: containerRef.current,
           height,
           waveColor,
@@ -59,17 +58,16 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           autoScroll: true,
         });
 
-        // Load audio
-        await wavesurfer.current.load(url);
+        wavesurfer.current = ws;
 
-        wavesurfer.current.on('ready', () => {
+        ws.on('ready', () => {
           console.log('WaveSurfer ready');
-          setDuration(wavesurfer.current?.getDuration() || 0);
+          setDuration(ws.getDuration());
           setIsReady(true);
           onReady?.();
         });
 
-        wavesurfer.current.on('error', (err) => {
+        ws.on('error', (err) => {
           console.error('WaveSurfer error:', err);
           toast({
             title: "Error",
@@ -78,20 +76,22 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           });
         });
 
-        wavesurfer.current.on('audioprocess', (time) => {
+        ws.on('audioprocess', (time) => {
           setCurrentTime(time);
           onTimeUpdate?.(time);
         });
 
-        wavesurfer.current.on('interaction', () => {
-          const time = wavesurfer.current?.getCurrentTime() || 0;
+        ws.on('interaction', () => {
+          const time = ws.getCurrentTime();
           setCurrentTime(time);
           onSeek?.(time);
         });
 
-        wavesurfer.current.on('finish', () => {
+        ws.on('finish', () => {
           setIsPlaying(false);
         });
+
+        await ws.load(url);
       } catch (err) {
         console.error('Error initializing WaveSurfer:', err);
         toast({
@@ -112,9 +112,12 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
 
   const handleZoom = debounce((newZoom: number) => {
+    console.log('Zooming to:', newZoom);
     if (wavesurfer.current && isReady) {
       try {
+        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
+        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
