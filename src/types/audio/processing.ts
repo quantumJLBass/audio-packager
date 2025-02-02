@@ -4,7 +4,7 @@ export enum DeviceType {
   CPU = "cpu",
   CUDA = "cuda",
   WebGPU = "webgpu",
-  WASM = "wasm",
+  WASM = "wasm", 
   Auto = "auto",
   GPU = "gpu",
   DML = "dml",
@@ -41,6 +41,8 @@ export interface PretrainedModelOptions {
   model_id?: string;
   task?: string;
   subtask?: string;
+  quantized?: boolean;
+  local_files_only?: boolean;
 }
 
 export interface AudioProcessingOptions {

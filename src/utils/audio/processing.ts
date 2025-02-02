@@ -43,8 +43,8 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
         dtype: settings.modelConfig.dtype,
-        isQuantized: settings.modelConfig.useQuantized,
-        local_files_only: true // Force using local files to prevent external data loading errors
+        quantized: settings.modelConfig.useQuantized,
+        local_files_only: true
       }
     );
 
@@ -73,27 +73,31 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       task: settings.processingTask,
       chunk_length_s: settings.defaultChunkLength,
       stride_length_s: settings.defaultStrideLength,
-      return_timestamps: settings.returnTimestamps,
-      max_new_tokens: settings.maxNewTokens,
-      num_beams: settings.numBeams,
-      temperature: settings.temperature,
-      no_repeat_ngram_size: settings.noRepeatNgramSize
+      return_timestamps: settings.returnTimestamps
     });
 
+    DebugLogger.log('Transcription', 'Raw transcription result:', result);
+
+    // Handle both single result and array of results
     const results = Array.isArray(result) ? result : [result];
     
-    const transcriptions = results.map((item, index) => ({
-      id: uuidv4(),
-      text: item.text || settings.noSpeechText,
-      start: item.chunks?.[0]?.timestamp?.[0] ?? 0,
-      end: item.chunks?.[0]?.timestamp?.[1] ?? 0,
-      confidence: settings.defaultConfidence,
-      speaker: {
-        id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-        name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-        color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
-      }
-    }));
+    const transcriptions = results.map((item, index) => {
+      // Extract timestamps from chunks if available, otherwise try direct access
+      const timestamps = item.chunks?.[0]?.timestamp || item.timestamp || [0, 0];
+      
+      return {
+        id: uuidv4(),
+        text: item.text || settings.noSpeechText,
+        start: timestamps[0] || 0,
+        end: timestamps[1] || 0,
+        confidence: item.confidence || settings.defaultConfidence,
+        speaker: {
+          id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+          name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+          color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
+        }
+      };
+    });
 
     toast({
       title: "Success",
