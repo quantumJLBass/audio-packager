@@ -1,17 +1,17 @@
+import { useToast } from '@/hooks/use-toast';
+import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { WaveformControls } from './audio/WaveformControls';
-import { WaveformPlugins } from './audio/waveform/WaveformPlugins';
-import { WaveformTimeline } from './audio/waveform/Timeline';
-import { useToast } from '@/hooks/use-toast';
-import { getSettings } from '@/utils/settings';
 
 interface AudioWaveformProps {
   url: string;
   onReady?: () => void;
   onTimeUpdate?: (time: number) => void;
   onSeek?: (time: number) => void;
-  onError?: (error: Error) => void;
+  height?: number;
+  waveColor?: string;
+  progressColor?: string;
 }
 
 export const AudioWaveform: React.FC<AudioWaveformProps> = ({
@@ -19,32 +19,28 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   onReady,
   onTimeUpdate,
   onSeek,
-  onError,
+  height = 128,
+  waveColor = '#4a5568',
+  progressColor = '#3182ce'
 }) => {
-  const settings = getSettings();
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [zoom, setZoom] = useState(settings.defaultZoom);
+  const [zoom, setZoom] = useState(50);
   const [isReady, setIsReady] = useState(false);
-  const [showSpectrogram, setShowSpectrogram] = useState(false);
-  const [showRegions, setShowRegions] = useState(true);
   const { toast } = useToast();
   const isInitializing = useRef(false);
-  const previousUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || !url || isInitializing.current || url === previousUrl.current) {
-      return;
-    }
+    if (!containerRef.current || !url || isInitializing.current) return;
 
     const initWaveSurfer = async () => {
       try {
         isInitializing.current = true;
-        console.log('Initializing WaveSurfer with URL:', url);
+        console.log('Initializing WaveSurfer in AudioWaveform');
 
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
@@ -52,37 +48,24 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         }
 
         const instance = WaveSurfer.create({
-          container: containerRef.current!,
-          height: settings.waveformHeight,
-          waveColor: settings.waveformColors.waveform,
-          progressColor: settings.waveformColors.progress,
+          container: containerRef.current,
+          height,
+          waveColor,
+          progressColor,
           cursorWidth: 1,
-          cursorColor: settings.waveformColors.cursor,
+          cursorColor: '#718096',
           normalize: true,
           minPxPerSec: zoom,
           fillParent: true,
           interact: true,
           autoScroll: true,
-          hideScrollbar: true,
-          autoCenter: false
         });
 
         instance.on('ready', () => {
-          console.log('WaveSurfer ready');
+          console.log('WaveSurfer ready in AudioWaveform');
           setDuration(instance.getDuration());
           setIsReady(true);
-          previousUrl.current = url;
           onReady?.();
-        });
-
-        instance.on('error', (err) => {
-          console.error('WaveSurfer error:', err);
-          onError?.(err);
-          toast({
-            title: "Error",
-            description: "Failed to load audio file",
-            variant: "destructive",
-          });
         });
 
         instance.on('audioprocess', (time) => {
@@ -96,18 +79,17 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           onSeek?.(time);
         });
 
-        instance.on('finish', () => setIsPlaying(false));
-        instance.on('play', () => setIsPlaying(true));
-        instance.on('pause', () => setIsPlaying(false));
+        instance.on('finish', () => {
+          setIsPlaying(false);
+        });
 
         await instance.load(url);
         wavesurfer.current = instance;
       } catch (err) {
-        console.error('Error initializing WaveSurfer:', err);
-        onError?.(err as Error);
+        console.error('Error initializing WaveSurfer in AudioWaveform:', err);
         toast({
           title: "Error",
-          description: "Failed to initialize audio player",
+          description: "Failed to initialize audio player. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -123,34 +105,57 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         wavesurfer.current = null;
       }
     };
-  }, [url, onReady, onTimeUpdate, zoom, toast, onError]);
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom]);
 
-  const handleZoom = (newZoom: number) => {
+  const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
-        requestAnimationFrame(() => {
-          wavesurfer.current?.zoom(newZoom);
-          setZoom(newZoom);
-        });
+        console.log('Applying zoom:', newZoom);
+        // Store current time to maintain position
+        const currentTime = wavesurfer.current.getCurrentTime();
+        
+        // Apply zoom using minPxPerSec
+        wavesurfer.current.zoom(newZoom);
+        
+        // Seek to maintain position after zoom
+        const progress = currentTime / duration;
+        wavesurfer.current.seekTo(progress);
+        
+        setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
         toast({
           title: "Error",
-          description: "Failed to zoom",
+          description: "Failed to zoom. Please try again.",
           variant: "destructive",
         });
       }
     }
+  }, 100);
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom + 10, 100);
+    handleZoom(newZoom);
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom - 10, 20);
+    handleZoom(newZoom);
+  };
+
+  const handleZoomChange = (newZoom: number) => {
+    handleZoom(newZoom);
   };
 
   const togglePlayPause = () => {
-    if (wavesurfer.current && isReady) {
+    if (wavesurfer.current) {
       wavesurfer.current.playPause();
+      setIsPlaying(!isPlaying);
     }
   };
 
   const toggleMute = () => {
-    if (wavesurfer.current && isReady) {
+    if (wavesurfer.current) {
       const newVolume = volume === 0 ? 1 : 0;
       wavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
@@ -159,7 +164,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
-    if (wavesurfer.current && isReady) {
+    if (wavesurfer.current) {
       wavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
     }
@@ -167,17 +172,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="w-full rounded-lg bg-gray-900 p-4">
-        <div ref={containerRef} className="w-full" />
-        <WaveformTimeline wavesurfer={wavesurfer.current} zoom={zoom} />
-        <WaveformPlugins 
-          wavesurfer={wavesurfer.current}
-          settings={settings}
-          showSpectrogram={showSpectrogram}
-          showRegions={showRegions}
-        />
-      </div>
-      
+      <div ref={containerRef} className="w-full rounded-lg glass p-4" />
+
       <WaveformControls
         isPlaying={isPlaying}
         isReady={isReady}
@@ -185,16 +181,12 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         currentTime={currentTime}
         duration={duration}
         zoom={zoom}
-        showSpectrogram={showSpectrogram}
-        showRegions={showRegions}
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}
-        onZoomIn={() => handleZoom(Math.min(zoom + 50, 500))}
-        onZoomOut={() => handleZoom(Math.max(zoom - 50, 50))}
-        onZoomChange={handleZoom}
-        onToggleSpectrogram={() => setShowSpectrogram(!showSpectrogram)}
-        onToggleRegions={() => setShowRegions(!showRegions)}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onZoomChange={handleZoomChange}
       />
     </div>
   );
