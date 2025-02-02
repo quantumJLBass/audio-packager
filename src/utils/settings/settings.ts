@@ -2,6 +2,7 @@ import { AUTO_SAVE_DEFAULTS, MODEL_DEFAULTS, SUPPORTED_MODELS, SUPPORTED_LANGUAG
 import { migrateSettings } from './migration';
 import { saveToStorage, loadFromStorage } from './storage';
 import type { AudioSettings } from '@/types/audio/settings';
+import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 
 export const SETTINGS_VERSION = '1.0.0';
 
@@ -64,7 +65,7 @@ export const defaultSettings: AudioSettings = {
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
   defaultModel: "base",
-  processingTask: "transcribe",
+  processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
   defaultStrideLength: 5,
   defaultFloatingPoint: 32,

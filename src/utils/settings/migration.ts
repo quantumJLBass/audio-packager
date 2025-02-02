@@ -6,12 +6,12 @@ export const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVers
 
   Object.keys(oldSettings).forEach(key => {
     if (key in newSettings) {
+      const settingKey = key as keyof AudioSettings;
       if (key === 'supportedModels' || key === 'supportedLanguages') {
         // Always use latest lists
-        newSettings[key as keyof AudioSettings] = defaultSettings[key as keyof AudioSettings];
+        newSettings[settingKey] = defaultSettings[settingKey];
       } else {
-        const settingKey = key as keyof AudioSettings;
-        (newSettings[settingKey] as any) = oldSettings[settingKey];
+        newSettings[settingKey] = oldSettings[settingKey] as AudioSettings[keyof AudioSettings];
       }
     }
   });

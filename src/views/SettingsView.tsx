@@ -30,27 +30,16 @@ export const SettingsView = () => {
     const updatedSettings = { ...settings, ...newSettings };
     setSettings(updatedSettings);
 
-    // If we've exceeded the long-term delay, save immediately
-    if (timeSinceLastSave >= settings.autoSave.longTermDelay) {
+    // Schedule a save after the short-term delay
+    saveTimeoutRef.current = setTimeout(() => {
       saveSettings(updatedSettings);
-      lastSaveTimeRef.current = now;
+      lastSaveTimeRef.current = Date.now();
       toast({
         title: "Settings saved",
         description: "Your changes have been saved",
         duration: 2000,
       });
-    } else {
-      // Schedule a save after the short-term delay
-      saveTimeoutRef.current = setTimeout(() => {
-        saveSettings(updatedSettings);
-        lastSaveTimeRef.current = Date.now();
-        toast({
-          title: "Settings saved",
-          description: "Your changes have been saved",
-          duration: 2000,
-        });
-      }, settings.autoSave.shortTermDelay);
-    }
+    }, settings.autoSave.shortTermDelay);
   }, [settings, toast]);
 
   return (
@@ -65,17 +54,17 @@ export const SettingsView = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
+          <Link to="/">
+            <Button variant="outline" size="icon">
+              <Home className="h-4 w-4" />
+            </Button>
+          </Link>
           <h1 className="text-2xl font-bold">Settings</h1>
         </div>
-        <Link to="/">
-          <Button variant="outline" size="icon">
-            <Home className="h-4 w-4" />
-          </Button>
-        </Link>
       </div>
 
       <Tabs defaultValue="api" className="w-full">
-        <TabsList>
+        <TabsList className="bg-background">
           <TabsTrigger value="api">API Keys</TabsTrigger>
           <TabsTrigger value="audio">Audio</TabsTrigger>
           <TabsTrigger value="visualization">Visualization</TabsTrigger>
