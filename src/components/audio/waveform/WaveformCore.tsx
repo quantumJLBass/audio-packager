@@ -23,17 +23,18 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const { toast } = useToast();
   const urlRef = useRef(url);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    let isSubscribed = true;
 
     const initWaveSurfer = async () => {
+      if (!containerRef.current || isInitializing) return;
+
       try {
-        if (isLoading) return;
-        setIsLoading(true);
+        setIsInitializing(true);
         console.log('Initializing WaveSurfer...', { url });
 
         // Cleanup previous instance
@@ -44,7 +45,7 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         }
 
         // Only create new instance if URL changed
-        if (urlRef.current !== url) {
+        if (urlRef.current !== url && isSubscribed) {
           console.log('Creating new WaveSurfer instance');
           wavesurfer.current = WaveSurfer.create({
             container: containerRef.current,
@@ -53,25 +54,34 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
             height,
             normalize: true,
             minPxPerSec,
+            backend: 'WebAudio',
+            autoCenter: true,
+            responsive: true,
           });
 
           wavesurfer.current.on('ready', () => {
-            console.log('WaveSurfer ready');
-            onReady();
+            if (isSubscribed) {
+              console.log('WaveSurfer ready');
+              onReady();
+            }
           });
 
           wavesurfer.current.on('timeupdate', (time) => {
-            console.log('Time update:', time);
-            onTimeUpdate(time);
+            if (isSubscribed) {
+              console.log('Time update:', time);
+              onTimeUpdate(time);
+            }
           });
 
           wavesurfer.current.on('error', (error) => {
             console.error('WaveSurfer error:', error);
-            toast({
-              title: "Error",
-              description: "Failed to load audio waveform",
-              variant: "destructive",
-            });
+            if (isSubscribed) {
+              toast({
+                title: "Error",
+                description: "Failed to load audio waveform",
+                variant: "destructive",
+              });
+            }
           });
 
           await wavesurfer.current.load(url);
@@ -79,26 +89,31 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
         }
       } catch (error) {
         console.error('Error initializing WaveSurfer:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize audio waveform",
-          variant: "destructive",
-        });
+        if (isSubscribed) {
+          toast({
+            title: "Error",
+            description: "Failed to initialize audio waveform",
+            variant: "destructive",
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isSubscribed) {
+          setIsInitializing(false);
+        }
       }
     };
 
     initWaveSurfer();
 
     return () => {
-      console.log('Cleaning up WaveSurfer');
+      isSubscribed = false;
       if (wavesurfer.current) {
+        console.log('Cleaning up WaveSurfer');
         wavesurfer.current.destroy();
         wavesurfer.current = null;
       }
     };
   }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate]);
 
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="w-full h-full" />;
 };
