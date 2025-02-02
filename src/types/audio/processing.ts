@@ -38,7 +38,6 @@ export interface PretrainedModelOptions {
   revision: string;
   cache_dir?: string | null;
   dtype?: DType;
-  quantized?: boolean;
   model_id?: string;
   task?: string;
   subtask?: string;

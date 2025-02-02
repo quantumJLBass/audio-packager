@@ -115,7 +115,8 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
             }
           });
 
-          await wavesurfer.current.load(url, undefined, abortController.signal);
+          // Load the audio file without the abort signal parameter
+          await wavesurfer.current.load(url);
           urlRef.current = url;
         }
       } catch (error) {
