@@ -1,4 +1,3 @@
-import { Transcription } from '@/types/audio/transcription';
 import { pipeline } from "@huggingface/transformers";
 import { v4 as uuidv4 } from 'uuid';
 import { getSettings } from '../settings';
@@ -6,6 +5,7 @@ import { determineAudioTypeFromBuffer } from './fileType';
 import { buildModelPath } from './modelBuilder';
 import { toast } from '@/components/ui/use-toast';
 import { DebugLogger } from '../debug';
+import { Transcription } from '@/types/audio/transcription';
 
 export const processAudioBuffer = async (arrayBuffer: ArrayBuffer): Promise<Float32Array> => {
   DebugLogger.log('Processing', 'Processing audio buffer...');
@@ -83,7 +83,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         text: item.text || settings.noSpeechText,
         start: chunk?.timestamp?.[0] ?? 0,
         end: chunk?.timestamp?.[1] ?? 0,
-        confidence: chunk?.confidence ?? settings.defaultConfidence,
+        confidence: settings.defaultConfidence,
         speaker: {
           id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
           name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
