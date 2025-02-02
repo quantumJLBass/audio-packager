@@ -1,15 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { useToast } from '@/hooks/use-toast';
 
 interface WaveformCoreProps {
   url: string;
-  onReady: () => void;
-  onTimeUpdate: (time: number) => void;
+  onReady?: () => void;
+  onTimeUpdate?: (time: number) => void;
   minPxPerSec?: number;
-  waveColor?: string;
-  progressColor?: string;
-  height?: number;
 }
 
 export const WaveformCore: React.FC<WaveformCoreProps> = ({
@@ -17,67 +14,49 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
   onReady,
   onTimeUpdate,
   minPxPerSec = 100,
-  waveColor = '#4f46e5',
-  progressColor = '#7c3aed',
-  height = 128,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurfer = useRef<WaveSurfer | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
-  const previousUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!containerRef.current) return;
 
     const initWaveSurfer = async () => {
-      if (!containerRef.current || !url || url === previousUrl.current) {
-        return;
-      }
-
       try {
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
         }
 
         const instance = WaveSurfer.create({
-          container: containerRef.current,
-          waveColor,
-          progressColor,
-          height,
-          normalize: true,
+          container: containerRef.current!,
+          height: 128,
+          waveColor: '#4a5568',
+          progressColor: '#3182ce',
           minPxPerSec,
-          backend: 'WebAudio',
-          autoCenter: true,
           fillParent: true,
           interact: true,
-          mediaControls: true
+          autoScroll: true,
+          normalize: true,
+          backend: 'WebAudio'
         });
 
         instance.on('ready', () => {
-          if (isMounted) {
-            console.log('WaveSurfer ready');
-            setIsInitialized(true);
-            previousUrl.current = url;
-            onReady();
-          }
+          console.log('WaveSurfer ready');
+          onReady?.();
         });
 
-        instance.on('timeupdate', (time) => {
-          if (isMounted) {
-            onTimeUpdate(time);
-          }
+        instance.on('timeupdate', (time: number) => {
+          onTimeUpdate?.(time);
         });
 
-        instance.on('error', (error) => {
-          console.error('WaveSurfer error:', error);
-          if (isMounted) {
-            toast({
-              title: "Error",
-              description: "Failed to load audio waveform",
-              variant: "destructive",
-            });
-          }
+        instance.on('error', (err) => {
+          console.error('WaveSurfer error:', err);
+          toast({
+            title: "Error",
+            description: "Failed to load audio",
+            variant: "destructive"
+          });
         });
 
         await instance.load(url);
@@ -85,26 +64,23 @@ export const WaveformCore: React.FC<WaveformCoreProps> = ({
 
       } catch (error) {
         console.error('Error initializing WaveSurfer:', error);
-        if (isMounted) {
-          toast({
-            title: "Error",
-            description: "Failed to initialize audio waveform",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Error",
+          description: "Failed to initialize audio player",
+          variant: "destructive"
+        });
       }
     };
 
     initWaveSurfer();
 
     return () => {
-      isMounted = false;
       if (wavesurfer.current) {
         wavesurfer.current.destroy();
         wavesurfer.current = null;
       }
     };
-  }, [url, waveColor, progressColor, height, minPxPerSec, onReady, onTimeUpdate, toast]);
+  }, [url, minPxPerSec, onReady, onTimeUpdate, toast]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return <div ref={containerRef} />;
 };

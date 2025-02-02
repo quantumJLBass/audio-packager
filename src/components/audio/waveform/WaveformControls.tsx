@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut, AudioWaveform, Layers } from 'lucide-react';
+import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut, Waves, Layers } from 'lucide-react';
 import { formatTimestamp } from '@/utils/timeFormat';
 
-export interface WaveformControlsProps {
+interface WaveformControlsProps {
   isPlaying: boolean;
   isReady: boolean;
   volume: number;
@@ -18,7 +18,7 @@ export interface WaveformControlsProps {
   onMute: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onZoomChange: (newZoom: number) => void;
+  onZoomChange: (value: number) => void;
   onToggleSpectrogram: () => void;
   onToggleRegions: () => void;
 }
@@ -37,16 +37,17 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
   onMute,
   onZoomIn,
   onZoomOut,
+  onZoomChange,
   onToggleSpectrogram,
   onToggleRegions,
 }) => {
   return (
-    <div className="flex items-center space-x-4 p-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-lg">
+    <div className="flex items-center gap-4">
       <Button
         variant="ghost"
         size="icon"
-        disabled={!isReady}
         onClick={onPlayPause}
+        disabled={!isReady}
       >
         {isPlaying ? (
           <PauseCircle className="h-6 w-6" />
@@ -55,12 +56,8 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
         )}
       </Button>
 
-      <div className="flex items-center space-x-2 min-w-[100px]">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onMute}
-        >
+      <div className="flex items-center gap-2 min-w-[200px]">
+        <Button variant="ghost" size="icon" onClick={onMute}>
           {volume === 0 ? (
             <VolumeX className="h-4 w-4" />
           ) : (
@@ -69,6 +66,7 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
         </Button>
         <Slider
           value={[volume]}
+          min={0}
           max={1}
           step={0.1}
           onValueChange={onVolumeChange}
@@ -76,42 +74,49 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
         />
       </div>
 
-      <div className="flex-1 text-center text-sm">
+      <span className="text-sm font-mono">
         {formatTimestamp(currentTime)} / {formatTimestamp(duration)}
-      </div>
+      </span>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSpectrogram}
+          className={showSpectrogram ? 'bg-primary/20' : ''}
+        >
+          <Waves className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleRegions}
+          className={showRegions ? 'bg-primary/20' : ''}
+        >
+          <Layers className="h-4 w-4" />
+        </Button>
+
         <Button
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
+          disabled={!isReady}
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
+        
+        <span className="text-sm font-mono w-16 text-center">{zoom}%</span>
+        
         <Button
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
+          disabled={!isReady}
         >
           <ZoomIn className="h-4 w-4" />
         </Button>
       </div>
-
-      <Button
-        variant={showSpectrogram ? "default" : "ghost"}
-        size="icon"
-        onClick={onToggleSpectrogram}
-      >
-        <AudioWaveform className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant={showRegions ? "default" : "ghost"}
-        size="icon"
-        onClick={onToggleRegions}
-      >
-        <Layers className="h-4 w-4" />
-      </Button>
     </div>
   );
 };

@@ -30,6 +30,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const { toast } = useToast();
   const transcriptionStarted = useRef(false);
+  const audioDataRef = useRef<Float32Array | null>(null);
 
   const handleReady = useCallback(() => {
     setIsReady(true);
@@ -66,9 +67,10 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     setZoom(newZoom);
   }, [isReady, toast]);
 
+  // Load audio data and start transcription
   useEffect(() => {
-    const startTranscription = async () => {
-      if (!url || isTranscribing || transcriptionStarted.current) return;
+    const loadAudioAndTranscribe = async () => {
+      if (!url || isTranscribing || transcriptionStarted.current || !isReady) return;
       
       transcriptionStarted.current = true;
       setIsTranscribing(true);
@@ -77,6 +79,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         const audioData = await processAudioBuffer(arrayBuffer);
+        audioDataRef.current = audioData;
         
         const results = await transcribeAudio(audioData);
         setTranscriptions(results);
@@ -100,7 +103,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     };
 
     if (isReady) {
-      startTranscription();
+      loadAudioAndTranscribe();
     }
   }, [url, isReady, isTranscribing, toast]);
 
