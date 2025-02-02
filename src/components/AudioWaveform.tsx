@@ -3,14 +3,12 @@ import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { WaveformControls } from './audio/WaveformControls';
-import { DebugLogger } from '@/utils/debug';
 
 interface AudioWaveformProps {
   url: string;
   onReady?: () => void;
   onTimeUpdate?: (time: number) => void;
-  onPlayPause?: (isPlaying: boolean) => void;
-  onDurationChange?: (duration: number) => void;
+  onSeek?: (time: number) => void;
   height?: number;
   waveColor?: string;
   progressColor?: string;
@@ -20,8 +18,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   url,
   onReady,
   onTimeUpdate,
-  onPlayPause,
-  onDurationChange,
+  onSeek,
   height = 128,
   waveColor = '#4a5568',
   progressColor = '#3182ce'
@@ -36,21 +33,17 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
   const isInitializing = useRef(false);
-  const urlRef = useRef(url);
 
   useEffect(() => {
-    if (!containerRef.current || !url || isInitializing.current || url === urlRef.current) {
-      return;
-    }
+    if (!containerRef.current || !url || isInitializing.current) return;
 
     const initWaveSurfer = async () => {
       try {
         isInitializing.current = true;
-        DebugLogger.log('AudioWaveform', 'Initializing WaveSurfer');
+        console.log('Initializing WaveSurfer with URL:', url);
 
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
-          wavesurfer.current = null;
         }
 
         const instance = WaveSurfer.create({
@@ -69,23 +62,19 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
 
         instance.on('ready', () => {
-          DebugLogger.log('AudioWaveform', 'WaveSurfer ready');
-          const audioDuration = instance.getDuration();
-          setDuration(audioDuration);
-          onDurationChange?.(audioDuration);
+          console.log('WaveSurfer ready');
+          setDuration(instance.getDuration());
           setIsReady(true);
-          urlRef.current = url;
           onReady?.();
         });
 
-        instance.on('play', () => {
-          setIsPlaying(true);
-          onPlayPause?.(true);
-        });
-
-        instance.on('pause', () => {
-          setIsPlaying(false);
-          onPlayPause?.(false);
+        instance.on('error', (err) => {
+          console.error('WaveSurfer error:', err);
+          toast({
+            title: "Error",
+            description: "Failed to load audio file. Please try again.",
+            variant: "destructive",
+          });
         });
 
         instance.on('audioprocess', (time) => {
@@ -96,14 +85,14 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         instance.on('interaction', () => {
           const time = instance.getCurrentTime();
           setCurrentTime(time);
-          onTimeUpdate?.(time);
+          onSeek?.(time);
         });
 
         instance.on('finish', () => {
           setIsPlaying(false);
-          onPlayPause?.(false);
         });
 
+        console.log('Loading audio URL:', url);
         await instance.load(url);
         wavesurfer.current = instance;
       } catch (err) {
@@ -126,12 +115,14 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         wavesurfer.current = null;
       }
     };
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, onPlayPause, onDurationChange, zoom, toast]);
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom, toast]);
 
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
+        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
+        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
@@ -147,6 +138,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const togglePlayPause = () => {
     if (wavesurfer.current) {
       wavesurfer.current.playPause();
+      setIsPlaying(!isPlaying);
     }
   };
 
@@ -168,8 +160,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   return (
     <div className="space-y-4">
-      <div ref={containerRef} className="w-full rounded-lg glass p-4" />
-
+      <div ref={containerRef} className="w-full rounded-lg bg-gray-900 p-4" />
       <WaveformControls
         isPlaying={isPlaying}
         isReady={isReady}
@@ -180,8 +171,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}
-        onZoomIn={() => handleZoom(Math.min(500, zoom + 50))}
-        onZoomOut={() => handleZoom(Math.max(50, zoom - 50))}
+        onZoomIn={() => handleZoom(Math.min(zoom + 10, 100))}
+        onZoomOut={() => handleZoom(Math.max(zoom - 10, 20))}
         onZoomChange={handleZoom}
       />
     </div>

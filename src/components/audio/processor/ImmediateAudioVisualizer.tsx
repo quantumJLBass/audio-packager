@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { AudioWaveform } from '@/components/AudioWaveform';
 import { AudioSettings } from '@/types/audio/settings';
 import { useToast } from '@/hooks/use-toast';
-import { DebugLogger } from '@/utils/debug';
 
 interface ImmediateAudioVisualizerProps {
   url: string;
@@ -21,39 +20,27 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
   onReady,
   onDurationChange,
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (url && !isLoaded) {
-      DebugLogger.log('ImmediateAudioVisualizer', 'Loading audio URL:', url);
-      setIsLoaded(false);
-    }
-  }, [url, isLoaded]);
-
-  const handleReady = () => {
-    if (!isLoaded) {
-      setIsLoaded(true);
-      onReady();
-      DebugLogger.log('ImmediateAudioVisualizer', 'Audio visualization ready');
-    }
+  const handleError = (error: Error) => {
+    console.error('Audio visualization error:', error);
+    toast({
+      title: "Error",
+      description: "Failed to load audio visualization",
+      variant: "destructive",
+    });
   };
 
   return (
     <div className="space-y-4">
-      {url && (
-        <AudioWaveform
-          key={url}
-          url={url}
-          onReady={handleReady}
-          onTimeUpdate={onTimeUpdate}
-          onPlayPause={onPlayPause}
-          onDurationChange={onDurationChange}
-          height={settings.waveformHeight}
-          waveColor={settings.waveformColors.waveform}
-          progressColor={settings.waveformColors.progress}
-        />
-      )}
+      <AudioWaveform
+        url={url}
+        onReady={onReady}
+        onTimeUpdate={onTimeUpdate}
+        height={settings.waveformHeight}
+        waveColor={settings.waveformColors.waveform}
+        progressColor={settings.waveformColors.progress}
+      />
     </div>
   );
 };
