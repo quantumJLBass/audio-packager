@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { SettingField } from '@/components/settings/SettingField';
 import type { AudioSettings } from '@/types/audio/settings';
-import { DeviceType, DType } from '@/types/audio/processing';
+import { DeviceType, DType } from '@/types/audio/common';
 
 interface ModelSettingsProps {
   settings: AudioSettings;
@@ -27,7 +27,7 @@ export const ModelSettings: React.FC<ModelSettingsProps> = ({ settings, onChange
           </SelectTrigger>
           <SelectContent>
             {settings.supportedModels.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
+              <SelectItem key={model.key} value={model.key}>
                 {model.name}
               </SelectItem>
             ))}

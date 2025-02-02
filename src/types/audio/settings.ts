@@ -1,7 +1,8 @@
 /**
  * Audio settings type definitions for configuring audio processing behavior
  */
-import { DeviceType, DType, ProcessingTask } from './processing';
+import { DeviceType, DType } from './common';
+import { ProcessingTask } from './processing';
 import { Transcription } from './transcription';
 
 /**

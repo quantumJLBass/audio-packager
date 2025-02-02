@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AudioProcessingState } from '@/types/audio';
+import { ProcessingState } from '@/types/audio/processing';
 import { PlaybackControls } from './PlaybackControls';
 
-interface AudioProcessingControlsProps extends AudioProcessingState {
+interface AudioProcessingControlsProps extends ProcessingState {
   onPlayPause: () => void;
 }
 

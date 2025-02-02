@@ -1,4 +1,5 @@
-import { DeviceType, DType } from '@/types/audio/settings';
+import { DeviceType, DType } from './common';
+import { Transcription } from './transcription';
 
 export enum ProcessingTask {
   Transcribe = 'transcribe',
@@ -11,7 +12,7 @@ export interface ProcessingState {
   duration: number;
   isReady: boolean;
   isTranscribing: boolean;
-  transcriptions: any[];
+  transcriptions: Transcription[];
   error: string | null;
 }
 
@@ -25,7 +26,6 @@ export interface ProcessingOptions {
   num_beams?: number;
   temperature?: number;
   no_repeat_ngram_size?: number;
-  language?: string;
 }
 
 export interface TranscriptionChunkOutput {
@@ -52,4 +52,12 @@ export interface PretrainedModelOptions {
   subtask?: string;
   isQuantized?: boolean;
   local_files_only?: boolean;
+}
+
+export interface ModelUrlOptions {
+  provider: string;
+  model: string;
+  isQuantized?: boolean;
+  isOnnx?: boolean;
+  language?: string;
 }
