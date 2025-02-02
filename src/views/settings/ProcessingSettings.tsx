@@ -32,10 +32,10 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           value="model" 
           className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground">
             Model Settings
           </AccordionTrigger>
-          <AccordionContent className="bg-background/5 p-4">
+          <AccordionContent className="bg-accent/5 p-4">
             <ModelSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
@@ -44,10 +44,10 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           value="sentiment" 
           className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground">
             Sentiment Analysis
           </AccordionTrigger>
-          <AccordionContent className="bg-background/5 p-4">
+          <AccordionContent className="bg-accent/5 p-4">
             <SentimentSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
@@ -56,10 +56,10 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           value="tone" 
           className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground">
             Tone Analysis
           </AccordionTrigger>
-          <AccordionContent className="bg-background/5 p-4">
+          <AccordionContent className="bg-accent/5 p-4">
             <ToneSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
@@ -68,10 +68,10 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
           value="speakers" 
           className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground">
             Speaker Settings
           </AccordionTrigger>
-          <AccordionContent className="bg-background/5 p-4">
+          <AccordionContent className="bg-accent/5 p-4">
             <SpeakerSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
