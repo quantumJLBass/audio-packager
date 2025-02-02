@@ -1,14 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
+import {
+  PlayCircle,
+  PauseCircle,
+  Volume2,
   VolumeX,
   ZoomIn,
   ZoomOut,
-  AudioWaveform,
+  Waveform,
   Layers
 } from 'lucide-react';
 import { formatTimestamp } from '@/utils/timeFormat';
@@ -51,30 +51,50 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
   onToggleRegions,
 }) => {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled={!isReady}
-          onClick={onPlayPause}
-        >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-        </Button>
+    <div className="flex items-center gap-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onPlayPause}
+        disabled={!isReady}
+      >
+        {isPlaying ? (
+          <PauseCircle className="h-6 w-6" />
+        ) : (
+          <PlayCircle className="h-6 w-6" />
+        )}
+      </Button>
 
-        <span className="text-sm font-mono">
-          {formatTimestamp(currentTime)} / {formatTimestamp(duration)}
-        </span>
+      <div className="flex items-center gap-2 min-w-[200px]">
+        <Button variant="ghost" size="icon" onClick={onMute}>
+          {volume === 0 ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+        </Button>
+        <Slider
+          value={[volume]}
+          min={0}
+          max={1}
+          step={0.1}
+          onValueChange={onVolumeChange}
+          className="w-24"
+        />
       </div>
 
-      <div className="flex items-center gap-4">
+      <span className="text-sm font-mono">
+        {formatTimestamp(currentTime)} / {formatTimestamp(duration)}
+      </span>
+
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
           onClick={onToggleSpectrogram}
           className={showSpectrogram ? 'bg-primary/20' : ''}
         >
-          <AudioWaveform className="h-4 w-4" />
+          <Waveform className="h-4 w-4" />
         </Button>
 
         <Button
@@ -86,51 +106,25 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
           <Layers className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onZoomOut}
-            disabled={zoom <= 50}
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          
-          <span className="text-sm font-mono w-12 text-center">
-            {zoom}%
-          </span>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onZoomIn}
-            disabled={zoom >= 500}
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMute}
-          >
-            {volume === 0 ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-          </Button>
-          
-          <Slider
-            value={[volume]}
-            max={1}
-            step={0.1}
-            onValueChange={onVolumeChange}
-            className="w-24"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomOut}
+          disabled={!isReady || zoom <= 50}
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        
+        <span className="text-sm font-mono w-16 text-center">{zoom}%</span>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomIn}
+          disabled={!isReady || zoom >= 500}
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

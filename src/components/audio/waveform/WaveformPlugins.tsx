@@ -41,22 +41,21 @@ export const WaveformPlugins: React.FC<WaveformPluginsProps> = ({
       const spectrogram = Spectrogram.create({
         labels: true,
         height: 200,
-        splitChannels: true,
-        scale: 'mel',
-        frequencyMax: 8000,
-        frequencyMin: 0,
-        fftSamples: 1024,
+        container: '#spectrogram',
         labelsBackground: 'rgba(0, 0, 0, 0.1)',
-        container: '#spectrogram'
+        colorMap: (magnitude: number) => {
+          const alpha = Math.min(1, Math.max(0, magnitude));
+          return `rgba(100, 100, 100, ${alpha})`;
+        }
       });
       wavesurfer.registerPlugin(spectrogram);
     }
 
     return () => {
       if (wavesurfer) {
-        wavesurfer.removePlugin('minimap');
-        wavesurfer.removePlugin('regions');
-        wavesurfer.removePlugin('spectrogram');
+        wavesurfer.destroyPlugin('minimap');
+        if (showRegions) wavesurfer.destroyPlugin('regions');
+        if (showSpectrogram) wavesurfer.destroyPlugin('spectrogram');
       }
     };
   }, [wavesurfer, showSpectrogram, showRegions]);
