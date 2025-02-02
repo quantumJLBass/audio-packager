@@ -1,8 +1,8 @@
-import { ProcessingTask } from '@/types/audio/processing';
-import type { AudioSettings } from '@/types/audio/settings';
-import { AUTO_SAVE_DEFAULTS, INITIAL_STATE, MODEL_DEFAULTS, SUPPORTED_LANGUAGES, SUPPORTED_MODELS, WAVEFORM_DEFAULTS } from './defaults';
+import { AUTO_SAVE_DEFAULTS, MODEL_DEFAULTS, SUPPORTED_MODELS, SUPPORTED_LANGUAGES, WAVEFORM_DEFAULTS, INITIAL_STATE } from './defaults';
 import { migrateSettings } from './migration';
-import { loadFromStorage, saveToStorage } from './storage';
+import { saveToStorage, loadFromStorage } from './storage';
+import type { AudioSettings } from '@/types/audio/settings';
+import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 
 export const SETTINGS_VERSION = '1.0.0';
 
@@ -64,7 +64,7 @@ export const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: 1,
+  defaultModel: "base",
   processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
   defaultStrideLength: 5,
@@ -106,25 +106,25 @@ export const defaultSettings: AudioSettings = {
 
 export const getSettings = (): AudioSettings => {
   const savedData = loadFromStorage();
-
+  
   if (savedData) {
     try {
       const parsed = JSON.parse(savedData);
       const savedVersion = parsed._version || '0.0.0';
-
+      
       if (savedVersion !== SETTINGS_VERSION) {
         const migratedSettings = migrateSettings(parsed, SETTINGS_VERSION);
         saveSettings(migratedSettings);
         return migratedSettings;
       }
-
+      
       return { ...defaultSettings, ...parsed };
     } catch (e) {
       console.error('Error parsing saved settings:', e);
       return defaultSettings;
     }
   }
-
+  
   return defaultSettings;
 };
 

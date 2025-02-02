@@ -19,20 +19,13 @@ export const analyzeSentiment = async (audioData: Float32Array): Promise<string>
 
   DebugLogger.log('Sentiment', 'Analyzing sentiment for text:', text);
   const settings = getSettings();
-  const modelConfig = {
-    ...createModelConfig(settings),
-    device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
-    dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-    revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null,
-    local_files_only: true
-  };
+  const modelConfig = createModelConfig(settings);
 
   try {
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentAnalysis.model,
-      modelConfig as any
+      modelConfig
     );
 
     const result = await classifier(text);
@@ -92,18 +85,10 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
     reader.readAsDataURL(audioFile);
   });
 
-  const modelConfig = {
-    ...createModelConfig(settings),
-    device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
-    dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-    revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null,
-    local_files_only: true
-  };
-
   try {
     const modelPath = buildModelPath(settings);
-    const transcriptionConfig = createTranscriptionConfig(settings);
+    const modelConfig = createModelConfig();
+    const transcriptionConfig = createTranscriptionConfig();
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
@@ -121,5 +106,4 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
     DebugLogger.error('Transcription', 'Conversion error:', error);
     return '';
   }
-  return '';
 }

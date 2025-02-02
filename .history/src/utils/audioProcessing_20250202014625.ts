@@ -79,11 +79,9 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
       "text-classification",
       settings.sentimentModel,
       {
-        device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-        local_files_only: true
+        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
       }
     );
 

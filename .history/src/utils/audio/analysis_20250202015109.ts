@@ -95,14 +95,12 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
   const modelConfig = {
     ...createModelConfig(settings),
     device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
-    dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-    revision: settings.modelRevision,
-    cache_dir: settings.enableModelCaching ? undefined : null,
-    local_files_only: true
+    dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16"
   };
 
   try {
     const modelPath = buildModelPath(settings);
+    const modelConfig = createModelConfig(settings);
     const transcriptionConfig = createTranscriptionConfig(settings);
 
     const transcriber = await pipeline(

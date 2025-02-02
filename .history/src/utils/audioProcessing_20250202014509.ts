@@ -28,17 +28,18 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     const modelToUse = selectedModel?.key || settings.defaultModel;
     console.log('Selected model:', modelToUse);
 
-    const modelPath = buildModelPath(settings);
+    const modelPath = buildModelPath(modelToUse);
     console.log('Using model path:', modelPath);
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       modelPath,
       {
-        device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
+        dtype: settings.modelConfig.dtype,
+        isQuantized: settings.modelConfig.useQuantized,
         local_files_only: true
       }
     );
@@ -79,11 +80,9 @@ export const analyzeSentiment = async (text: string): Promise<string> => {
       "text-classification",
       settings.sentimentModel,
       {
-        device: settings.modelConfig.device as "auto" | "gpu" | "cpu" | "wasm" | "webgpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu",
+        device: settings.modelConfig.device,
         revision: settings.modelRevision,
-        cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype as "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16",
-        local_files_only: true
+        cache_dir: settings.enableModelCaching ? undefined : null // TODO: setting is it not?
       }
     );
 

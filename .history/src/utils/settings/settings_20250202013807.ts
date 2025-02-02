@@ -64,7 +64,7 @@ export const defaultSettings: AudioSettings = {
   defaultTempo: 120,
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
-  defaultModel: 1,
+  defaultModel: "base",
   processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
   defaultStrideLength: 5,
