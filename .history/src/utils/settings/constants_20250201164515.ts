@@ -1,5 +1,5 @@
 import { DeviceType, DType } from '@/types/audio/processing';
-import type { AutoSaveSettings, InitialState, Language, ModelSettings, SupportedModel, WaveformColors } from './types';
+import type { AutoSaveSettings, ModelSettings, SupportedModel, Language, WaveformColors, InitialState } from './types';
 
 export const AUTO_SAVE_DEFAULTS: AutoSaveSettings = {
   shortTermDelay: 3000,
@@ -8,8 +8,8 @@ export const AUTO_SAVE_DEFAULTS: AutoSaveSettings = {
 };
 
 export const MODEL_DEFAULTS: ModelSettings = {
-  provider: 'onnx-community',
-  model: 'whisper-large-v3-turbo_timestamped',
+  provider: 'openai',
+  model: 'base',
   useOnnx: true,
   useQuantized: false,
   device: DeviceType.WebGPU,
