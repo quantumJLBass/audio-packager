@@ -9,6 +9,7 @@ interface AudioWaveformProps {
   onReady?: () => void;
   onTimeUpdate?: (time: number) => void;
   onSeek?: (time: number) => void;
+  onError?: (error: Error) => void;
   height?: number;
   waveColor?: string;
   progressColor?: string;
@@ -19,6 +20,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   onReady,
   onTimeUpdate,
   onSeek,
+  onError,
   height = 128,
   waveColor = '#4a5568',
   progressColor = '#3182ce'
@@ -33,9 +35,12 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const [isReady, setIsReady] = useState(false);
   const { toast } = useToast();
   const isInitializing = useRef(false);
+  const previousUrl = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current || !url || isInitializing.current) return;
+    if (!containerRef.current || !url || isInitializing.current || url === previousUrl.current) {
+      return;
+    }
 
     const initWaveSurfer = async () => {
       try {
@@ -44,10 +49,11 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
+          wavesurfer.current = null;
         }
 
         const instance = WaveSurfer.create({
-          container: containerRef.current,
+          container: containerRef.current!,
           height,
           waveColor,
           progressColor,
@@ -65,11 +71,13 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           console.log('WaveSurfer ready');
           setDuration(instance.getDuration());
           setIsReady(true);
+          previousUrl.current = url;
           onReady?.();
         });
 
         instance.on('error', (err) => {
           console.error('WaveSurfer error:', err);
+          onError?.(err);
           toast({
             title: "Error",
             description: "Failed to load audio file. Please try again.",
@@ -92,11 +100,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           setIsPlaying(false);
         });
 
+        instance.on('play', () => {
+          setIsPlaying(true);
+        });
+
+        instance.on('pause', () => {
+          setIsPlaying(false);
+        });
+
         console.log('Loading audio URL:', url);
         await instance.load(url);
         wavesurfer.current = instance;
       } catch (err) {
         console.error('Error initializing WaveSurfer:', err);
+        onError?.(err as Error);
         toast({
           title: "Error",
           description: "Failed to initialize audio player. Please try again.",
@@ -115,14 +132,12 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         wavesurfer.current = null;
       }
     };
-  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom, toast]);
+  }, [url, height, waveColor, progressColor, onReady, onTimeUpdate, zoom, toast, onError]);
 
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
-        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
-        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
@@ -136,14 +151,13 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   }, 100);
 
   const togglePlayPause = () => {
-    if (wavesurfer.current) {
+    if (wavesurfer.current && isReady) {
       wavesurfer.current.playPause();
-      setIsPlaying(!isPlaying);
     }
   };
 
   const toggleMute = () => {
-    if (wavesurfer.current) {
+    if (wavesurfer.current && isReady) {
       const newVolume = volume === 0 ? 1 : 0;
       wavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
@@ -152,7 +166,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
-    if (wavesurfer.current) {
+    if (wavesurfer.current && isReady) {
       wavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
     }
