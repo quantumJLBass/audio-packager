@@ -5,7 +5,7 @@ import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
 // Current settings schema version
-const SETTINGS_VERSION = '1.1.0';
+const SETTINGS_VERSION = '1.0.0';
 
 const autoSaveSettings = {
   shortTermDelay: 3000, // 3 seconds

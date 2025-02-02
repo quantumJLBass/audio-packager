@@ -1,8 +1,8 @@
-import { SentimentThresholdMatrix } from '@/components/settings/SentimentThresholdMatrix';
-import { SettingField } from '@/components/settings/SettingField';
-import { Input } from '@/components/ui/input';
-import type { AudioSettings } from '@/types/audio/settings';
 import React from 'react';
+import { Input } from '@/components/ui/input';
+import { SettingField } from '@/components/settings/SettingField';
+import { SentimentThresholdMatrix } from '@/components/settings/SentimentThresholdMatrix';
+import type { AudioSettings } from '@/types/audio/settings';
 
 interface SentimentSettingsProps {
   settings: AudioSettings;
