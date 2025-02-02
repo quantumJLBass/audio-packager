@@ -36,7 +36,7 @@ export const WaveformTimeline: React.FC<TimelineProps> = ({ wavesurfer, zoom }) 
 
     return () => {
       if (wavesurfer) {
-        wavesurfer.destroyPlugin('timeline');
+        wavesurfer.destroy();
       }
     };
   }, [wavesurfer, zoom]);
