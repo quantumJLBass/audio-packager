@@ -60,3 +60,5 @@ export interface ModelUrlOptions {
   isOnnx?: boolean;
   language?: string;
 }
+
+export type SupportedAudioType = 'audio/mpeg' | 'audio/wav' | 'audio/ogg';
