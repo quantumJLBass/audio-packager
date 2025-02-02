@@ -2,6 +2,9 @@ import { DeviceTypes, DTypes } from '@/types/audio/common';
 import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
+// Current settings schema version
+export const SETTINGS_VERSION = '1.1.0';
+
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
@@ -161,6 +164,22 @@ const defaultSettings: AudioSettings = {
     longTermDelay: 30000,
     enabled: true
   }
+};
+
+const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVersion: string): AudioSettings => {
+  const newSettings = { ...defaultSettings };
+
+  Object.entries(oldSettings).forEach(([key, value]) => {
+    if (key in newSettings) {
+      if (key === 'supportedModels' || key === 'supportedLanguages') {
+        // Always use latest lists
+        return;
+      }
+      (newSettings as any)[key] = value;
+    }
+  });
+
+  return newSettings;
 };
 
 export const getSettings = (): AudioSettings => {
