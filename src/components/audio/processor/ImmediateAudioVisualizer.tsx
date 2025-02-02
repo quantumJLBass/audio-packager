@@ -30,22 +30,12 @@ export const ImmediateAudioVisualizer: React.FC<ImmediateAudioVisualizerProps> =
     }
   }, [url]);
 
-  const handleError = (error: Error) => {
-    console.error('Audio visualization error:', error);
-    toast({
-      title: "Error",
-      description: "Failed to load audio visualization",
-      variant: "destructive",
-    });
-  };
-
   return (
     <div className="space-y-4">
       <AudioWaveform
         url={url}
         onReady={onReady}
         onTimeUpdate={onTimeUpdate}
-        onError={handleError}
       />
     </div>
   );
