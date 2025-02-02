@@ -1,27 +1,26 @@
 export enum DeviceType {
   CPU = 'cpu',
   WebGPU = 'webgpu',
-  WASM = 'wasm',
-  Auto = 'auto',
-  GPU = 'gpu',
-  CUDA = 'cuda',
-  DML = 'dml',
-  WebNN = 'webnn',
-  WebNNNPU = 'webnn-npu',
-  WebNNGPU = 'webnn-gpu',
-  WebNNCPU = 'webnn-cpu'
+  WebGL = 'webgl',
+  WASM = 'wasm'
 }
 
 export enum DType {
-  Int8 = 'int8',
-  Auto = 'auto',
-  FP32 = 'fp32',
-  FP16 = 'fp16',
-  Q8 = 'q8',
-  UInt8 = 'uint8',
-  Q4 = 'q4',
-  BNB4 = 'bnb4',
-  Q4F16 = 'q4f16'
+  FP32 = 'float32',
+  FP16 = 'float16',
+  INT8 = 'int8'
 }
 
-export type SupportedAudioType = 'audio/mpeg' | 'audio/wav' | 'audio/ogg';
+export type SupportedAudioType =
+  | 'audio/wav'
+  | 'audio/wave'
+  | 'audio/x-wav'
+  | 'audio/mp3'
+  | 'audio/mpeg'
+  | 'audio/mp4'
+  | 'audio/aac'
+  | 'audio/ogg'
+  | 'audio/webm'
+  | 'audio/opus'
+  | 'audio/midi'
+  | 'audio/vorbis';

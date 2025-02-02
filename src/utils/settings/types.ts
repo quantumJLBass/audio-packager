@@ -1,4 +1,4 @@
-import { DeviceType, DType } from '@/types/audio/common';
+import { DeviceType, DType } from '@/types/audio/processing';
 import { Transcription } from '@/types/audio/transcription';
 
 export interface AutoSaveSettings {

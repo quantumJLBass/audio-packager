@@ -164,19 +164,6 @@ const defaultSettings: AudioSettings = {
   timeFormat: 'HH:mm:ss',
   showMilliseconds: true,
 
-  // Speaker Settings
-  speakerIdTemplate: 'speaker_{?}',
-  speakerNameTemplate: 'Speaker {?}',
-  speakerColors: [
-    '#FF0000',
-    '#00FF00',
-    '#0000FF',
-    '#FFFF00',
-    '#FF00FF',
-    '#00FFFF'
-  ],
-  maxSpeakers: 10,
-
   initialState: {
     currentTime: 0,
     isPlaying: false,

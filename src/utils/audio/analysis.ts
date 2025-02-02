@@ -9,18 +9,18 @@ import { createAudioFileFromBuffer } from './fileType';
 import { buildModelPath, createModelConfig, createTranscriptionConfig } from './modelBuilder';
 
 export const analyzeSentiment = async (audioData: Float32Array): Promise<string> => {
-  const settings = getSettings();
   const text = await convertAudioToText(audioData);
-  
   if (!text) {
     DebugLogger.log('Sentiment', 'No text to analyze, returning default sentiment');
+    const settings = getSettings();
     return settings.sentimentAnalysis.defaultLabel;
   }
 
   DebugLogger.log('Sentiment', 'Analyzing sentiment for text:', text);
-  
+  const settings = getSettings();
+  const modelConfig = createModelConfig();
+
   try {
-    const modelConfig = createModelConfig(settings);
     const classifier = await pipeline(
       "text-classification",
       settings.sentimentAnalysis.model,
@@ -86,8 +86,8 @@ async function convertAudioToText(audioData: Float32Array): Promise<string> {
 
   try {
     const modelPath = buildModelPath(settings.defaultModel);
-    const modelConfig = createModelConfig(settings);
-    const transcriptionConfig = createTranscriptionConfig(settings);
+    const modelConfig = createModelConfig();
+    const transcriptionConfig = createTranscriptionConfig();
 
     const transcriber = await pipeline(
       "automatic-speech-recognition",
