@@ -1,9 +1,15 @@
-export enum DeviceType {
-  CPU = 'cpu',
-  WebGPU = 'webgpu',
-  WebGL = 'webgl',
-  WASM = 'wasm'
-}
+export type DeviceType = 
+  | "auto" 
+  | "gpu" 
+  | "cpu" 
+  | "wasm" 
+  | "webgpu" 
+  | "cuda" 
+  | "dml" 
+  | "webnn" 
+  | "webnn-npu" 
+  | "webnn-gpu" 
+  | "webnn-cpu";
 
 export enum DType {
   FP32 = 'float32',

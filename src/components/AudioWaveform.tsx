@@ -1,8 +1,8 @@
-import { useToast } from '@/hooks/use-toast';
-import { debounce } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
+import { useToast } from '@/hooks/use-toast';
 import { WaveformControls } from './audio/WaveformControls';
+import { debounce } from 'lodash';
 
 interface AudioWaveformProps {
   url: string;
@@ -40,11 +40,15 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
     const initWaveSurfer = async () => {
       try {
         isInitializing.current = true;
-        console.log('Initializing WaveSurfer in AudioWaveform');
 
         if (wavesurfer.current) {
           wavesurfer.current.destroy();
           wavesurfer.current = null;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to load audio file: ${response.statusText}`);
         }
 
         const instance = WaveSurfer.create({
@@ -62,20 +66,20 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         });
 
         instance.on('ready', () => {
-          console.log('WaveSurfer ready in AudioWaveform');
+          console.log('WaveSurfer ready');
           setDuration(instance.getDuration());
           setIsReady(true);
           onReady?.();
         });
 
-        // instance.on('error', (err) => {
-        //   console.error('WaveSurfer error in AudioWaveform:', err);
-        //   toast({
-        //     title: "Error",
-        //     description: "Failed to load audio file. Please try again.",
-        //     variant: "destructive",
-        //   });
-        // });
+        instance.on('error', (err) => {
+          console.error('WaveSurfer error:', err);
+          toast({
+            title: "Error",
+            description: "Failed to load audio file. Please try again.",
+            variant: "destructive",
+          });
+        });
 
         instance.on('audioprocess', (time) => {
           setCurrentTime(time);
@@ -95,10 +99,10 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         await instance.load(url);
         wavesurfer.current = instance;
       } catch (err) {
-        console.error('Error initializing WaveSurfer in AudioWaveform:', err);
+        console.error('Error initializing WaveSurfer:', err);
         toast({
           title: "Error",
-          description: "Failed to initialize audio player. Please try again.",
+          description: err instanceof Error ? err.message : "Failed to initialize audio player",
           variant: "destructive",
         });
       } finally {
@@ -119,9 +123,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   const handleZoom = debounce((newZoom: number) => {
     if (wavesurfer.current && isReady) {
       try {
-        const currentTime = wavesurfer.current.getCurrentTime();
         wavesurfer.current.zoom(newZoom);
-        wavesurfer.current.seekTo(currentTime / duration);
         setZoom(newZoom);
       } catch (err) {
         console.error('Error zooming:', err);
@@ -133,20 +135,6 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
       }
     }
   }, 100);
-
-  const handleZoomIn = () => {
-    const newZoom = Math.min(zoom + 10, 100);
-    handleZoom(newZoom);
-  };
-
-  const handleZoomOut = () => {
-    const newZoom = Math.max(zoom - 10, 20);
-    handleZoom(newZoom);
-  };
-
-  const handleZoomChange = (newZoom: number) => {
-    handleZoom(newZoom);
-  };
 
   const togglePlayPause = () => {
     if (wavesurfer.current) {
@@ -174,7 +162,7 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
   return (
     <div className="space-y-4">
       <div ref={containerRef} className="w-full rounded-lg glass p-4" />
-
+      
       <WaveformControls
         isPlaying={isPlaying}
         isReady={isReady}
@@ -185,9 +173,9 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
         onPlayPause={togglePlayPause}
         onVolumeChange={handleVolumeChange}
         onMute={toggleMute}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onZoomChange={handleZoomChange}
+        onZoomIn={() => handleZoom(Math.min(500, zoom + 50))}
+        onZoomOut={() => handleZoom(Math.max(50, zoom - 50))}
+        onZoomChange={handleZoom}
       />
     </div>
   );

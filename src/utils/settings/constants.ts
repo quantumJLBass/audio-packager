@@ -1,4 +1,3 @@
-import { DeviceType, DType } from '@/types/audio/common';
 import type { AutoSaveSettings, InitialState, Language, ModelSettings, SupportedModel, WaveformColors } from './types';
 
 export const AUTO_SAVE_DEFAULTS: AutoSaveSettings = {
@@ -12,8 +11,8 @@ export const MODEL_DEFAULTS: ModelSettings = {
   model: 'whisper-large-v3-turbo_timestamped',
   useOnnx: true,
   useQuantized: false,
-  device: DeviceType.WebGPU,
-  dtype: DType.FP32
+  device: "webgpu",
+  dtype: 'float32'
 };
 
 export const SUPPORTED_MODELS: SupportedModel[] = [
