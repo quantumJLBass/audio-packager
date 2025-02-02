@@ -30,48 +30,48 @@ export const ProcessingSettings: React.FC<ProcessingSettingsProps> = ({
       >
         <AccordionItem 
           value="model" 
-          className="bg-background border rounded-lg overflow-hidden"
+          className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
             Model Settings
           </AccordionTrigger>
-          <AccordionContent className="bg-background/50 p-4">
+          <AccordionContent className="bg-background/5 p-4">
             <ModelSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem 
           value="sentiment" 
-          className="bg-background border rounded-lg overflow-hidden"
+          className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
             Sentiment Analysis
           </AccordionTrigger>
-          <AccordionContent className="bg-background/50 p-4">
+          <AccordionContent className="bg-background/5 p-4">
             <SentimentSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem 
           value="tone" 
-          className="bg-background border rounded-lg overflow-hidden"
+          className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
             Tone Analysis
           </AccordionTrigger>
-          <AccordionContent className="bg-background/50 p-4">
+          <AccordionContent className="bg-background/5 p-4">
             <ToneSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem 
           value="speakers" 
-          className="bg-background border rounded-lg overflow-hidden"
+          className="border rounded-lg overflow-hidden"
         >
-          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground">
+          <AccordionTrigger className="px-4 py-2 hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50">
             Speaker Settings
           </AccordionTrigger>
-          <AccordionContent className="bg-background/50 p-4">
+          <AccordionContent className="bg-background/5 p-4">
             <SpeakerSettings settings={settings} onChange={onChange} />
           </AccordionContent>
         </AccordionItem>

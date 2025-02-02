@@ -1,17 +1,17 @@
 import type { AudioSettings } from '@/types/audio/settings';
-import { defaultSettings } from './settings';
+import { defaultSettings } from './defaults';
 
 export const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVersion: string): AudioSettings => {
-  const newSettings = { ...defaultSettings };
+  const newSettings: AudioSettings = { ...defaultSettings };
 
-  Object.keys(oldSettings).forEach(key => {
+  // Type-safe way to copy settings
+  (Object.keys(oldSettings) as Array<keyof AudioSettings>).forEach(key => {
     if (key in newSettings) {
-      const settingKey = key as keyof AudioSettings;
       if (key === 'supportedModels' || key === 'supportedLanguages') {
         // Always use latest lists
-        newSettings[settingKey] = defaultSettings[settingKey];
+        newSettings[key] = defaultSettings[key];
       } else {
-        newSettings[settingKey] = oldSettings[settingKey] as AudioSettings[keyof AudioSettings];
+        newSettings[key] = oldSettings[key] as AudioSettings[keyof AudioSettings];
       }
     }
   });
