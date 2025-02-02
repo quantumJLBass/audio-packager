@@ -1,192 +1,54 @@
-import { AudioUploader } from '@/components/AudioUploader';
-import { SettingField } from '@/components/settings/SettingField';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from "@/components/ui/switch";
-import { useToast } from '@/hooks/use-toast';
-import { getSettings } from '@/utils/settings';
-import { ChevronDown } from "lucide-react";
-import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useSettings } from '@/hooks/useSettings';
 
-interface OutletContext {
-  onFileSelect: (file: File) => void;
+interface AudioUploadFormProps {
+  onUpload: (file: File) => void;
 }
 
-export const AudioUploadForm = () => {
-  const { onFileSelect } = useOutletContext<OutletContext>();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [packageName, setPackageName] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [autoProcess, setAutoProcess] = useState(false);
-  const settings = getSettings();
-  const [options, setOptions] = useState({
-    model: settings.defaultModel,
-    language: settings.defaultLanguage,
-    floatingPoint: settings.defaultFloatingPoint,
-    diarization: settings.defaultDiarization,
-    chunkLength: settings.defaultChunkLength,
-    strideLength: settings.defaultStrideLength,
-  });
-  const { toast } = useToast();
+export const AudioUploadForm: React.FC<AudioUploadFormProps> = ({ onUpload }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const { settings } = useSettings();
 
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
-    setPackageName(file.name.replace(/\.[^/.]+$/, ''));
-    if (autoProcess) {
-      handleSubmit();
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
     }
-    onFileSelect(file);
   };
 
-  const handleSubmit = () => {
-    if (!selectedFile) {
-      return;
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (file) {
+      onUpload(file);
     }
-    onFileSelect(selectedFile);
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Audio</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <AudioUploader onFileSelect={handleFileSelect} />
-
-            <SettingField
-              id="packageName"
-              label="Package Name"
-              tooltip="Name for this audio processing package. This will be used to identify the processed results."
-            >
-              <Input
-                id="packageName"
-                value={packageName}
-                onChange={(e) => setPackageName(e.target.value)}
-                placeholder="Enter package name"
-              />
-            </SettingField>
-
-            <SettingField
-              id="autoProcess"
-              label="Auto-process on Upload"
-              tooltip="Automatically start processing when a file is uploaded"
-            >
-              <Switch
-                checked={autoProcess}
-                onCheckedChange={setAutoProcess}
-              />
-            </SettingField>
-
-            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  Advanced Options <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 mt-4">
-                <SettingField
-                  id="model"
-                  label="Model"
-                  tooltip="Select the AI model to use for audio processing. Larger models are more accurate but slower."
-                >
-                  <Select
-                    value={options.model}
-                    onValueChange={(value) => setOptions({ ...options, model: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {settings.supportedModels.map((model) => (
-                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </SettingField>
-
-                <SettingField
-                  id="language"
-                  label="Language"
-                  tooltip="Select the primary language of the audio. Auto-detect works well for most cases."
-                >
-                  <Select
-                    value={options.language}
-                    onValueChange={(value) => setOptions({ ...options, language: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {settings.supportedLanguages.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </SettingField>
-
-                <SettingField
-                  id="floatingPoint"
-                  label="Floating Point"
-                  tooltip="Precision level for audio processing. Higher precision (32-bit) is more accurate but uses more memory."
-                >
-                  <Select
-                    value={options.floatingPoint.toString()}
-                    onValueChange={(value) => setOptions({ ...options, floatingPoint: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select precision" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="16">16-bit</SelectItem>
-                      <SelectItem value="32">32-bit</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </SettingField>
-
-                <SettingField
-                  id="chunkLength"
-                  label="Chunk Length (seconds)"
-                  tooltip="Length of audio segments for processing. Longer chunks are more accurate but use more memory."
-                >
-                  <Input
-                    id="chunkLength"
-                    type="number"
-                    value={options.chunkLength}
-                    onChange={(e) => setOptions({ ...options, chunkLength: parseInt(e.target.value) })}
-                    min={1}
-                    max={60}
-                  />
-                </SettingField>
-
-                <SettingField
-                  id="strideLength"
-                  label="Stride Length (seconds)"
-                  tooltip="Overlap between audio chunks. Longer stride helps maintain context between chunks."
-                >
-                  <Input
-                    id="strideLength"
-                    type="number"
-                    value={options.strideLength}
-                    onChange={(e) => setOptions({ ...options, strideLength: parseInt(e.target.value) })}
-                    min={1}
-                    max={30}
-                  />
-                </SettingField>
-              </CollapsibleContent>
-            </Collapsible>
-
-            <Button type="submit" className="w-full">
-              Process Audio
-            </Button>
-          </CardContent>
-        </Card>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="audio-file" className="block text-sm font-medium text-gray-700">
+          Select Audio File
+        </label>
+        <input
+          type="file"
+          id="audio-file"
+          accept="audio/*"
+          onChange={handleFileChange}
+          className="mt-1 block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+        />
       </div>
+      <button
+        type="submit"
+        disabled={!file}
+        className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+      >
+        Upload
+      </button>
     </form>
   );
 };
