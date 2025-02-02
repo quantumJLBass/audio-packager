@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut, Waveform, Layers } from 'lucide-react';
+import { PlayCircle, PauseCircle, Volume2, VolumeX, ZoomIn, ZoomOut, AudioWaveform, Layers } from 'lucide-react';
 import { formatTimestamp } from '@/utils/timeFormat';
 
 export interface WaveformControlsProps {
@@ -102,7 +102,7 @@ export const WaveformControls: React.FC<WaveformControlsProps> = ({
         size="icon"
         onClick={onToggleSpectrogram}
       >
-        <Waveform className="h-4 w-4" />
+        <AudioWaveform className="h-4 w-4" />
       </Button>
 
       <Button
