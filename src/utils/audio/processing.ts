@@ -82,7 +82,6 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
     const results = Array.isArray(result) ? result : [result];
 
     const transcriptions = results.map((item: TranscriptionOutput, index: number) => {
-      // Extract timestamps and confidence from chunks if available
       const chunk = item.chunks?.[0] as TranscriptionChunkOutput | undefined;
       const timestamps = chunk?.timestamp || [0, 0];
       const confidence = chunk?.confidence || settings.defaultConfidence;

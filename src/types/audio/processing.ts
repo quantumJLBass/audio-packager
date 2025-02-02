@@ -1,4 +1,5 @@
 import { DeviceType, DType } from './common';
+import { Transcription } from './transcription';
 
 export type HFDevice = "cpu" | "webgpu" | "wasm" | "auto" | "gpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
 export type HFDType = "auto" | "fp32" | "fp16" | "q8" | "int8" | "uint8" | "q4" | "bnb4" | "q4f16";

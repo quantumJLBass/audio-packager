@@ -1,6 +1,3 @@
-/**
- * Settings management utilities for audio processing configuration
- */
 import { DeviceType, DType } from '@/types/audio/common';
 import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
@@ -8,16 +5,17 @@ import type { AudioSettings } from '@/types/audio/settings';
 // Current settings schema version
 const SETTINGS_VERSION = '1.1.0';
 
-const autoSaveSettings = {
-  shortTermDelay: 3000, // 3 seconds
-  longTermDelay: 30000, // 30 seconds
-  enabled: true
-};
-
 const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
+  speakerIdTemplate: "speaker-{?}",
+  speakerNameTemplate: "Speaker {?}",
+  speakerColors: [
+    '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
+    '#16a34a', '#2563eb', '#9333ea', '#c026d3'
+  ],
+  maxSpeakers: 8,
 
   modelConfig: {
     provider: 'onnx-community',
@@ -173,39 +171,29 @@ const defaultSettings: AudioSettings = {
     transcriptions: [],
     error: null
   },
-  autoSave: autoSaveSettings,
+
+  autoSave: {
+    shortTermDelay: 3000,
+    longTermDelay: 30000,
+    enabled: true
+  }
 };
 
-/**
- * Updates settings structure based on version changes
- */
 const migrateSettings = (oldSettings: Partial<AudioSettings>, currentVersion: string): AudioSettings => {
-  // Start with default settings to ensure all new fields are present
   const newSettings = { ...defaultSettings };
 
-  // Preserve user's existing preferences while ensuring new options are available
-  Object.keys(oldSettings).forEach(key => {
+  Object.entries(oldSettings).forEach(([key, value]) => {
     if (key in newSettings) {
-      if (key === 'supportedModels') {
-        // Always use latest models list
-        newSettings.supportedModels = defaultSettings.supportedModels;
-      } else if (key === 'supportedLanguages') {
-        // Always use latest languages list
-        newSettings.supportedLanguages = defaultSettings.supportedLanguages;
-      } else {
-        // Preserve user's setting if it exists
-        const settingKey = key as keyof AudioSettings;
-        (newSettings[settingKey] as any) = oldSettings[settingKey];
+      if (key === 'supportedModels' || key === 'supportedLanguages') {
+        return;
       }
+      (newSettings as any)[key] = value;
     }
   });
 
   return newSettings;
 };
 
-/**
- * Retrieves the current audio settings
- */
 export const getSettings = (): AudioSettings => {
   const savedData = localStorage.getItem('audioSettings');
 
@@ -214,7 +202,6 @@ export const getSettings = (): AudioSettings => {
       const parsed = JSON.parse(savedData);
       const savedVersion = parsed._version || '0.0.0';
 
-      // If versions don't match, migrate settings
       if (savedVersion !== SETTINGS_VERSION) {
         const migratedSettings = migrateSettings(parsed, SETTINGS_VERSION);
         saveSettings(migratedSettings);
@@ -231,9 +218,6 @@ export const getSettings = (): AudioSettings => {
   return defaultSettings;
 };
 
-/**
- * Saves updated audio settings
- */
 export const saveSettings = (settings: Partial<AudioSettings>): AudioSettings => {
   const currentSettings = getSettings();
   const newSettings = {
