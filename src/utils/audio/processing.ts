@@ -83,7 +83,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         text: item.text || settings.noSpeechText,
         start: chunk?.timestamp?.[0] ?? 0,
         end: chunk?.timestamp?.[1] ?? 0,
-        confidence: chunk?.probability ?? settings.defaultConfidence,
+        confidence: chunk?.confidence ?? settings.defaultConfidence,
         speaker: {
           id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
           name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
