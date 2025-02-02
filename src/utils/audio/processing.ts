@@ -50,9 +50,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         device: settings.modelConfig.device,
         revision: settings.modelRevision,
         cache_dir: settings.enableModelCaching ? undefined : null,
-        dtype: settings.modelConfig.dtype,
-        model_id: modelToUse,
-        task: "transcribe"
+        dtype: settings.modelConfig.dtype
       }
     );
 
@@ -80,7 +78,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
 
     // Process transcription in chunks to prevent UI blocking
     const chunkSize = 30 * settings.audioSampleRate; // 30 seconds chunks
-    const chunks: Transcription[] = [];
+    const transcriptions: Transcription[] = [];
     
     for (let i = 0; i < audioData.length; i += chunkSize) {
       if (signal.aborted) {
@@ -100,38 +98,38 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
         no_repeat_ngram_size: settings.noRepeatNgramSize
       });
 
-      if (result.chunks) {
-        const processedChunks = result.chunks.map((chunk: any, index: number) => ({
-          id: uuidv4(),
-          text: chunk.text || settings.noSpeechText,
-          start: chunk.timestamp[0] || 0,
-          end: chunk.timestamp[1] || 0,
-          confidence: chunk.confidence || settings.defaultConfidence,
-          speaker: {
-            id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
-            name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
-            color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
-          }
-        }));
-        chunks.push(...processedChunks);
+      // Handle both single result and array of results
+      const results = Array.isArray(result) ? result : [result];
+      const processedChunks = results.map((chunk: any, index: number) => ({
+        id: uuidv4(),
+        text: chunk.text || settings.noSpeechText,
+        start: chunk.timestamp?.[0] || 0,
+        end: chunk.timestamp?.[1] || 0,
+        confidence: chunk.confidence || settings.defaultConfidence,
+        speaker: {
+          id: settings.speakerIdTemplate.replace('{?}', `${Math.floor(index / 2) + 1}`),
+          name: settings.speakerNameTemplate.replace('{?}', `${Math.floor(index /2) + 1}'`),
+          color: settings.speakerColors[Math.floor(index / 2) % settings.speakerColors.length]
+        }
+      }));
+      transcriptions.push(...processedChunks);
 
-        // Update progress
-        toast({
-          title: "Transcription progress",
-          description: `Processed ${Math.min(((i + chunkSize) / audioData.length) * 100, 100).toFixed(1)}%`,
-          duration: null
-        });
-      }
+      // Update progress
+      toast({
+        title: "Transcription progress",
+        description: `Processed ${Math.min(((i + chunkSize) / audioData.length) * 100, 100).toFixed(1)}%`,
+        duration: null
+      });
     }
 
     // Clear progress toast and show success
     toast({
       title: "Transcription complete",
-      description: `Successfully processed ${chunks.length} segments`,
+      description: `Successfully processed ${transcriptions.length} segments`,
       duration: 3000
     });
 
-    return chunks;
+    return transcriptions;
   } catch (error) {
     console.error('Transcription error:', error);
     

@@ -19,9 +19,7 @@ const initializeTranscriber = async () => {
       device: settings.modelConfig.device,
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
-      dtype: settings.modelConfig.dtype,
-      model_id: settings.defaultModel,
-      task: "transcribe"
+      dtype: settings.modelConfig.dtype
     }
   );
 };
