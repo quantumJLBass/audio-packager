@@ -32,7 +32,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
   const modelToUse = selectedModel?.key || settings.defaultModel;
   DebugLogger.log('Transcription', 'Selected model:', modelToUse);
 
-  const modelPath = buildModelPath(selectedModel?.key);
+  const modelPath = buildModelPath(modelToUse);
   DebugLogger.log('Transcription', 'Using model path:', modelPath);
 
   try {

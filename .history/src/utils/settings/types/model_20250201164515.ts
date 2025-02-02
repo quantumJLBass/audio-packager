@@ -10,8 +10,7 @@ export interface ModelSettings {
 }
 
 export interface SupportedModel {
-  id: number;
-  key: string;
+  id: string;
   name: string;
   provider: string;
 }

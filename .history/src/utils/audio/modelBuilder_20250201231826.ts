@@ -1,7 +1,7 @@
 import { DebugLogger } from '../debug';
 import { getSettings } from '../settings';
 
-export const buildModelPath = (modelId: number): string => {
+export const buildModelPath = (modelId: string): string => {
   const settings = getSettings();
   const model = settings.supportedModels.find(m => m.id === modelId);
 

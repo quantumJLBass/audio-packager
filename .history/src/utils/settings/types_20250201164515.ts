@@ -1,4 +1,4 @@
-import { DeviceType, DType } from '@/types/audio/processing';
+import { DeviceType, DType, ProcessingTask } from '@/types/audio/processing';
 import { Transcription } from '@/types/audio/transcription';
 
 export interface AutoSaveSettings {
@@ -17,8 +17,7 @@ export interface ModelSettings {
 }
 
 export interface SupportedModel {
-  id: number;
-  key: string;
+  id: string;
   name: string;
   provider: string;
 }
