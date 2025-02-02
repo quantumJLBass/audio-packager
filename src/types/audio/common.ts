@@ -1,3 +1,4 @@
+// Define the device type
 export type DeviceType = 
   | "auto" 
   | "gpu" 
@@ -11,6 +12,7 @@ export type DeviceType =
   | "webnn-gpu" 
   | "webnn-cpu";
 
+// Define the data type
 export type DType = 
   | "auto"
   | "int8"
@@ -37,29 +39,29 @@ export type SupportedAudioType =
   | 'audio/vorbis';
 
 // Create a const object for DeviceType values to use in code
-export const DeviceTypes: Record<string, DeviceType> = {
-  Auto: "auto",
-  GPU: "gpu",
-  CPU: "cpu",
-  WASM: "wasm",
-  WebGPU: "webgpu",
-  CUDA: "cuda",
-  DML: "dml",
-  WebNN: "webnn",
-  WebNNNPU: "webnn-npu",
-  WebNNGPU: "webnn-gpu",
-  WebNNCPU: "webnn-cpu"
-} as const;
+export const DeviceTypes = {
+  Auto: "auto" as DeviceType,
+  GPU: "gpu" as DeviceType,
+  CPU: "cpu" as DeviceType,
+  WASM: "wasm" as DeviceType,
+  WebGPU: "webgpu" as DeviceType,
+  CUDA: "cuda" as DeviceType,
+  DML: "dml" as DeviceType,
+  WebNN: "webnn" as DeviceType,
+  WebNNNPU: "webnn-npu" as DeviceType,
+  WebNNGPU: "webnn-gpu" as DeviceType,
+  WebNNCPU: "webnn-cpu" as DeviceType
+};
 
 // Create a const object for DType values to use in code
-export const DTypes: Record<string, DType> = {
-  Auto: "auto",
-  Int8: "int8",
-  FP32: "fp32",
-  FP16: "fp16",
-  Q8: "q8",
-  UInt8: "uint8",
-  Q4: "q4",
-  BNB4: "bnb4",
-  Q4F16: "q4f16"
-} as const;
+export const DTypes = {
+  Auto: "auto" as DType,
+  Int8: "int8" as DType,
+  FP32: "fp32" as DType,
+  FP16: "fp16" as DType,
+  Q8: "q8" as DType,
+  UInt8: "uint8" as DType,
+  Q4: "q4" as DType,
+  BNB4: "bnb4" as DType,
+  Q4F16: "q4f16" as DType
+};

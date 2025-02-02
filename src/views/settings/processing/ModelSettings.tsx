@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { SettingField } from '@/components/settings/SettingField';
 import type { AudioSettings } from '@/types/audio/settings';
+import type { DeviceType, DType } from '@/types/audio/common';
 import { DeviceTypes, DTypes } from '@/types/audio/common';
 
 interface ModelSettingsProps {

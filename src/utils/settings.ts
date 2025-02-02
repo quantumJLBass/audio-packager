@@ -1,4 +1,4 @@
-import { DeviceType, DType } from '@/types/audio/common';
+import { DeviceTypes, DTypes } from '@/types/audio/common';
 import { ProcessingTask } from '@/types/audio/processing';
 import type { AudioSettings } from '@/types/audio/settings';
 
@@ -9,23 +9,14 @@ const defaultSettings: AudioSettings = {
   debugMode: false,
   huggingFaceToken: '',
   openAIKey: '',
-  speakerIdTemplate: "speaker-{?}",
-  speakerNameTemplate: "Speaker {?}",
-  speakerColors: [
-    '#4f46e5', '#7c3aed', '#db2777', '#ea580c',
-    '#16a34a', '#2563eb', '#9333ea', '#c026d3'
-  ],
-  maxSpeakers: 8,
-
   modelConfig: {
     provider: 'onnx-community',
     model: 'whisper-large-v3-turbo_timestamped',
     useOnnx: true,
     useQuantized: false,
-    device: DeviceType.WebGPU,
-    dtype: DType.FP32
+    device: DeviceTypes.WebGPU,
+    dtype: DTypes.FP32
   },
-
   sentimentAnalysis: {
     provider: 'SamLowe',
     model: 'roberta-base-go_emotions',
@@ -61,7 +52,6 @@ const defaultSettings: AudioSettings = {
       neutral: { value: 0.25, precision: 0.694, recall: 0.604, f1: 0.646 }
     }
   },
-
   toneAnalysis: {
     defaultTone: 'neutral',
     toneThresholds: {
@@ -71,7 +61,6 @@ const defaultSettings: AudioSettings = {
       shouting: 0.8
     }
   },
-
   audioSampleRate: 44100,
   fftSize: 2048,
   minPitchLag: 20,
@@ -82,7 +71,6 @@ const defaultSettings: AudioSettings = {
   defaultConfidence: 0.75,
   noSpeechText: "(no speech detected)",
   defaultModel: 1,
-
   processingTask: ProcessingTask.Transcribe,
   defaultChunkLength: 30,
   defaultStrideLength: 5,
@@ -93,7 +81,6 @@ const defaultSettings: AudioSettings = {
   numBeams: 1,
   temperature: 0,
   noRepeatNgramSize: 3,
-
   supportedModels: [
     { id: 1, key: 'whisper-tiny', name: 'Whisper Tiny', provider: "openai" },
     { id: 2, key: 'whisper-base', name: 'Whisper Base', provider: "openai" },
@@ -120,7 +107,6 @@ const defaultSettings: AudioSettings = {
     { id: 23, key: 'whisper-tiny', name: 'Whisper Tiny ONNX', provider: "onnx-community" },
     { id: 24, key: 'moonshine-tiny-ONNX', name: 'Whisper Large v3 Turbo ONNX timestamped', provider: "onnx-community" }
   ],
-
   modelRevision: 'main',
   enableModelCaching: true,
   sentimentModel: 'SamLowe/roberta-base-go_emotions',
@@ -140,7 +126,6 @@ const defaultSettings: AudioSettings = {
     { code: 'zh', name: 'Chinese' },
   ],
   defaultLanguage: 'auto',
-
   waveformColors: {
     background: '#ffffff',
     waveform: '#4a5568',
@@ -149,19 +134,15 @@ const defaultSettings: AudioSettings = {
   },
   waveformHeight: 128,
   minPxPerSec: 100,
-
   minVolume: 0,
   maxVolume: 200,
   volumeStep: 1,
-
   minZoom: 1,
   maxZoom: 1000,
   defaultZoom: 100,
   zoomStep: 10,
-
   timeFormat: 'HH:mm:ss',
   showMilliseconds: true,
-
   initialState: {
     currentTime: 0,
     isPlaying: false,
@@ -171,7 +152,6 @@ const defaultSettings: AudioSettings = {
     transcriptions: [],
     error: null
   },
-
   autoSave: {
     shortTermDelay: 3000,
     longTermDelay: 30000,
