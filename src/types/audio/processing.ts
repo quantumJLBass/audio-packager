@@ -1,5 +1,7 @@
-import { DeviceType, DType, SupportedAudioType } from './common';
+import { DeviceType, DType } from './common';
 import { Transcription } from './transcription';
+
+export type SupportedAudioType = 'audio/mpeg' | 'audio/wav' | 'audio/ogg';
 
 export enum ProcessingTask {
   Transcribe = 'transcribe',
@@ -38,25 +40,22 @@ export interface TranscriptionOutput {
   chunks?: TranscriptionChunkOutput[];
 }
 
+export interface ModelUrlOptions {
+  provider: string;
+  model: string;
+  language?: string;
+}
+
 export interface PretrainedModelOptions {
   revision?: string;
   cache_dir?: string | null;
   force_download?: boolean;
   resume_download?: boolean;
   proxies?: any;
-  device?: string;
+  device?: "cpu" | "webgpu" | "wasm" | "auto" | "gpu" | "cuda" | "dml" | "webnn" | "webnn-npu" | "webnn-gpu" | "webnn-cpu";
   dtype?: string;
   model_id?: string;
   task?: string;
   subtask?: string;
-  quantized?: boolean;
   local_files_only?: boolean;
-}
-
-export interface ModelUrlOptions {
-  provider: string;
-  model: string;
-  quantized?: boolean;
-  isOnnx?: boolean;
-  language?: string;
 }

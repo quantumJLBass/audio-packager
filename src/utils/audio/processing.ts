@@ -39,8 +39,7 @@ export const transcribeAudio = async (audioData: Float32Array): Promise<Transcri
       revision: settings.modelRevision,
       cache_dir: settings.enableModelCaching ? undefined : null,
       dtype: settings.modelConfig.dtype,
-      quantized: settings.modelConfig.useQuantized,
-      local_files_only: true
+      local_files_only: false // Changed to false to allow remote model loading
     };
 
     const transcriber = await pipeline(
