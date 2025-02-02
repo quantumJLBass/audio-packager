@@ -2,15 +2,8 @@ import { ModelUrlOptions } from '@/types/audio/processing';
 import { DebugLogger } from '../debug';
 
 export const buildModelUrl = (options: ModelUrlOptions): string => {
-  const {
-    provider,
-    model,
-    language
-  } = options;
-
-  const langSuffix = language && language !== 'auto' ? `.${language}` : '';
-  const url = `${provider}/${model}${langSuffix}`;
-
+  const { provider, model } = options;
+  const url = `${provider}/${model}`;
   DebugLogger.log('URL Builder', 'Built model URL:', url);
   return url;
 };

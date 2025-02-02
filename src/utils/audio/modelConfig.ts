@@ -2,9 +2,8 @@ import { ModelUrlOptions } from '@/types/audio/processing';
 import { AudioSettings } from '@/types/audio/settings';
 
 export const getModelPath = (modelId: string, options: ModelUrlOptions): string => {
-  const { provider, model, language } = options;
-  const languageSuffix = language ? `.${language}` : '';
-  return `${provider}/${model}${languageSuffix}`;
+  const { provider, model } = options;
+  return `${provider}/${model}`;
 };
 
 export const createModelConfig = (settings: AudioSettings) => {
@@ -13,7 +12,8 @@ export const createModelConfig = (settings: AudioSettings) => {
     cache_dir: settings.enableModelCaching ? undefined : null,
     device: settings.modelConfig.device,
     dtype: settings.modelConfig.dtype,
-    local_files_only: false // Changed to false to allow remote model loading
+    isQuantized: settings.modelConfig.useQuantized,
+    local_files_only: false
   };
 };
 
